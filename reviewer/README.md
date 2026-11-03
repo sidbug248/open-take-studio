@@ -20,7 +20,7 @@ Do not deploy until the full Render studio passes its hosted end-to-end journey 
 
 - Vercel project: `prj_1d9l4KWS3SaYMarl9aLpR2VqQFbI` (`open-take-studio-review`).
 - Team: `team_GkDA3N4RHKQQtTMpKkR8eYcH` (`eternity-flux-solutions`).
-- Existing production deployment, inspected 2026-11-03: `dpl_EiLqHa9C8qDtkLPJzvhV4t6f33bf`.
+- Previous production deployment / rollback target: `dpl_EiLqHa9C8qDtkLPJzvhV4t6f33bf`.
 - Preserve aliases `open-take-studio-review.vercel.app` and `open-take-studio-review-eternity-flux-solutions.vercel.app`.
 - Keep the competition tag and main branch unchanged.
 
@@ -34,4 +34,10 @@ $env:VERCEL_ORG_ID = 'team_GkDA3N4RHKQQtTMpKkR8eYcH'
 vercel deploy ./reviewer --prod --scope eternity-flux-solutions --yes
 ```
 
-After GO and deployment, verify the existing alias, CTA destination and owner sign-in note; all three video URLs; `film/index.html`; the portable ZIP; and source/X links. The former production deployment remains the rollback target. No deployment command was run while preparing this directory.
+After GO and deployment, verify the existing alias, CTA destination and owner sign-in note; all three video URLs; `film/index.html`; the portable ZIP; and source/X links. The former production deployment remains the rollback target.
+
+## Authorized release verification — 2026-11-03
+
+Following the release owner's explicit GO after hosted persistence and existing-media authoring checks, deployment `dpl_4WaZaEvCHFuSe4PVfZNAM5JoEvBc` reached READY and retained both existing aliases. The public CTA includes the confirmed notice that new AI generation is paused because event credits have ended.
+
+The actual public HTML matches this source. All eight prior link/media references remain present, all 18 archived media/support files are SHA-256 identical, and the portable download matches the pinned archive hash. The local receipt is `artifacts/reviewer-link-update/deployment-verification.json`. The release owner performs the final rendered browser CTA/sign-in check.

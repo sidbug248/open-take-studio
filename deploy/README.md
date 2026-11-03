@@ -1,6 +1,6 @@
-# Hosted authoring runtime — deployment preparation
+# Hosted authoring runtime — deployed 3 November 2026
 
-This bundle is not a live deployment. The local studio remains unchanged until a coordinated restart. Render account access and approval for paid hosting are required before provisioning.
+The full application is live at https://open-take-studio.onrender.com with private owner sign-in. Render service `srv-dbl12c61egvs73994htg` runs in Ohio. The original 19 projects and 462 assets were copied with matching hashes; their original local files remain preserved. See `docs/hosted-release-2026-11-03.md` for actual validation and the external generation blocker.
 
 The proposed service runs the complete Node/React app as one process with SQLite and all managed media under `/var/data/studio` on a persistent 10 GB disk. It is not a static showcase or ephemeral serverless function. The current Render `1c-2g` plan is $25/month, and a 10 GB disk is $2.50/month; taxes and excess bandwidth are additional. These figures were checked on 3 November 2026: [pricing](https://render.com/pricing), [persistent disk behavior](https://render.com/docs/disks).
 
@@ -10,12 +10,12 @@ Owner login protects the application HTML, embedded Explore bootstrap, APIs, dow
 
 The runtime uses system FFmpeg/FFprobe and Node 24. All dev dependencies are retained because editable Object Room export compiles its own local player runtime with Vite. The container starts its application as the unprivileged `node` user after initializing only the mounted data directory. Uploaded data is never included in the image.
 
-## Required deployment verification
+## Deployment procedure and recorded verification
 
-1. Build and smoke-test the Docker image in a real Docker environment. The image has not yet been built in this Windows session.
+1. Build and smoke-test the Docker image in a real Docker environment. Render has built and run this Node 24 image successfully; the latest validated application commit is `181f24d`.
 2. Provision the approved paid service and disk; configure private credentials in the host's secret manager.
 3. Migrate a verified, consistent copy of SQLite and managed media, keeping the original local data untouched. Preserve file ownership for uid 1000. Do not copy a live SQLite file without its WAL or a consistent SQLite backup.
-4. Verify HTTPS login, private media denial while signed out, generation, persisted results, restart recovery, downloads, and project reopening on the actual host.
+4. HTTPS login, private media denial while signed out, restored projects, existing-media upload/edit/download/export/import, and an actual Render restart have passed. A real Router generation request was made once and blocked by `insufficient_credits`; the user confirmed the shared event allocation had ended. No new generation success is claimed.
 5. Hosted mode automatically checks hourly and creates a consistent SQLite plus managed-media snapshot when the last completed backup is 24 hours old. Owner-only `/api/runtime/backups` endpoints create snapshots, list the latest result, and download each manifest/file for an off-host copy. Keep at least 2 GiB free; failures are reported by the status endpoint. After each new successful snapshot, retention keeps the newest three unmodified app-owned snapshots. Active downloads are protected temporarily; user-added archives, symlinks, modified snapshot folders, and incomplete staging folders are preserved. Monitor capacity and review skipped folders. An automatic off-host destination remains unconfigured; Render disk snapshots alone are not the tested SQLite recovery path.
 6. Shutdown stops new requests/polls, aborts native progress streams, and waits up to 24 seconds for active workers and HTTP/backup activity, with a 28 second process deadline. SQLite is not closed under an unfinished callback. Persisted request IDs and idempotency identities remain recoverable after the deadline. Isolated tests cover in-flight drain and both Router/native restart recovery; an actual hosted restart is still required.
 
