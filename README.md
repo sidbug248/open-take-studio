@@ -49,15 +49,16 @@ For development, use `npm run dev` instead of the production start. Run only one
 
 ## Open the examples
 
-The separate submission release assets contain:
+The public release includes these four downloads:
 
-- `Open-Take-Studio-Competition-Demo.mp4`: the 100.063-second competition demonstration, including the product, implementation and workflow innovation. The earlier 82.022-second before/after montage is also retained separately.
-- `Prismatic-Three-possible-skies.playable.zip`: extract the entire archive, then open `index.html` for the self-contained three-choice film.
-- `Liquid-Directed-Object.opentake.zip`, `Prismatic-Three-possible-skies.opentake.zip`, and `Voices-Mixed-Soundtrack.opentake.zip`: use **Projects → Import production package** in the running studio to inspect/edit these examples. Imported historical jobs are archived and do not automatically generate or charge.
-- `Afterlight-directed-scene.spatial.zip`: the directed scene export.
-- Selected finished MP4s for the story, scene-to-video, and sound/motion results.
+- [Competition demo MP4](https://github.com/sidbug248/open-take-studio/releases/download/v0.1.0-submission/Open-Take-Studio-Competition-Demo.mp4): the 100.063-second demonstration of the product, implementation and workflow innovation.
+- [Self-contained reviewer demo ZIP](https://github.com/sidbug248/open-take-studio/releases/download/v0.1.0-submission/Open-Take-Studio-review-demo-2026-11-03.zip): extract the entire archive and open `index.html` to view the demonstration and portable outputs.
+- [Three-choice branching film ZIP](https://github.com/sidbug248/open-take-studio/releases/download/v0.1.0-submission/Prismatic-Three-possible-skies.playable.zip): extract the entire archive and open `index.html`. The film works without the studio or a Comfy account.
+- [Clean application source ZIP](https://github.com/sidbug248/open-take-studio/releases/download/v0.1.0-submission/Open-Take-Studio-source-2026-11-03.zip): the verified competition source snapshot with setup instructions, native workflows and licenses.
 
-Examples are separate from application source so the code repository contains no private database or historical credential-bearing request store. The examples preserve prompts, creative inputs and production relationships intentionally included in their portable format. Generated media is not automatically licensed under the application's MIT license; see `docs/licensing.md`.
+Editable sample project bundles remain local and are **not included in the public release downloads**. A fresh checkout starts with an empty workspace. The studio can import your own editable `.opentake.zip` packages through **Projects → Import production package**.
+
+The tagged source snapshot remains pinned to the verified application commit; this main-branch README contains the current public download links. Generated media is not automatically licensed under the application's MIT license; see `docs/licensing.md`.
 
 ## Comfy workflows
 
