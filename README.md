@@ -2,11 +2,13 @@
 
 [🚀 Open the live app](https://open-take-studio.onrender.com)
 
-**Post-submission deployment — November 3, 2026.** The full hosted authoring studio is available behind **owner-password sign-in**. This is a private, single-owner workspace: there is no public signup or self-service Comfy-key setup. The workspace owner configures the Comfy credential on the server; no password or API key is published here.
+**Post-submission reviewer access — November 3, 2026.** Choose **Try the studio with your own Comfy key** to enter an isolated workspace without an account, OAuth, or the owner's password. Explore curated saved examples, remix them into your workspace, and use local editing/export tools. To request new AI generation, connect your own [Comfy workspace API key](https://platform.comfy.org/profile/api-keys) with credits and the required model access.
 
-**The event credit allocation has ended, so new AI generation is currently blocked by `insufficient_credits`.** After sign-in, the restored project library, saved and imported media, local editing tools, downloads, and project exports remain available. Hosted sign-in, restored projects, saved-media playback and editing, upload/download, project export/import, and persistence through a server restart were verified on November 3. Imported examples are not presented as fresh hosted generations.
+Reviewer keys are encrypted on the server, expire after **12 hours**, and are removed on disconnect. The anonymous browser session lasts **7 days**. Export projects before signing out, clearing cookies, or changing browsers. Reconnect the same key to resume that workspace's pending jobs; a different key requires a new reviewer workspace. Never put an API key in a prompt, project package, or chat.
 
-This deployment follows the submission. The original reviewer demo and immutable `v0.1.0-submission` release below remain unchanged; the local setup instructions still apply to that source snapshot.
+**The owner's original event credit allocation has ended.** Reviewer requests use only the reviewer's connected key. Live HTTP checks verified isolated media access, saving, downloads, exports, invalid-key rejection, and connect/disconnect/reconnect with the known unfunded key. Concurrent execution and recovery were tested with mocked providers. A fresh live generation with a funded reviewer key has **not** been verified.
+
+This update follows the submission. The original reviewer demonstrations and immutable `v0.1.0-submission` release below remain unchanged; the local setup instructions still apply to that source snapshot.
 
 **A local creative studio for branching films, directed 3D scenes, editable sound-driven motion, and source-preserving iteration.**
 
@@ -18,7 +20,7 @@ Open Take combines a React/TypeScript interface, Express, SQLite, managed local 
 - [Watch the 100-second competition video](https://x.com/ayosiddy/status/2117645518000279974).
 - [Download the tagged source release](https://github.com/sidbug248/open-take-studio/releases/tag/v0.1.0-submission).
 
-The reviewer demo shows playable outputs; run the source locally for the complete authoring studio.
+The reviewer demo preserves the submission's playable outputs. The [live authoring studio](https://open-take-studio.onrender.com) offers isolated reviewer workspaces and separate private owner sign-in. You can also run the source locally with your own authorized Comfy credentials.
 
 ## Try the three connected journeys
 
@@ -80,7 +82,7 @@ The catalogue describes 66 creative outcomes: 55 marked executable (some require
 
 The current three-journey validation includes two fresh H3 videos, actual scene-render input-byte matching, a mixed-soundtrack motion export, saved/reopened edits, project package restoration and standalone branching-film playback. A 154-test host run passed before final display-only changes; the final build/typecheck and visual checks followed those display changes. See `submission-evidence/verification-summary.json` and `docs/first-impression-validation.md` for scope.
 
-Physical-phone and actual hidden-tab browser behavior remain unverified. The application is not a hosted multi-user service. Public deployment would require authentication, workspace authorization and appropriate storage/job infrastructure; changing the listen address alone is not sufficient.
+Physical-phone and actual hidden-tab browser behavior remain unverified in the submission evidence. The immutable submission source is a local studio. The post-submission hosted app adds separate reviewer SQLite/media storage, credential-bound jobs, scoped recovery and bounded admission; the owner's workspace stays private. Reviewer access is an anonymous browser session, not an account system with cross-device recovery or team collaboration.
 
 ## Developer checks
 
