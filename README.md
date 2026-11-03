@@ -1,8 +1,16 @@
 # Open Take Studio
 
-[🚀 Open the live app](https://open-take-studio.onrender.com)
+**The full creative studio is available in the cloud and on your own computer.**
 
-**[Open the full studio at the original submitted URL](https://open-take-studio-review.vercel.app/)** — the cinematic homepage and authoring app now open directly, keeping the Vercel address. Render remains the application and persistent-storage backend.
+| Choose how to use it | Open or install |
+| --- | --- |
+| Full studio through Vercel — original submitted URL | [open-take-studio-review.vercel.app](https://open-take-studio-review.vercel.app/) |
+| Full studio directly on Render | [open-take-studio.onrender.com](https://open-take-studio.onrender.com/) |
+| Install the current studio on your computer | [Local installation instructions](#install-the-current-studio-locally) |
+
+Both cloud links serve the same current application. Vercel keeps its address while forwarding the application to Render, which runs the server and persistent storage. Neither link requires an intermediate demo page or an extra click to enter the studio.
+
+**Local installation requires no Render or Vercel account or subscription.** New AI generation uses hosted Comfy/provider services and requires your own authorized API key, model access, internet connection and credits. Opening the app and editing, rendering or exporting existing media do not require inference credits.
 
 **Post-submission arrival and routing update — November 3, 2026.** Explore the cinematic homepage, moving previews, interactive 3D, recipes, and curated work without a login, API key, or reserved workspace. An isolated workspace starts only when you create, import, edit/remix, or submit a key connection. If creation is temporarily at capacity, the showcase stays visible and your current prompt and selected files remain with a retry action. **Generate** opens a dismissible connection dialog when needed. Connect your own [Comfy workspace API key](https://platform.comfy.org/profile/api-keys) with credits and model access, then choose Generate again. Connecting never starts a generation automatically. [Private owner sign-in](https://open-take-studio.onrender.com/login) remains separate.
 
@@ -10,7 +18,7 @@ Reviewer keys are encrypted on the server, expire after **12 hours**, and are re
 
 **The owner's original event credit allocation has ended.** Reviewer requests use only the reviewer's connected key. Live HTTP checks verified isolated media access, saving, downloads, exports, invalid-key rejection, and connect/disconnect/reconnect with the known unfunded key. Concurrent execution and recovery were tested with mocked providers. A fresh live generation with a funded reviewer key has **not** been verified.
 
-This update follows the submission. [Current post-submission authoring source](https://github.com/sidbug248/open-take-studio/tree/codex/authoring-live) includes the hosted access and routing corrections. The original reviewer demonstrations and immutable `v0.1.0-submission` release below remain unchanged; the local setup instructions still apply to that source snapshot.
+This update follows the submission. [Current post-submission authoring source](https://github.com/sidbug248/open-take-studio/tree/codex/authoring-live) includes the hosted access and routing corrections. The original reviewer demonstrations and immutable `v0.1.0-submission` release below remain unchanged. The local instructions below explicitly install the current authoring branch; the tagged source ZIP remains the original competition snapshot.
 
 **A local creative studio for branching films, directed 3D scenes, editable sound-driven motion, and source-preserving iteration.**
 
@@ -35,30 +43,44 @@ The submission's 100-second competition demonstration combines actual UI capture
 
 ## Requirements
 
-- Node.js **22.13 or newer**; Node 24 LTS is recommended.
-- npm and internet access for the initial dependency install.
+- Node.js **22.16 or newer** for the current authoring branch; Node 24 is recommended.
+- Git for the clone commands below, plus npm and internet access for the initial dependency install.
 - A modern browser with WebGL for interactive 3D and motion rendering.
 - Your own **Comfy API key, service access and credits** for new hosted generations. Viewing portable exports needs no API key.
 - FFmpeg/ffprobe are installed through the locked dependencies. If your package manager blocks installation scripts, permit the documented FFmpeg dependency or set compatible `FFMPEG_PATH` and `FFPROBE_PATH`.
 
 No local model installation is required. Provider credentials and model weights are not distributed.
 
-## Install and run
+## Install the current studio locally
+
+The current application source is on [`codex/authoring-live`](https://github.com/sidbug248/open-take-studio/tree/codex/authoring-live). The default `main` branch retains the competition application snapshot with updated public documentation. Use the commands below for a fresh installation of the current studio:
 
 ```sh
+git clone --branch codex/authoring-live --single-branch https://github.com/sidbug248/open-take-studio.git
+cd open-take-studio
 npm ci
 ```
 
-For a **fresh checkout**, copy `.env.example` to `.env` and set `COMFY_API_KEY` locally. Do not overwrite an existing credential file. Never put a service key in client code.
+Create a local `.env` from the supplied template. This command works in PowerShell and macOS/Linux shells and leaves an existing `.env` untouched:
+
+```sh
+node -e "const fs = require('node:fs'); if (!fs.existsSync('.env')) fs.copyFileSync('.env.example', '.env', fs.constants.COPYFILE_EXCL);"
+```
+
+You can leave `COMFY_API_KEY` empty to open the studio and work with existing media. When you want new hosted generations, add your own authorized Comfy API key to this local `.env` file; generation also requires credits and model access. Keep the hosted-only `OTS_CREDENTIAL_ENCRYPTION_KEY`, `OTS_VERCEL_PROXY_ORIGIN` and `OTS_VERCEL_PROXY_SECRET` settings unset for local use. Local mode is the default. Never put a service key in client code or commit `.env`.
 
 ```sh
 npm run build
 npm start
 ```
 
-Open **http://127.0.0.1:4310**. The app binds to loopback as a single-user local application. Stop it with Ctrl+C. A fresh checkout starts with a new local database; it does not contain the author's private workspace.
+Open **http://127.0.0.1:4310**. The app runs on your computer, binds to loopback as a single-user local application, and stores its database and media in the local `data` directory. Stop it with Ctrl+C.
 
-For development, use `npm run dev` instead of the production start. Run only one server against a given port/database. Windows also has the supplied `Start-OpenTakeStudio.ps1` launcher.
+A fresh installation starts with an empty workspace and does not contain the author's private projects or the cloud showcase library. Cloud and local workspaces do not synchronize automatically. To transfer your own work, export an editable `.opentake.zip` project package from its cloud workspace, then use **Projects → Import production package** in your local studio. Keep the `data` directory when upgrading, and back it up with the app stopped.
+
+For development, use `npm run dev` instead of the production start. Run only one server against a given port/database. Windows also has the supplied `Start-OpenTakeStudio.ps1` launcher after dependencies have been installed.
+
+For the original competition version, use the [`v0.1.0-submission` release and source ZIP](https://github.com/sidbug248/open-take-studio/releases/tag/v0.1.0-submission). That archived snapshot is separate from the current authoring branch installed above.
 
 ## Open the examples
 
