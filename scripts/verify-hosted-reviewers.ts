@@ -3,6 +3,7 @@ import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import AdmZip from 'adm-zip';
+import {parse} from 'dotenv';
 import type {Asset,Project,ProjectDetail,Take} from '../shared/types.ts';
 
 const base=new URL(process.env.OTS_REVIEWER_VERIFY_ORIGIN||'https://open-take-studio.onrender.com').origin;
@@ -14,11 +15,12 @@ const privateDirectory=path.resolve('data/reviewer-verification',path.basename(d
 await mkdir(directory,{recursive:true});await mkdir(privateDirectory,{recursive:true,mode:0o700});
 type Reviewer={label:string;cookie:string;projectId?:string;assetId?:string;takeId?:string;sha256?:string};
 const invalidKey='ots-invalid-reviewer-verification-key-no-real-credential';
+let probeKey='';
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jx1sAAAAASUVORK5CYII=','base64');
 const sha=(bytes:Buffer)=>createHash('sha256').update(bytes).digest('hex');
 let reviewers:Reviewer[]=resume?JSON.parse(await readFile(privatePath,'utf8')):[];
 let receipt:any=resume?JSON.parse(await readFile(receiptPath,'utf8')):{startedAt:new Date().toISOString(),origin:base,scope:'Two isolated reviewer workspaces; invalid-key verification; missing-key admission rejection; imported fixture save, download, export and reopen. No funded generation.',events:[]};
-const secrets=()=>[invalidKey,...reviewers.flatMap(r=>[r.cookie,r.cookie.slice(r.cookie.indexOf('=')+1)])].filter(Boolean);
+const secrets=()=>[invalidKey,probeKey,...reviewers.flatMap(r=>[r.cookie,r.cookie.slice(r.cookie.indexOf('=')+1)])].filter(Boolean);
 const clean=(value:unknown)=>{let text=String(value);for(const secret of secrets())text=text.split(secret).join('[redacted]');return text.slice(0,2000);};
 async function save(){await writeFile(privatePath,JSON.stringify(reviewers,null,2),{mode:0o600});await writeFile(receiptPath,JSON.stringify(receipt,null,2));}
 async function note(event:string,value:Record<string,unknown>={}){receipt.events.push({at:new Date().toISOString(),event,...value});await save();console.log(JSON.stringify({event,...value}));}
@@ -43,12 +45,27 @@ try{
   check(reviewers.length===2&&reviewers.every(r=>r.projectId&&r.assetId&&r.takeId),'Two complete saved reviewer fixtures are required');
   for(const reviewer of reviewers){
     const peer=reviewers.find(value=>value!==reviewer)!;
+    const bootstrap=await json<{projects:Array<{id:string}>}>(reviewer,'/api/explore/bootstrap');check(bootstrap.projects.length===1&&bootstrap.projects[0].id===reviewer.projectId,'Explore API crossed reviewer storage boundaries');
+    const page=await request(reviewer,'/'),html=await page.text(),embedded=/<script type="application\/json" id="ots-explore-bootstrap">([\s\S]*?)<\/script>/.exec(html);check(page.ok&&embedded,'Reviewer HTML bootstrap is missing');const injected=JSON.parse(embedded[1]) as {projects:Array<{id:string}>};check(injected.projects.length===1&&injected.projects[0].id===reviewer.projectId,'HTML bootstrap exposed another workspace');
     const detail=await json<ProjectDetail>(reviewer,`/api/projects/${reviewer.projectId}`);check(detail.project.selectedTakeId===reviewer.takeId,'Saved take selection was lost');check(detail.takes.find(t=>t.id===reviewer.takeId)?.favorite,'Favorite edit was lost');check(detail.jobs.length===0,'Missing-key attempt unexpectedly created an executable job');
     const asset=detail.assets.find(a=>a.id===reviewer.assetId);check(asset?.provenance==='imported','Fixture provenance was lost');const media=await request(reviewer,asset.url+'?download=1');check(media.ok,'Reviewer cannot download its own media');check(sha(Buffer.from(await media.arrayBuffer()))===reviewer.sha256,'Downloaded media differs');
     for(const route of[`/api/projects/${peer.projectId}`,`/api/projects/${peer.projectId}/export`,`/api/assets/${peer.assetId}/file`,`/api/display/${peer.assetId}/poster`,`/api/projects/1bec0508-6565-4cf8-9666-f07d224351a1`,`/api/projects/1bec0508-6565-4cf8-9666-f07d224351a1/export`,`/api/assets/e5ebae2e-4573-49e8-96af-61b7c472fa2c/file`,`/api/runtime/backup`])await denial(reviewer,route);
     await denial(undefined,asset.url);
     const exported=await request(reviewer,`/api/projects/${reviewer.projectId}/export`);check(exported.ok,'Reviewer export failed');const bytes=Buffer.from(await exported.arrayBuffer()),zip=new AdmZip(bytes),manifest=JSON.parse(zip.readAsText('manifest.json'));check(manifest.project.id===reviewer.projectId,'Export crossed workspace boundaries');check(manifest.jobs.length===0,'Export contains unexpected executions');for(const entry of zip.getEntries())if(!entry.isDirectory)for(const secret of secrets())check(!entry.getData().includes(Buffer.from(secret)),'Package contains a credential or session token');await writeFile(path.join(directory,`Reviewer-${reviewer.label}.opentake.zip`),bytes);
     await note(resume?'reviewer-post-restart-reopened':'reviewer-save-download-export-isolation-verified',{reviewer:reviewer.label,projectId:reviewer.projectId,assetId:reviewer.assetId,takeId:reviewer.takeId,mediaSha256:reviewer.sha256,packageBytes:bytes.length,jobs:0});
+  }
+  if(process.argv.includes('--unfunded-connect')){
+    // Explicit opt-in only: verifies a known exhausted key through free metadata
+    // probes. No inference request follows this connection and it is disconnected.
+    probeKey=parse(await readFile('.env.hosted','utf8')).COMFY_API_KEY?.trim()??'';check(probeKey,'Private hosted Comfy key is unavailable');const reviewer=reviewers[0];
+    try{
+      for(let attempt=1;attempt<=2;attempt++){
+        const connected=await json<{credential:{state:string;connected:boolean}}>(reviewer,'/api/reviewer/connect','POST',{apiKey:probeKey});check(!JSON.stringify(connected).includes(probeKey),'Connect response exposed the entered credential');check(connected.credential.connected&&connected.credential.state==='insufficient_credits','Expected the explicitly unfunded key to report insufficient_credits');
+        await note(attempt===1?'live-unfunded-key-connected':'same-unfunded-key-reconnected',{credentialState:connected.credential.state,generationSubmitted:false});
+        const disconnected=await json<{credential:{connected:boolean}}>(reviewer,'/api/reviewer/connect','DELETE');check(!disconnected.credential.connected,'Disconnect did not remove the active credential');
+      }
+      const detail=await json<ProjectDetail>(reviewer,`/api/projects/${reviewer.projectId}`);check(detail.jobs.length===0,'Connect checks unexpectedly created a generation job');receipt.liveUnfundedConnectVerified=true;
+    }finally{await json(reviewer,'/api/reviewer/connect','DELETE').catch(()=>undefined);probeKey='';}
   }
   receipt.completedAt=new Date().toISOString();receipt.passed=true;receipt.liveGenerationVerified=false;receipt.limitations=['No funded reviewer key was supplied, so live generation and provider polling were not exercised. Concurrent key routing, no-credit behavior, disconnect/expiry and restart idempotency are covered by mocked integration tests.'];delete receipt.error;await save();console.log(JSON.stringify({passed:true,receiptPath,resumeCommand:`npx tsx scripts/verify-hosted-reviewers.ts --resume "${directory}"`,liveGenerationVerified:false}));
 }catch(error){receipt.passed=false;receipt.error=clean(error instanceof Error?error.message:error);await save();console.error(JSON.stringify({passed:false,error:receipt.error,receiptPath}));process.exitCode=1;}

@@ -1,10 +1,13 @@
-import {createHash} from 'node:crypto';
+import {createHash,randomUUID} from 'node:crypto';
+import {mkdir,readFile,writeFile,rename} from 'node:fs/promises';
 import path from 'node:path';
 import AdmZip from 'adm-zip';
 import type {Asset,Project,ProjectDetail} from '../shared/types.ts';
 import type {StudioRuntime} from './studio-runtime.ts';
 import {importProject,ProjectError} from './project-routes.ts';
 import {MAX_MEDIA_BYTES} from './media.ts';
+import {DISPLAY_VERSION} from './display-media.ts';
+import type {AssetPresentation} from '../shared/presentation-contract.ts';
 
 export const REVIEWER_EXAMPLE_IDS=Object.freeze([
  '456f5fdb-e79b-4946-9122-dc17e7a291e3',
@@ -72,6 +75,39 @@ function pruneAssets(value:unknown,excluded:Set<string>,key=''):unknown{
  return value;
 }
 const hash=(bytes:Buffer)=>createHash('sha256').update(bytes).digest('hex');
+interface PreparedDisplayIndex {version:string;assetId:string;sourceSha256:string;posterSourceSha256?:string;preparedAt:string;optionsKey:string;presentation:AssetPresentation;files:{file:string;sha256:string;bytes:number}[];}
+/** Copy cache bytes only after original and derivative integrity checks. The
+ * imported media mapping is authoritative; owner IDs never remain in URLs. */
+export async function copyReviewerExampleDisplays(owner:StudioRuntime,target:StudioRuntime,sourceProjectId:string,targetProjectId:string){
+ if(!approved(sourceProjectId)||owner===target||owner.store.dataDir===target.store.dataDir)throw new ProjectError('Invalid curated display copy.',403);
+ const imported=target.store.listAssets(targetProjectId),mapping=new Map<string,Asset>();
+ for(const asset of imported){const provenance=asset.metadata.packageImport as {sourceProjectId?:string;sourceAssetId?:string}|undefined;if(provenance?.sourceProjectId===sourceProjectId&&provenance.sourceAssetId)mapping.set(provenance.sourceAssetId,asset);}
+ const result={copied:0,skipped:0,failed:0,files:0};
+ for(const [sourceId,asset]of mapping){const original=owner.store.getAsset(sourceId);if(!original||original.projectId!==sourceProjectId||original.sha256!==asset.sha256){result.skipped++;continue;}
+  try{
+   const sourceDirectory=owner.explore.displays.directory(original),targetDirectory=target.explore.displays.directory(asset);
+   const raw=await readFile(path.join(sourceDirectory,'index.json'));if(raw.length>128*1024)throw new Error('Oversized display index');const record=JSON.parse(raw.toString('utf8')) as PreparedDisplayIndex;
+   if(record.version!==DISPLAY_VERSION||record.assetId!==sourceId||record.sourceSha256!==original.sha256||!['ready','partial'].includes(record.presentation?.state)||!Array.isArray(record.files)||record.files.length>16)throw new Error('Invalid display index');
+   const mediaFiles=new Map<string,Buffer>();
+   for(const file of record.files){if(!/^[a-f0-9]{64}\.(?:webp|jpg|mp4|glb)$/.test(file.file)||!/^[a-f0-9]{64}$/.test(file.sha256)||!file.file.startsWith(file.sha256+'.')||!Number.isSafeInteger(file.bytes)||file.bytes<1||file.bytes>64*1024*1024)throw new Error('Invalid display file');const bytes=await readFile(path.join(sourceDirectory,file.file));if(bytes.length!==file.bytes||hash(bytes)!==file.sha256)throw new Error('Display file integrity mismatch');mediaFiles.set(file.file,bytes);}
+   const sourcePrefix=`/api/display/${sourceId}/${original.sha256}/${DISPLAY_VERSION}/`,targetPrefix=`/api/display/${asset.id}/${asset.sha256}/${DISPLAY_VERSION}/`;
+   const rewriteUrl=(url:string)=>{if(typeof url!=='string'||!url.startsWith(sourcePrefix)||!mediaFiles.has(url.slice(sourcePrefix.length)))throw new Error('Display URL does not match verified files');return targetPrefix+url.slice(sourcePrefix.length);};
+   const sourceIdentity=(id:string,sha:string)=>{const mapped=mapping.get(id),source=owner.store.getAsset(id);if(!mapped||!source||source.projectId!==sourceProjectId||source.sha256!==sha||mapped.sha256!==sha)throw new Error('Display source is not an unchanged imported asset');return mapped.id;};
+   const presentation:AssetPresentation={original:target.explore.displays.original(asset),presentationVersion:DISPLAY_VERSION,state:record.presentation.state};
+   const prior=record.presentation;
+   if(prior.poster){const variants=prior.poster.variants.map(variant=>({...variant,url:rewriteUrl(variant.url)}));presentation.poster={...prior.poster,url:rewriteUrl(prior.poster.url),sourceAssetId:sourceIdentity(prior.poster.sourceAssetId,prior.poster.sourceSha256),variants,srcSet:variants.map(variant=>`${variant.url} ${variant.width}w`).join(', ')};}
+   if(prior.preview)presentation.preview={...prior.preview,url:rewriteUrl(prior.preview.url),sourceAssetId:sourceIdentity(prior.preview.sourceAssetId,prior.preview.sourceSha256)};
+   if(prior.mesh)presentation.mesh={...prior.mesh,url:rewriteUrl(prior.mesh.url),sourceAssetId:sourceIdentity(prior.mesh.sourceAssetId,prior.mesh.sourceSha256)};
+   if(prior.waveform)presentation.waveform=prior.waveform;
+   const next:PreparedDisplayIndex={...record,assetId:asset.id,sourceSha256:asset.sha256,presentation};
+   await mkdir(targetDirectory,{recursive:true});
+   for(const [file,bytes]of mediaFiles){await writeFile(path.join(targetDirectory,file),bytes,{flag:'wx'}).catch(async error=>{if(error.code!=='EEXIST')throw error;const existing=await readFile(path.join(targetDirectory,file));if(hash(existing)!==hash(bytes))throw new Error('Target display integrity mismatch');});}
+   const temporary=path.join(targetDirectory,'index-copy-'+randomUUID()+'.json');await writeFile(temporary,JSON.stringify(next));await rename(temporary,path.join(targetDirectory,'index.json'));result.copied++;result.files+=mediaFiles.size;
+  }catch(error){if((error as NodeJS.ErrnoException).code==='ENOENT')result.skipped++;else result.failed++;}
+ }
+ if(result.copied){const revision=target.explore.displays.revisionFile;await mkdir(path.dirname(revision),{recursive:true});const temporary=revision+'.copy-'+randomUUID();await writeFile(temporary,JSON.stringify({version:DISPLAY_VERSION,revision:randomUUID()}));await rename(temporary,revision);}
+ return result;
+}
 const inFlight=new WeakMap<StudioRuntime,Map<string,Promise<Project>>>();
 export function remixReviewerExample(owner:StudioRuntime,target:StudioRuntime,id:string):Promise<Project>{
  if(!approved(id))return Promise.reject(new ProjectError('Curated example not found.',404));
@@ -100,5 +136,5 @@ async function copyExample(owner:StudioRuntime,target:StudioRuntime,id:string):P
  const hashes=new Map(clean.assets.map(a=>[a.id,a.sha256]));for(const asset of clean.assets){if(typeof asset.metadata.sourceAssetId==='string'&&hashes.has(asset.metadata.sourceAssetId)&&asset.metadata.sourceSha256)asset.metadata.sourceSha256=hashes.get(asset.metadata.sourceAssetId);}
  const manifest={format:'open-take-studio',version:1,exportedAt:new Date().toISOString(),...clean,archivedJobIds:[],securityNote:'Curated reviewer copy. Jobs, credentials, signed URLs, execution payloads and embedded archives were omitted. Saved media and local production relationships remain.'};
  const manifestBytes=Buffer.from(JSON.stringify(manifest));if(manifestBytes.length>32*1024*1024)throw new ProjectError('Curated manifest exceeds the package limit.',413);zip.addFile('manifest.json',manifestBytes);for(const [name,bytes]of files){zip.addFile('media/'+name,bytes);const entry=zip.getEntry('media/'+name);if(entry)entry.header.method=0;}
- const imported=await importProject(target.store,target.media,zip.toBuffer());const named={...imported,name:`${examples.find(e=>e.id===id)!.name} · your remix`};target.store.upsertProject(named);return named;
+ const imported=await importProject(target.store,target.media,zip.toBuffer());const named={...imported,name:`${examples.find(e=>e.id===id)!.name} · your remix`};target.store.upsertProject(named);await copyReviewerExampleDisplays(owner,target,id,named.id);return named;
 }

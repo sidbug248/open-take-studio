@@ -18,6 +18,7 @@ import {hostedInput} from '../server/hosted-input-cache.ts';
 import {LocalFileStorage} from '../server/media.ts';
 import type {HostedMediaReference} from '../server/media-transport.ts';
 import type {RouterPort} from '../server/router-port.ts';
+import {GenerationWorker} from '../server/worker.ts';
 import type {WorkflowPort,WorkflowSnapshot} from '../server/workflow-port.ts';
 import type {WorkflowGraph} from '../shared/workflow-types.ts';
 import type {Asset,Job,Project,ProjectDetail} from '../shared/types.ts';
@@ -104,7 +105,7 @@ test('a no-credit reviewer records one blocked attempt without automatic resubmi
   const f=await fixture(t),a=await f.session();await f.json(a.cookie,'/api/reviewer/connect','POST',{apiKey:emptyKey});const p=await f.json<Project>(a.cookie,'/api/projects','POST',{name:'No credits',description:''}),runtime=await f.runtime(a.id);
   const response=await f.request(a.cookie,'/api/generate','POST',{projectId:p.id,clientRequestId:'no-credit-intention',modelId:'bfl/flux-3-image',prompt:'No-credit fixture',settings:{},inputAssetIds:{}});
   if(response.status===402){assert.equal(f.calls.length,0);return;}
-  assert.equal(response.status,202);const {job}=await response.json() as {job:Job};await runtime.worker.process(job.id);await runtime.worker.tick();await runtime.worker.tick();assert.equal(runtime.store.getJob(job.id)!.state,'BLOCKED');assert.equal(runtime.store.getJob(job.id)!.errorType,'insufficient_credits');assert.equal(f.calls.length,1);assert.equal(f.calls[0].key,emptyKey);
+  assert.equal(response.status,202);const {job}=await response.json() as {job:Job};await runtime.worker.process(job.id);await GenerationWorker.prototype.tick.call(runtime.worker);await GenerationWorker.prototype.tick.call(runtime.worker);assert.equal(runtime.store.getJob(job.id)!.state,'BLOCKED');assert.equal(runtime.store.getJob(job.id)!.errorType,'insufficient_credits');assert.equal(f.calls.length,1);assert.equal(f.calls[0].key,emptyKey);
 });
 
 test('native workflow upload, submit and recovery use the same isolated reviewer credential without replay',async t=>{

@@ -1,5 +1,7 @@
 # Hosted authoring release — 3 November 2026
 
+**Later post-submission update:** Reviewer BYOK access is now deployed. See [reviewer access and verification](reviewer-access-2026-11-03.md) for the current access model. The owner-only descriptions below record the earlier deployment milestone and have been superseded. Original owner projects and backups remain preserved.
+
 The full authoring application is deployed separately from the immutable competition reviewer. The eleven-feature expansion remains paused. No competition form or agreement was submitted.
 
 ## Actual services
