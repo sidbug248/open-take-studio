@@ -1,6 +1,6 @@
 # Open Take Studio
 
-**A local creative studio for branching films, directed 3D scenes, editable sound-driven motion, and source-preserving iteration.**
+**A creative studio for branching films, directed 3D scenes, editable sound-driven motion, and source-preserving iteration — available locally and in a private hosted workspace.**
 
 Open Take combines a React/TypeScript interface, Express, SQLite, managed local media, Comfy Router, and a separate native Comfy Cloud workflow client. AI inference uses hosted Comfy/provider routes. Scene rendering, media editing, sound mixing, and portable exports run locally.
 
@@ -10,7 +10,7 @@ Open Take combines a React/TypeScript interface, Express, SQLite, managed local 
 - [Watch the 100-second competition video](https://x.com/ayosiddy/status/2117645518000279974).
 - [Download the tagged source release](https://github.com/sidbug248/open-take-studio/releases/tag/v0.1.0-submission).
 
-The reviewer demo shows playable outputs; run the source locally for the complete authoring studio.
+The reviewer demo shows playable outputs. The full authoring application is also available at [Open Take Studio on Render](https://open-take-studio.onrender.com), with owner sign-in required. The shared event-credit allocation has ended, so new AI generation is currently blocked; saved media, local processing, and exports remain available. Run the source locally with your own authorized Comfy credentials and credits to use an independent workspace.
 
 ## Try the three connected journeys
 
@@ -22,7 +22,7 @@ The submission's 100-second competition demonstration combines actual UI capture
 
 ## Requirements
 
-- Node.js **22.13 or newer**; Node 24 LTS is recommended.
+- Node.js **22.16 or newer**; Node 24 LTS is recommended and used by the hosted runtime.
 - npm and internet access for the initial dependency install.
 - A modern browser with WebGL for interactive 3D and motion rendering.
 - Your own **Comfy API key, service access and credits** for new hosted generations. Viewing portable exports needs no API key.
@@ -72,7 +72,7 @@ The catalogue describes 66 creative outcomes: 55 marked executable (some require
 
 The current three-journey validation includes two fresh H3 videos, actual scene-render input-byte matching, a mixed-soundtrack motion export, saved/reopened edits, project package restoration and standalone branching-film playback. A 154-test host run passed before final display-only changes; the final build/typecheck and visual checks followed those display changes. See `submission-evidence/verification-summary.json` and `docs/first-impression-validation.md` for scope.
 
-Physical-phone and actual hidden-tab browser behavior remain unverified. The application is not a hosted multi-user service. Public deployment would require authentication, workspace authorization and appropriate storage/job infrastructure; changing the listen address alone is not sufficient.
+Physical-phone behavior remains unverified. The hosted application is a private single-owner workspace, with authenticated project/media access, persistent SQLite and media storage, recoverable jobs, bounded generation admission, and managed backups. It does not provide public signup or multi-user tenancy. See `deploy/README.md` and `docs/hosted-release-2026-11-03.md` for deployment evidence and current limits.
 
 ## Developer checks
 

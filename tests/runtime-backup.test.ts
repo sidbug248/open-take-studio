@@ -1,15 +1,19 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdir,mkdtemp,rm,writeFile} from 'node:fs/promises';
+import {mkdir,mkdtemp,rm,writeFile,readFile,readdir} from 'node:fs/promises';
 import path from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {Store} from '../server/store.ts';
 import {LocalFileStorage} from '../server/media.ts';
-import {createWorkspaceBackup,restoreEmptyWorkspace} from '../server/runtime-backup.ts';
+import {createWorkspaceBackup,restoreEmptyWorkspace,pruneWorkspaceBackups} from '../server/runtime-backup.ts';
 import {GenerationWorker} from '../server/worker.ts';
 import type {Job,Take} from '../shared/types.ts';
 import type {RouterPort} from '../server/router-port.ts';
 const now=new Date().toISOString();
+test('retention keeps three newest app snapshots and preserves user archives and unlisted files',async()=>{
+ const base=path.resolve('data/test-fixtures');await mkdir(base,{recursive:true});const dir=await mkdtemp(path.join(base,'retention-')),store=new Store(path.join(dir,'source')),backups=path.join(dir,'backups');
+ try{const ids:string[]=[];for(let i=0;i<5;i++){const snapshot=await createWorkspaceBackup(store,backups);snapshot.createdAt=new Date(Date.parse(now)+i*1000).toISOString();await writeFile(path.join(backups,snapshot.id,'manifest.json'),JSON.stringify(snapshot));ids.push(snapshot.id);}await writeFile(path.join(backups,ids[0],'user-note.txt'),'Keep this user-added file');await mkdir(path.join(backups,'user-archive'));await writeFile(path.join(backups,'user-archive','original.txt'),'Keep this archive');const result=await pruneWorkspaceBackups(backups,3);assert.deepEqual(result.removed,[ids[1]]);assert.ok(result.skipped.includes(ids[0]));assert.equal(await readFile(path.join(backups,'user-archive','original.txt'),'utf8'),'Keep this archive');for(const id of ids.slice(2))assert.ok((await readdir(backups)).includes(id));}finally{store.close();await rm(dir,{recursive:true,force:true});}
+});
 test('consistent full-workspace backup restores original IDs, media hashes, jobs and scoped records without overwriting a populated destination',async()=>{
  const base=path.resolve('data/test-fixtures');await mkdir(base,{recursive:true});const dir=await mkdtemp(path.join(base,'backup-')),source=new Store(path.join(dir,'source')),target=new Store(path.join(dir,'target')),media=new LocalFileStorage(source.dataDir),pid=randomUUID();
  try{source.upsertProject({id:pid,name:'Actual preserved project',description:'',createdAt:now,updatedAt:now});const asset=await media.put({projectId:pid,name:'source.txt',mimeType:'text/plain',bytes:Buffer.from('Managed source media bytes'),provenance:'imported'});source.upsertAsset(asset);

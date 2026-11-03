@@ -45,6 +45,7 @@ const sessions=new AuthSessions(store,config);
 app.use(sessions.identify());
 app.use(createAuthRouter(sessions));
 app.use(sessions.gate());
+app.get('/api/studio/status',(_req,res)=>{res.setHeader('Cache-Control','no-store');res.json({ok:true,version:'0.1.0',keyConfigured:config.keyConfigured,mode:config.mode,sdkVersion:'0.5.0'});});
 app.use('/api',(_req,res,next)=>{res.setHeader('Cache-Control','no-store');next();});
 app.use(express.json({limit:'2mb'}));
 app.use('/api',projectAuthorization(store),createRuntimeAdmission(store,config));

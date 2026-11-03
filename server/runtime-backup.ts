@@ -1,7 +1,7 @@
 import {backup,DatabaseSync} from 'node:sqlite';
 import {createHash,randomUUID} from 'node:crypto';
 import {createReadStream} from 'node:fs';
-import {mkdir,copyFile,readFile,writeFile,rename,readdir,stat,statfs} from 'node:fs/promises';
+import {mkdir,copyFile,readFile,writeFile,rename,readdir,stat,statfs,realpath,rm} from 'node:fs/promises';
 import path from 'node:path';
 import {Router,raw} from 'express';
 import type {Store} from './store.ts';
@@ -15,7 +15,7 @@ function safeFile(name:string){return name==='studio.sqlite'||/^media\/[A-Za-z0-
 function validateManifest(value:unknown):WorkspaceBackup{const m=value as WorkspaceBackup;if(m?.format!=='open-take-workspace'||m.version!==1||!Array.isArray(m.files)||m.files.length<1||m.files.length>30000)fail('Invalid workspace backup manifest');const seen=new Set<string>();let total=0;for(const f of m.files){if(!safeFile(f.name)||seen.has(f.name)||!Number.isSafeInteger(f.bytes)||f.bytes<1||f.bytes>4*1024**3||!/^[a-f0-9]{64}$/.test(f.sha256))fail('Unsafe or invalid backup file');seen.add(f.name);total+=f.bytes;}if(!seen.has('studio.sqlite')||total>40*1024**3)fail('Backup is incomplete or exceeds 40 GiB');return m;}
 export async function createWorkspaceBackup(store:Store,directory:string):Promise<WorkspaceBackup>{
   const id=randomUUID(),stage=path.join(directory,'.pending-'+id),target=path.join(directory,id);await mkdir(stage,{recursive:true});
-  await backup(store.db,path.join(stage,'studio.sqlite'));const snapshot=new DatabaseSync(path.join(stage,'studio.sqlite'),{readOnly:true});
+  await backup(store.db,path.join(stage,'studio.sqlite'));const snapshot=new DatabaseSync(path.join(stage,'studio.sqlite'));snapshot.exec('PRAGMA journal_mode=DELETE; PRAGMA query_only=ON;');
   const files:BackupFile[]=[],counts:Record<string,number>={};
   const add=async(name:string,source:string,expected?:{sha256:string;size:number})=>{if(!safeFile(name))return;const destination=path.join(stage,...name.split('/'));if(name!=='studio.sqlite'){await mkdir(path.dirname(destination),{recursive:true});await copyFile(source,destination);}const size=(await stat(destination)).size,sha256=await fileHash(destination);if(expected&&(expected.sha256!==sha256||expected.size!==size))fail('A source media integrity check failed during backup');files.push({name,bytes:size,sha256});};
   try{for(const table of tables)if(snapshot.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(table))counts[table]=(snapshot.prepare(`SELECT count(*) AS n FROM ${table}`).get() as {n:number}).n;
@@ -39,19 +39,31 @@ export async function restoreEmptyWorkspace(store:Store,stagedDirectory:string,m
   }finally{source.close();}
   return{restored:true,counts:manifest.counts,preservedIds:true,ownerSessionsPreserved:true};
 }
+/** Remove only complete, app-owned snapshots after a new verified snapshot exists. */
+export async function pruneWorkspaceBackups(directory:string,keep=3,protectedIds:ReadonlySet<string>=new Set()){
+  if(!Number.isInteger(keep)||keep<1)throw new Error('At least one backup must be retained');const root=await realpath(directory),owned:{id:string;createdAt:number;directory:string;manifest:WorkspaceBackup}[]=[],removed:string[]=[],skipped:string[]=[];
+  for(const entry of await readdir(root,{withFileTypes:true})){if(!entry.isDirectory()||entry.isSymbolicLink()||!/^[a-f0-9-]{36}$/.test(entry.name))continue;try{const target=await realpath(path.join(root,entry.name));if(path.dirname(target)!==root)continue;const manifest=validateManifest(JSON.parse(await readFile(path.join(target,'manifest.json'),'utf8'))),createdAt=Date.parse(manifest.createdAt);if(manifest.id!==entry.name||!Number.isFinite(createdAt))continue;owned.push({id:entry.name,createdAt,directory:target,manifest});}catch{skipped.push(entry.name);}}
+  owned.sort((a,b)=>b.createdAt-a.createdAt||b.id.localeCompare(a.id));
+  for(const candidate of owned.slice(keep)){if(protectedIds.has(candidate.id)){skipped.push(candidate.id);continue;}const expected=new Set(['manifest.json',...candidate.manifest.files.map(f=>f.name)]);const wal=await stat(path.join(candidate.directory,'studio.sqlite-wal')).catch(()=>undefined),shm=await stat(path.join(candidate.directory,'studio.sqlite-shm')).catch(()=>undefined);if(wal?.isFile()&&wal.size===0){expected.add('studio.sqlite-wal');if(shm?.isFile()&&shm.size===32768)expected.add('studio.sqlite-shm');}let safe=true;const inspect=async(dir:string,prefix='')=>{for(const entry of await readdir(dir,{withFileTypes:true})){if(entry.isSymbolicLink()){safe=false;return;}const relative=prefix+entry.name;if(entry.isDirectory())await inspect(path.join(dir,entry.name),relative+'/');else if(!entry.isFile()||!expected.has(relative))safe=false;}};await inspect(candidate.directory);if(!safe){skipped.push(candidate.id);continue;}
+    // Resolved absolute target is checked immediately before recursive deletion.
+    const checked=await realpath(candidate.directory);if(path.dirname(checked)!==root||path.basename(checked)!==candidate.id)throw new Error('Backup retention target escaped its managed directory');await rm(checked,{recursive:true});removed.push(candidate.id);
+  }
+  return{removed,skipped,targetRetainedSnapshots:keep};
+}
 export class WorkspaceBackupService {
-  readonly directory:string;private timer?:ReturnType<typeof setInterval>;private running?:Promise<WorkspaceBackup>;lastError?:string;
+  readonly directory:string;private timer?:ReturnType<typeof setInterval>;private running?:Promise<WorkspaceBackup>;private downloads=new Map<string,number>();lastError?:string;lastRetention?:Awaited<ReturnType<typeof pruneWorkspaceBackups>>;
   constructor(readonly store:Store){this.directory=path.join(store.dataDir,'backups');}
-  run(){if(!this.running)this.running=(async()=>{const disk=await statfs(this.store.dataDir);if(disk.bavail*disk.bsize<2*1024**3)fail('At least 2 GiB free space is required for a consistent backup.',507);return createWorkspaceBackup(this.store,this.directory);})().finally(()=>{this.running=undefined;});return this.running;}
+  protectDownload(id:string){this.downloads.set(id,Date.now()+3600000);}
+  run(){if(!this.running)this.running=(async()=>{const disk=await statfs(this.store.dataDir);if(disk.bavail*disk.bsize<2*1024**3)fail('At least 2 GiB free space is required for a consistent backup.',507);const manifest=await createWorkspaceBackup(this.store,this.directory);for(const[id,until]of this.downloads)if(until<Date.now())this.downloads.delete(id);this.lastRetention=await pruneWorkspaceBackups(this.directory,3,new Set(this.downloads.keys()));return manifest;})().finally(()=>{this.running=undefined;});return this.running;}
   start(){if(this.timer)return;this.timer=setInterval(()=>void this.ensureDaily(),3600000);this.timer.unref();void this.ensureDaily();}
   private async ensureDaily(){try{let last=0;try{last=Date.parse(JSON.parse(await readFile(path.join(this.directory,'latest.json'),'utf8')).createdAt);}catch{}if(Date.now()-last>=24*3600000)await this.run();this.lastError=undefined;}catch(error){this.lastError=error instanceof Error?error.message:'Backup failed';}}
   async stop(){if(this.timer)clearInterval(this.timer);this.timer=undefined;await this.running;}
 }
 export function createRuntimeBackupRouter(store:Store,service:WorkspaceBackupService){const router=Router(),uploads=new Set<string>();router.use((req,_res,next)=>{try{requireOwner(req);next();}catch(e){next(e);}});
-  router.get('/runtime/backups',async(_req,res)=>{let latest=null;try{latest=JSON.parse(await readFile(path.join(service.directory,'latest.json'),'utf8'));}catch{}res.json({latest,lastError:service.lastError??null,automaticIntervalHours:24,offHostCopy:'Download manifest and every listed file to a separate machine or storage account.'});});
+  router.get('/runtime/backups',async(_req,res)=>{let latest=null;try{latest=JSON.parse(await readFile(path.join(service.directory,'latest.json'),'utf8'));}catch{}res.json({latest,lastError:service.lastError??null,automaticIntervalHours:24,retainedSnapshotsTarget:3,lastRetention:service.lastRetention??null,offHostCopy:'Download manifest and every listed file to a separate machine or storage account.'});});
   router.post('/runtime/backups',async(_req,res)=>res.status(201).json(await service.run()));
   router.get('/runtime/backups/:id/manifest',async(req,res)=>{if(!/^[a-f0-9-]{36}$/.test(String(req.params.id)))fail('Unknown backup',404);res.json(JSON.parse(await readFile(path.join(service.directory,String(req.params.id),'manifest.json'),'utf8')));});
-  router.get('/runtime/backups/:id/files/:index',async(req,res)=>{if(!/^[a-f0-9-]{36}$/.test(String(req.params.id)))fail('Unknown backup',404);const manifest=validateManifest(JSON.parse(await readFile(path.join(service.directory,String(req.params.id),'manifest.json'),'utf8'))),index=Number(req.params.index),file=manifest.files[index];if(!Number.isInteger(index)||!file)fail('Unknown backup file',404);res.attachment(path.basename(file.name)).sendFile(path.join(service.directory,String(req.params.id),...file.name.split('/')));});
+  router.get('/runtime/backups/:id/files/:index',async(req,res)=>{if(!/^[a-f0-9-]{36}$/.test(String(req.params.id)))fail('Unknown backup',404);const manifest=validateManifest(JSON.parse(await readFile(path.join(service.directory,String(req.params.id),'manifest.json'),'utf8'))),index=Number(req.params.index),file=manifest.files[index];if(!Number.isInteger(index)||!file)fail('Unknown backup file',404);service.protectDownload(String(req.params.id));res.attachment(path.basename(file.name)).sendFile(path.join(service.directory,String(req.params.id),...file.name.split('/')));});
   router.post('/runtime/migrations',async(req,res)=>{if((store.db.prepare('SELECT count(*) AS n FROM projects').get() as {n:number}).n)fail('Migration requires an empty destination',409);const manifest=validateManifest(req.body),id=randomUUID(),directory=path.join(store.dataDir,'migration',id);await mkdir(directory,{recursive:true});await writeFile(path.join(directory,'manifest.json'),JSON.stringify(manifest));res.status(201).json({id,files:manifest.files.length});});
   const load=async(id:string)=>{if(!/^[a-f0-9-]{36}$/.test(id))fail('Unknown migration',404);const directory=path.join(store.dataDir,'migration',id);return{directory,manifest:validateManifest(JSON.parse(await readFile(path.join(directory,'manifest.json'),'utf8')))};};
   router.get('/runtime/migrations/:id',async(req,res)=>{const{directory,manifest}=await load(String(req.params.id));res.json({files:await Promise.all(manifest.files.map(async(f,index)=>({index,name:f.name,bytes:f.bytes,uploaded:(await stat(path.join(directory,...f.name.split('/'))).catch(()=>({size:0}))).size})))});});

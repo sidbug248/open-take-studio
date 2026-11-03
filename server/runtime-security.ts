@@ -35,7 +35,14 @@ export function createRuntimeAdmission(store:Store,settings:RuntimeConfig,freeBy
       if(Number(req.headers['content-length']??0)>310*1024*1024){res.status(413).json({error:'Request exceeds the 310 MiB hosted limit.'});return;}
       activeWrites++;let released=false,generationReserved=false;release=()=>{if(!released){released=true;activeWrites--;if(generationReserved)pendingGenerations--;}};res.once('finish',release);res.once('close',release);
       if(await freeBytes()<settings.minFreeDiskBytes){res.status(507).json({error:'Persistent storage is nearly full. Download a backup and expand the disk before adding more work.'});return;}
-      let bytes=0;req.on('data',(chunk:Buffer)=>{bytes+=chunk.length;if(bytes>310*1024*1024&&!res.headersSent){res.status(413).json({error:'Request exceeds the 310 MiB hosted limit.'});res.once('finish',()=>req.destroy());}});
+      // A data listener itself starts flowing. Express can yield while traversing
+      // many routers, before Multer/raw-body attaches. Arm the meter only when
+      // the actual downstream data consumer is installed; do not consume bytes
+      // or explicitly pause streams that raw-body expects to start normally.
+      let bytes=0;
+      const meter=(chunk:Buffer)=>{bytes+=chunk.length;if(bytes>310*1024*1024&&!res.headersSent){res.status(413).json({error:'Request exceeds the 310 MiB hosted limit.'});res.once('finish',()=>req.destroy());}};
+      const arm=(event:string)=>{if(event==='data'){req.removeListener('newListener',arm);req.on('data',meter);}};
+      req.on('newListener',arm);res.once('finish',()=>{req.removeListener('newListener',arm);req.removeListener('data',meter);});
       if(req.path==='/generate'||/^\/workflows\/[^/]+\/run$/.test(req.path)||/^\/(?:jobs|workflow-jobs)\/[^/]+\/retry$/.test(req.path)){
         const native=/^\/workflows\//.test(req.path),assetId=native?req.path.split('/')[2]:undefined,projectId=native?store.getAsset(assetId!)?.projectId:req.body?.projectId;
         const clientId=req.body?.clientRequestId,identity=typeof clientId==='string'&&typeof projectId==='string'?(native?`native:${projectId}:${clientId}`:createHash('sha256').update(`ots:${projectId}:${clientId}`).digest('hex')):req.path;
