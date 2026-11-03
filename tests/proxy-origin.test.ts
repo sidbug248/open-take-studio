@@ -31,4 +31,12 @@ test('proxy configuration requires an explicit separate HTTPS origin and strong 
   assert.throws(()=>readRuntimeConfig({...env,OTS_VERCEL_PROXY_ORIGIN:proxy},process.cwd()),/secret/);
   assert.throws(()=>readRuntimeConfig({...env,OTS_VERCEL_PROXY_ORIGIN:origin,OTS_VERCEL_PROXY_SECRET:secret},process.cwd()),/separate HTTPS/);
   const configured=readRuntimeConfig({...env,OTS_VERCEL_PROXY_ORIGIN:proxy,OTS_VERCEL_PROXY_SECRET:secret},process.cwd());assert.equal(configured.vercelProxyOrigin,proxy);
+  assert.equal(readRuntimeConfig({...env,RENDER:'true',RENDER_EXTERNAL_URL:origin},process.cwd()).trustProxyHops,2);
+});
+
+test('verified Render ingress uses the second address from the right, never a caller prefix',async t=>{
+  const settings={...readRuntimeConfig({},process.cwd()),mode:'hosted' as const,publicOrigin:origin,trustProxyHops:2};
+  const app=express();app.set('trust proxy',settings.trustProxyHops);app.use((req,_res,next)=>{req.headers.host='studio.onrender.com';next();});app.use(securityBoundary(settings));app.get('/ip',(req,res)=>res.json({clientIp:clientAddress(req)}));
+  const server=app.listen(0,'127.0.0.1');await new Promise<void>(resolve=>server.once('listening',resolve));t.after(()=>new Promise<void>(resolve=>server.close(()=>resolve())));
+  for(const prefix of['','203.0.113.66, ','203.0.113.66, 192.0.2.77, ']){const response=await fetch(`http://127.0.0.1:${(server.address() as AddressInfo).port}/ip`,{headers:{'X-Forwarded-Proto':'https','X-Forwarded-For':prefix+'198.51.100.7, 192.0.2.9','X-Vercel-Forwarded-For':'203.0.113.66'}});assert.equal(response.status,200);assert.deepEqual(await response.json(),{clientIp:'198.51.100.7'});}
 });

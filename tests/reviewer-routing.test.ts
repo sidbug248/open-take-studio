@@ -25,7 +25,8 @@ test('proxy authentication is an overwrite-only private request transform, never
   assert.deepEqual(secret,{type:'request.headers',op:'set',target:{key:'x-ots-proxy-secret'},args:'$OTS_VERCEL_PROXY_SECRET',env:['OTS_VERCEL_PROXY_SECRET']});
   assert.ok(proxy.transforms?.some(item=>item.target.key==='x-ots-proxy-secret'&&item.type==='response.headers'&&item.op==='delete'));
   assert.ok(!Object.keys(proxy.headers??{}).some(name=>/secret|credential|cookie|authorization/i.test(name)));
-  assert.ok(!proxy.transforms?.some(item=>item.type==='request.headers'&&['origin','cookie','host','x-forwarded-for','x-vercel-forwarded-for'].includes(item.target.key)),'Native identity and browser CSRF headers must not be fabricated');
+  assert.ok(!proxy.transforms?.some(item=>item.type==='request.headers'&&['origin','cookie','host'].includes(item.target.key)),'Browser origin and session headers must remain unchanged');
+  for(const key of['x-forwarded-for','x-vercel-forwarded-for','x-real-ip'])assert.deepEqual(proxy.transforms?.find(item=>item.type==='request.headers'&&item.target.key===key),{type:'request.headers',op:'delete',target:{key}},'Remove caller forwarding values before Vercel builds origin headers; never fabricate an IP');
 });
 
 test('competition media URLs remain static and the moved page resolves its original relative assets',()=>{

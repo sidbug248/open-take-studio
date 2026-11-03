@@ -26,7 +26,9 @@ export function readRuntimeConfig(env:NodeJS.ProcessEnv,rootDir:string):RuntimeC
     if(env.OTS_PERSISTENT_STORAGE_CONFIRMED!=='true')throw new Error('Hosted mode requires OTS_PERSISTENT_STORAGE_CONFIRMED=true after verifying the mounted persistent volume');
   }
   return{mode,port:integer(env,'PORT',4310,1,65535),bindHost:mode==='hosted'?'0.0.0.0':'127.0.0.1',dataDir,publicOrigin,ownerPasswordHash:env.OTS_OWNER_PASSWORD_HASH,vercelProxyOrigin,vercelProxySecret:vercelProxyOrigin?env.OTS_VERCEL_PROXY_SECRET:undefined,
-    trustProxyHops:integer(env,'OTS_TRUST_PROXY_HOPS',mode==='hosted'?1:0,0,5),sessionHours:integer(env,'OTS_SESSION_HOURS',12,1,168),
+    // Render's public ingress appends the client and Cloudflare edge. Count from
+    // the right so any caller-supplied X-Forwarded-For prefix stays untrusted.
+    trustProxyHops:integer(env,'OTS_TRUST_PROXY_HOPS',mode==='hosted'?(env.RENDER==='true'||env.RENDER_EXTERNAL_URL?2:1):0,0,5),sessionHours:integer(env,'OTS_SESSION_HOURS',12,1,168),
     maxActiveJobs:integer(env,'OTS_MAX_ACTIVE_JOBS',12,1,100),maxGenerationPerHour:integer(env,'OTS_MAX_GENERATIONS_PER_HOUR',30,1,1000),maxUploadsPerMinute:integer(env,'OTS_MAX_UPLOADS_PER_MINUTE',30,1,1000),
     maxWriteRequestsPerMinute:integer(env,'OTS_MAX_WRITES_PER_MINUTE',180,1,10000),maxConcurrentWrites:integer(env,'OTS_MAX_CONCURRENT_WRITES',4,1,32),
     minFreeDiskBytes:integer(env,'OTS_MIN_FREE_DISK_MIB',1024,16,102400)*1024*1024,backupDir:env.OTS_BACKUP_DIR?path.resolve(env.OTS_BACKUP_DIR):undefined};
