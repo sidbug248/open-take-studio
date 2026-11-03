@@ -1,0 +1,39 @@
+import { readFile } from 'node:fs/promises';
+import type { Asset } from '../../shared/types.ts';
+import type { WorkflowExecution, WorkflowVersion } from '../../shared/workflow-types.ts';
+import type { Store } from '../store.ts';
+import type { LocalFileStorage } from '../media.ts';
+import { mediaToolPaths, runMediaTool } from '../film-media.ts';
+import { imageDimensions } from '../input-validation.ts';
+import { WorkflowError } from '../workflow-schema.ts';
+
+export interface OutcomeProbe { duration:number; hasAudio:boolean; hasVideo:boolean; }
+export async function probeOutcomeAsset(asset:Asset,media:LocalFileStorage):Promise<OutcomeProbe>{
+  const raw=await runMediaTool(mediaToolPaths().ffprobe,['-v','error','-protocol_whitelist','file,pipe','-show_streams','-show_format','-of','json',media.path(asset)],1024*1024,30000);
+  const result=JSON.parse(raw.toString('utf8')),duration=Number(result.format?.duration??result.streams?.[0]?.duration);
+  if(!Number.isFinite(duration)||duration<=0)throw new WorkflowError('The input has no verifiable media duration');
+  return{duration,hasAudio:result.streams?.some((s:any)=>s.codec_type==='audio')===true,hasVideo:result.streams?.some((s:any)=>s.codec_type==='video')===true};
+}
+/** Strict provider prerequisites for the built-in outcome templates. Generic user
+ * graphs still receive Cloud validation; these checks run before any billable admission. */
+export async function validateNativeOutcomeInputs(workflow:WorkflowVersion,values:WorkflowExecution['values'],store:Pick<Store,'getAsset'>,media:LocalFileStorage,probe:typeof probeOutcomeAsset=probeOutcomeAsset):Promise<void>{
+  const graph=structuredClone(workflow.apiGraph);
+  for(const binding of workflow.bindings){const value=values[binding.key];if(value!==undefined)graph[binding.nodeId].inputs[binding.inputName]=value;}
+  const resolve=(nodeId:string,field:string,kind:Asset['kind']):Asset|undefined=>{const input=graph[nodeId].inputs[field];if(!Array.isArray(input))return;const loader=graph[String(input[0])];if(!loader)return;const uploaded=Object.values(loader.inputs).find((value:any)=>value&&typeof value==='object'&&!Array.isArray(value)&&typeof value.assetId==='string') as {assetId:string}|undefined;if(!uploaded)return;const asset=store.getAsset(uploaded.assetId);if(!asset||asset.kind!==kind)throw new WorkflowError(`Select a saved ${kind} for this operation`);return asset;};
+  const integer=(value:unknown,label:string,min:number,max:number)=>{if(!Number.isSafeInteger(value)||Number(value)<min||Number(value)>max)throw new WorkflowError(`${label} must be an integer from ${min} to ${max}`);};
+  for(const[id,node]of Object.entries(graph)){
+    const p=node.inputs;
+    if(node.class_type==='SoniloTextToMusic'){if(typeof p.prompt!=='string'||p.prompt.trim().length<1||p.prompt.trim().length>1000)throw new WorkflowError('Music direction must contain 1–1000 characters');integer(p.duration,'Music duration',1,360);}
+    if(node.class_type==='ViduExtendVideoNode'){
+      if(typeof p.prompt!=='string'||p.prompt.length>2000)throw new WorkflowError('Continuation direction must contain at most 2000 characters');integer(p['model.duration'],'Continuation duration',1,7);
+      const source=resolve(id,'video','video');if(source){const info=await probe(source,media);if(!info.hasVideo||info.duration<4||info.duration>55)throw new WorkflowError('Vidu extension requires a source video between 4 and 55 seconds');}
+    }
+    if(node.class_type==='VeedDubbingNode'){const source=resolve(id,'model.video','video');if(source){const info=await probe(source,media);if(!info.hasVideo||!info.hasAudio||info.duration>599)throw new WorkflowError('Dubbing requires a video with an audio track, at most 599 seconds');}}
+    if(node.class_type==='ElevenLabsAudioIsolation'){const source=resolve(id,'audio','audio');if(source){const info=await probe(source,media);if(!info.hasAudio)throw new WorkflowError('Voice isolation requires decodable audio');}}
+    if(node.class_type==='MeshyImageToModelNode'){
+      integer(p['should_remesh.target_polycount'],'Target polygon count',100,300000);
+      if(typeof p['should_texture.texture_prompt']!=='string'||p['should_texture.texture_prompt'].length>600)throw new WorkflowError('Texture direction must contain at most 600 characters');
+      const source=resolve(id,'image','image');if(source){if(!['image/png','image/jpeg','image/webp'].includes(source.mimeType))throw new WorkflowError('Image-to-3D requires a PNG, JPEG or WebP reference');imageDimensions(await readFile(media.path(source)),source.mimeType);}
+    }
+  }
+}

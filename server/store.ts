@@ -8,6 +8,7 @@ type Tables = 'projects' | 'assets' | 'takes' | 'jobs' | 'shots' | 'recipes';
 type Entity = Project | Asset | Take | Job | Shot | Recipe;
 export interface OperationReceipt<T = unknown> { key: string; fingerprint: string; result: T; createdAt: string; }
 export interface RunnableJobQuery { executionRoute?:'router'|'comfy-workflow'; dueAt?:string; excludeIds?:readonly string[]; limit?:number; }
+export interface ScopedRecord<T=unknown> {id:string;projectId:string;kind:string;data:T;createdAt:string;updatedAt:string;}
 
 /** Durable local repository. Media is managed separately, so a hosted repository can replace this. */
 export class Store {
@@ -24,6 +25,7 @@ export class Store {
     }
     this.db.exec('CREATE TABLE IF NOT EXISTS job_identities (idempotency_key TEXT PRIMARY KEY, job_id TEXT NOT NULL UNIQUE REFERENCES jobs(id)); CREATE TABLE IF NOT EXISTS archived_jobs (job_id TEXT PRIMARY KEY REFERENCES jobs(id));');
     this.db.exec('CREATE TABLE IF NOT EXISTS operation_receipts (operation_key TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, data TEXT NOT NULL);');
+    this.db.exec('CREATE TABLE IF NOT EXISTS workspace_records (id TEXT NOT NULL, project_id TEXT NOT NULL, kind TEXT NOT NULL, data TEXT NOT NULL, PRIMARY KEY(kind,id)); CREATE INDEX IF NOT EXISTS workspace_records_project_kind ON workspace_records(project_id,kind);');
     this.db.exec("CREATE INDEX IF NOT EXISTS jobs_runnable_state_route ON jobs(json_extract(data,'$.state'),coalesce(json_extract(data,'$.executionRoute'),'router'),json_extract(data,'$.nextPollAt'),json_extract(data,'$.createdAt'));");
     ensureJobReadModel(this.db);
   }
@@ -51,6 +53,13 @@ export class Store {
   listJobs = (id?: string) => this.list<Job>('jobs', id).sort((a,b) => a.createdAt.localeCompare(b.createdAt));
   listShots = (id?: string) => this.list<Shot>('shots', id).sort((a,b) => a.position - b.position);
   listRecipes = (id?: string) => this.list<Recipe>('recipes', id);
+  getScopedRecord<T=unknown>(kind:string,id:string):ScopedRecord<T>|undefined {const row=this.db.prepare('SELECT data FROM workspace_records WHERE kind=? AND id=?').get(kind,id) as {data:string}|undefined;return row?JSON.parse(row.data):undefined;}
+  listScopedRecords<T=unknown>(kind:string,projectId?:string):ScopedRecord<T>[] {const rows=(projectId?this.db.prepare('SELECT data FROM workspace_records WHERE kind=? AND project_id=? ORDER BY id').all(kind,projectId):this.db.prepare('SELECT data FROM workspace_records WHERE kind=? ORDER BY id').all(kind)) as {data:string}[];return rows.map(row=>JSON.parse(row.data));}
+  upsertScopedRecord<T>(value:ScopedRecord<T>):ScopedRecord<T> {
+    if(!/^[a-zA-Z0-9_-]{1,100}$/.test(value.kind)||!value.id||value.id.length>200||!this.getProject(value.projectId))throw new Error('Scoped records require a valid kind and existing project');
+    const previous=this.getScopedRecord(value.kind,value.id);if(previous&&previous.projectId!==value.projectId)throw new Error('Scoped record cannot move between projects');
+    this.db.prepare('INSERT INTO workspace_records(id,project_id,kind,data) VALUES(?,?,?,?) ON CONFLICT(kind,id) DO UPDATE SET data=excluded.data').run(value.id,value.projectId,value.kind,JSON.stringify(value));return value;
+  }
   upsertProject = (value: Project) => this.upsert('projects', value);
   upsertAsset = (value: Asset) => this.upsert('assets', value);
   upsertTake = (value: Take) => this.upsert('takes', value);

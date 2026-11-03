@@ -1,0 +1,52 @@
+import AdmZip from 'adm-zip';
+import sharp from 'sharp';
+import {mkdtemp,readFile,rm,writeFile} from 'node:fs/promises';
+import path from 'node:path';
+import os from 'node:os';
+import {randomUUID} from 'node:crypto';
+import type {DeliverySpec,DeliverySchedule} from '../shared/production-types.ts';
+import type {Store} from './store.ts';
+import type {LocalFileStorage} from './media.ts';
+import {mediaToolPaths,runMediaTool} from './film-media.ts';
+import {bad,deliverySpecSchema,localTake,projectAsset,fingerprint} from './production-core.ts';
+
+const sizes={square:[1080,1080],portrait:[1080,1920],landscape:[1920,1080]} as const;
+const safe=(s:string)=>s.replace(/[^a-zA-Z0-9._ -]/g,'_').slice(0,130)||'asset';
+export async function prepareDelivery(store:Store,media:LocalFileStorage,projectId:string,raw:DeliverySpec,intent:string){
+ const spec=deliverySpecSchema.parse(raw),key='delivery:'+projectId+':'+intent,hash=fingerprint(spec);const existing=store.getOperationReceipt<{assetId:string;takeId:string}>(key);if(existing){if(existing.fingerprint!==hash)throw bad('This delivery identity belongs to different inputs.',409);const asset=store.getAsset(existing.result.assetId),take=store.getTake(existing.result.takeId);if(!asset||!take)throw bad('Saved delivery media is missing.',409);return{asset,take};}
+ const assets=spec.assetIds.map(id=>projectAsset(store,projectId,id));if(new Set(spec.assetIds).size!==assets.length)throw bad('Choose each delivery asset once.');if(assets.reduce((n,a)=>n+a.size,0)>256*1024*1024)throw bad('A delivery package supports up to 256 MB of source media.');
+ const zip=new AdmZip(),manifest:{sourceAssetId:string;sha256:string;originalName:string;deliveredFile:string;processing:string}[]=[];
+ const directory=await mkdtemp(path.join(os.tmpdir(),'ots-delivery-'));
+ try{for(const [i,asset]of assets.entries()){
+   let bytes=await media.read(asset),extension=path.extname(asset.fileName),processing='Original bytes';
+   if(spec.preset!=='original'&&['image','video'].includes(asset.kind)){
+    const [width,height]=sizes[spec.preset];if(asset.kind==='image'){bytes=await sharp(bytes).rotate().resize(width,height,{fit:'contain',background:'#111114'}).png().toBuffer();extension='.png';}
+    else {const output=path.join(directory,`${i}.mp4`);await runMediaTool(mediaToolPaths().ffmpeg,['-y','-i',media.path(asset),'-vf',`scale=${width}:${height}:force_original_aspect_ratio=decrease:force_divisible_by=2,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:color=0x111114,setsar=1`,'-c:v','libx264','-preset','veryfast','-crf','21','-c:a','aac','-b:a','160k','-movflags','+faststart',output],8*1024*1024,240000);bytes=await readFile(output);extension='.mp4';}
+    processing=`Fit within ${width}×${height}; original framing preserved with padding`;
+   }
+   const file=`media/${String(i+1).padStart(2,'0')}-${safe(asset.name.replace(/\.[a-z0-9]{1,8}$/i,''))}${extension}`;zip.addFile(file,bytes);manifest.push({sourceAssetId:asset.id,sha256:asset.sha256,originalName:asset.name,deliveredFile:file,processing});
+  }
+  zip.addFile('caption.txt',Buffer.from(spec.caption));zip.addFile('delivery-manifest.json',Buffer.from(JSON.stringify({format:'open-take-delivery',version:1,projectId,name:spec.name,preset:spec.preset,createdAt:new Date().toISOString(),media:manifest,publication:{state:'not-published',destination:'download',note:'Prepared for download. No social account or external destination received this package.'}},null,2)));
+  zip.addFile('README.txt',Buffer.from('OPEN TAKE STUDIO\nDelivery package\n\nMedia, caption, and source manifest are included. This package has not been published to any social network. External platform delivery requires a separately authorized destination. Original project media remains unchanged.\n'));
+  const asset=await media.put({projectId,name:spec.name+'.zip',mimeType:'application/zip',kind:'document',bytes:zip.toBuffer(),provenance:'local-edit',metadata:{operation:'delivery-package',deliverySpec:spec,inputAssetIds:{sources:spec.assetIds},deliveryIntent:intent}}),take=localTake(projectId,asset,'delivery-package',spec.assetIds,spec.name+' · delivery');
+  return store.transaction(()=>{const raced=store.getOperationReceipt<{assetId:string;takeId:string}>(key);if(raced){if(raced.fingerprint!==hash)throw bad('Delivery identity conflict.',409);return{asset:store.getAsset(raced.result.assetId)!,take:store.getTake(raced.result.takeId)!};}store.upsertAsset(asset);store.upsertTake(take);store.putOperationReceipt({key,fingerprint:hash,result:{assetId:asset.id,takeId:take.id},createdAt:new Date().toISOString()});return{asset,take};});
+ }finally{await rm(directory,{recursive:true,force:true});}
+}
+
+export class DeliveryWorker {
+ private timer?:ReturnType<typeof setInterval>;private running?:Promise<void>;private stopped=true;
+ constructor(private store:Store,private media:LocalFileStorage,private now:()=>Date=()=>new Date()){}
+ start(){if(!this.stopped)return;this.stopped=false;this.timer=setInterval(()=>{void this.tick();},1000);this.timer.unref();void this.tick();}
+ async stop(){this.stopped=true;if(this.timer)clearInterval(this.timer);await this.running;}
+ tick():Promise<void>{if(this.running)return this.running;this.running=this.process().finally(()=>{this.running=undefined;});return this.running;}
+ private async process(){for(const row of this.store.listScopedRecords<DeliverySchedule>('delivery')){
+   if(this.stopped)break;const schedule=row.data;if(!['scheduled','running'].includes(schedule.state)||Date.parse(schedule.dueAt)>this.now().getTime())continue;
+   const running={...schedule,state:'running' as const,attempts:schedule.attempts+1,updatedAt:this.now().toISOString()};this.save(running);
+   try{const result=await prepareDelivery(this.store,this.media,row.projectId,schedule.spec,'schedule-'+schedule.id);this.save({...running,state:'ready',outputAssetId:result.asset.id,outputTakeId:result.take.id,completedAt:this.now().toISOString(),updatedAt:this.now().toISOString(),error:undefined});}
+   catch(error){this.save({...running,state:'failed',error:error instanceof Error?error.message:'Delivery failed.',updatedAt:this.now().toISOString()});}
+  }}
+ private save(data:DeliverySchedule){this.store.upsertScopedRecord({id:data.id,kind:'delivery',projectId:data.projectId,createdAt:data.createdAt,updatedAt:data.updatedAt,data});}
+}
+export function createSchedule(store:Store,projectId:string,spec:DeliverySpec,dueAt:string,id=randomUUID()):DeliverySchedule{
+ deliverySpecSchema.parse(spec);if(!store.getProject(projectId))throw bad('Project not found.',404);for(const assetId of spec.assetIds)projectAsset(store,projectId,assetId);if(!Number.isFinite(Date.parse(dueAt)))throw bad('Choose a valid delivery time.');const now=new Date().toISOString();const data:DeliverySchedule={id,projectId,spec,dueAt:new Date(dueAt).toISOString(),state:'scheduled',createdAt:now,updatedAt:now,attempts:0};const old=store.getScopedRecord<DeliverySchedule>('delivery',id);if(old){if(old.projectId!==projectId||fingerprint({spec:old.data.spec,dueAt:old.data.dueAt})!==fingerprint({spec,dueAt:data.dueAt}))throw bad('Schedule identity already belongs to different inputs.',409);return old.data;}store.upsertScopedRecord({id,kind:'delivery',projectId,createdAt:now,updatedAt:now,data});return data;
+}

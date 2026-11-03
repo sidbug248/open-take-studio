@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: open-take-studio
+    runtime: docker
+    branch: codex/authoring-live
+    plan: 1c-2g
+    region: virginia
+    autoDeployTrigger: checksPass
+    healthCheckPath: /api/health
+    numInstances: 1
+    disk:
+      name: studio-data
+      mountPath: /var/data
+      sizeGB: 10
+    envVars:
+      - key: OTS_MODE
+        value: hosted
+      - key: OTS_DATA_DIR
+        value: /var/data/studio
+      - key: OTS_PERSISTENT_STORAGE_CONFIRMED
+        value: "true"
+      - key: OTS_PUBLIC_ORIGIN
+        sync: false
+      - key: OTS_OWNER_PASSWORD_HASH
+        sync: false
+      - key: COMFY_API_KEY
+        sync: false
+      - key: OTS_MAX_CONCURRENT_WRITES
+        value: "2"
+      - key: OTS_MAX_ACTIVE_JOBS
+        value: "6"
+      - key: OTS_MAX_GENERATIONS_PER_HOUR
+        value: "30"
+      - key: OTS_MIN_FREE_DISK_MIB
+        value: "1024"

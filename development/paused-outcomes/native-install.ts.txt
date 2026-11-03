@@ -1,0 +1,22 @@
+import { randomUUID } from 'node:crypto';
+import type { Store } from '../store.ts';
+import type { LocalFileStorage } from '../media.ts';
+import type { Take } from '../../shared/types.ts';
+import { nativeOutcomeTemplate } from './native-templates.ts';
+import { WorkflowError } from '../workflow-schema.ts';
+
+const pending=new Map<string,Promise<any>>();
+/** Installing a reusable definition is idempotent and never starts generation. */
+export function installNativeOutcomeTemplate(store:Store,media:LocalFileStorage,projectId:string,id:string){
+  const key=projectId+':'+id;const existing=pending.get(key);if(existing)return existing;
+  const work=(async()=>{
+    if(!store.getProject(projectId))throw new WorkflowError('Project not found',404);
+    const template=nativeOutcomeTemplate(id);if(!template)throw new WorkflowError('Unknown native outcome template',404);
+    const workflow=template.workflow,previous=store.listAssets(projectId).find(asset=>asset.metadata.operation==='comfy-workflow-version'&&(asset.metadata.workflowVersion as any)?.graphSha256===workflow.graphSha256);
+    if(previous)return{asset:previous,workflow:previous.metadata.workflowVersion,take:store.listTakes(projectId).find(take=>take.assetIds.includes(previous.id)),templateId:id,reused:true};
+    const asset=await media.put({projectId,name:`${workflow.name}.workflow.json`,mimeType:'application/json',bytes:Buffer.from(JSON.stringify(workflow,null,2)),provenance:'local-edit',metadata:{operation:'comfy-workflow-version',workflowVersion:workflow,graphSha256:workflow.graphSha256,outcomeTemplateId:id,capabilityId:template.capabilityId}});
+    const timestamp=new Date().toISOString(),take:Take={id:randomUUID(),projectId,name:`${workflow.name} · workflow version`,kind:'document',executionRoute:'comfy-workflow',workflowVersionAssetId:asset.id,inputAssetIds:{},assetIds:[asset.id],modelId:'local/comfy-workflow-definition',provider:'ComfyUI',prompt:workflow.description,settings:{graphSha256:workflow.graphSha256,outcomeTemplateId:id},status:'LOCAL',provenance:'local-edit',favorite:false,createdAt:timestamp,updatedAt:timestamp,changes:[]};
+    store.transaction(()=>{store.upsertAsset(asset);store.upsertTake(take);store.upsertProject({...store.getProject(projectId)!,updatedAt:timestamp});});
+    return{asset,workflow,take,templateId:id,reused:false};
+  })();pending.set(key,work);work.finally(()=>{if(pending.get(key)===work)pending.delete(key);}).catch(()=>undefined);return work;
+}

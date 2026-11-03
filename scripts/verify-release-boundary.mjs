@@ -7,7 +7,7 @@ const files=execFileSync('git',['ls-files','-z'],{encoding:'utf8'}).split('\0').
 for(const file of files){
   assert.ok(!/^(?:data|artifacts|imports|node_modules|dist)\//.test(file),`Private/generated directory tracked: ${file}`);
   assert.ok(!/(?:^|\/)\.env(?:\.|$)/.test(file)||file==='.env.example',`Environment file tracked: ${file}`);
-  if(/\.(?:ts|tsx|js|mjs|json|md|yml|yaml)$/.test(file)){
+  if(/\.(?:ts|tsx|js|mjs|json|md|txt|yml|yaml)$/.test(file)){
     const text=readFileSync(file,'utf8');
     assert.ok(!/comfyui-[A-Za-z0-9_-]{24,}/.test(text),`Possible Comfy credential in ${file}`);
     assert.ok(!/-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/.test(text),`Private key in ${file}`);

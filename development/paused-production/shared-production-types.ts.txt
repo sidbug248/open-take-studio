@@ -1,0 +1,21 @@
+import type { Asset, GenerationRequest, Shot, Take } from './types';
+
+export interface StoryBeat { id:string; title:string; direction:string; narration:string; seconds:number; assetId?:string; shotId?:string; }
+export interface StoryDocument { version:1; kind:'story'; name:string; sourceText:string; sourceAssetId?:string; beats:StoryBeat[]; }
+export type ProductionNode = {id:string;label:string;x:number;y:number} & (
+  {kind:'asset';assetId:string} | {kind:'recipe';recipeId:string;prompt?:string} |
+  {kind:'storyboard';columns:1|2|3} | {kind:'delivery';preset:DeliveryPreset;caption:string});
+export interface ProductionEdge {id:string;from:string;to:string;inputKey?:string;}
+export interface ProductionGraph {version:1;kind:'graph';name:string;nodes:ProductionNode[];edges:ProductionEdge[];}
+export type ProductionDocument=StoryDocument|ProductionGraph;
+export type DeliveryPreset='original'|'square'|'portrait'|'landscape';
+export interface DeliverySpec {name:string;assetIds:string[];caption:string;preset:DeliveryPreset;}
+export interface DeliverySchedule {id:string;projectId:string;spec:DeliverySpec;dueAt:string;state:'scheduled'|'running'|'ready'|'failed'|'cancelled'|'paused';createdAt:string;updatedAt:string;attempts:number;outputAssetId?:string;outputTakeId?:string;error?:string;completedAt?:string;}
+export interface ReviewComment {id:string;assetId:string;author:string;body:string;seconds?:number;createdAt:string;resolved:boolean;decision?:'approve'|'changes';replyTo?:string;}
+export interface ReviewBoard {id:string;projectId:string;name:string;assetIds:string[];createdAt:string;updatedAt:string;expiresAt:string;revoked:boolean;allowComments:boolean;tokenHash:string;comments:ReviewComment[];}
+export type PublicReviewBoard=Omit<ReviewBoard,'tokenHash'>;
+export interface GraphNodeRun {nodeId:string;state:'ready'|'waiting'|'failed'|'complete';assetIds:string[];takeId?:string;jobId?:string;error?:string;request?:GenerationRequest;}
+export interface GraphRun {id:string;projectId:string;graphAssetId:string;createdAt:string;updatedAt:string;nodes:GraphNodeRun[];}
+export interface ProductionSnapshot {documents:Asset[];deliveries:DeliverySchedule[];reviews:PublicReviewBoard[];runs:GraphRun[];}
+export interface SavedProduction {asset:Asset;take:Take;document:ProductionDocument;}
+export interface AppliedStory extends SavedProduction {shots:Shot[];page?:{asset:Asset;take:Take};}

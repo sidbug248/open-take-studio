@@ -1,0 +1,63 @@
+import {createHash,randomUUID} from 'node:crypto';
+import sharp from 'sharp';
+import {z} from 'zod';
+import type {Asset,GenerationRequest,Take} from '../shared/types.ts';
+import type {ProductionDocument,ProductionGraph,StoryDocument,SavedProduction,GraphRun} from '../shared/production-types.ts';
+import type {Store} from './store.ts';
+import type {LocalFileStorage} from './media.ts';
+import {MODEL_REGISTRY,validateSupportedSettings} from './model-registry.ts';
+
+const id=z.string().min(1).max(128),text=z.string().max(20000);
+export const deliverySpecSchema=z.object({name:z.string().min(1).max(160),assetIds:z.array(id).min(1).max(24),caption:z.string().max(20000),preset:z.enum(['original','square','portrait','landscape'])}).strict();
+export const storySchema=z.object({version:z.literal(1),kind:z.literal('story'),name:z.string().min(1).max(160),sourceText:z.string().min(1).max(100000),sourceAssetId:id.optional(),beats:z.array(z.object({id,title:z.string().min(1).max(240),direction:text,narration:text,seconds:z.number().min(.1).max(600),assetId:id.optional(),shotId:id.optional()}).strict()).min(1).max(40)}).strict();
+const base={id,label:z.string().min(1).max(160),x:z.number().min(-10000).max(10000),y:z.number().min(-10000).max(10000)};
+export const graphSchema=z.object({version:z.literal(1),kind:z.literal('graph'),name:z.string().min(1).max(160),nodes:z.array(z.discriminatedUnion('kind',[
+ z.object({...base,kind:z.literal('asset'),assetId:id}).strict(),z.object({...base,kind:z.literal('recipe'),recipeId:id,prompt:text.optional()}).strict(),z.object({...base,kind:z.literal('storyboard'),columns:z.union([z.literal(1),z.literal(2),z.literal(3)])}).strict(),z.object({...base,kind:z.literal('delivery'),preset:z.enum(['original','square','portrait','landscape']),caption:text}).strict()
+])).min(1).max(30),edges:z.array(z.object({id,from:id,to:id,inputKey:z.string().max(100).optional()}).strict()).max(80)}).strict();
+export const productionSchema=z.discriminatedUnion('kind',[storySchema,graphSchema]);
+export const fingerprint=(v:unknown)=>createHash('sha256').update(canonical(v)).digest('hex');
+function canonical(v:unknown):string{return Array.isArray(v)?'['+v.map(canonical).join(',')+']':v&&typeof v==='object'?'{'+Object.entries(v).sort(([a],[b])=>a.localeCompare(b)).map(([k,x])=>JSON.stringify(k)+':'+canonical(x)).join(',')+'}':JSON.stringify(v);}
+export const bad=(message:string,status=400)=>Object.assign(new Error(message),{status});
+export function projectAsset(store:Store,projectId:string,id:string):Asset {const a=store.getAsset(id);if(!a||a.projectId!==projectId)throw bad('Choose media from this project.');return a;}
+export function localTake(projectId:string,asset:Asset,operation:string,sourceIds:string[],name=asset.name):Take {const now=new Date().toISOString();return{id:randomUUID(),projectId,name,kind:asset.kind,inputAssetIds:{sources:sourceIds},sourceAssetId:sourceIds[0],assetIds:[asset.id],modelId:'local/'+operation,provider:'local',prompt:'',settings:{operation},status:'LOCAL',provenance:'local-edit',favorite:false,createdAt:now,updatedAt:now,changes:[]};}
+export function parseStory(sourceText:string,name='Untitled treatment'):StoryDocument {
+ if(!sourceText.trim()||sourceText.length>100000)throw bad('Paste a treatment or script up to 100,000 characters.');
+ const normalized=sourceText.replace(/\r\n/g,'\n').trim();
+ const chunks=normalized.split(/\n\s*\n|\n(?=#{1,4}\s)/).map(x=>x.trim()).filter(Boolean);
+ const beats=chunks.slice(0,40).map((chunk,index)=>{const lines=chunk.split('\n');const heading=/^#{1,6}\s+|^(?:INT\.|EXT\.|SCENE\s+\d+)/i.test(lines[0]);const title=heading?lines.shift()!.replace(/^#+\s*/,'').slice(0,240):`Shot ${String(index+1).padStart(2,'0')}`;const body=(lines.join('\n')||chunk).trim();return{id:randomUUID(),title,direction:body,narration:'',seconds:Math.max(3,Math.min(20,Math.round(body.split(/\s+/).length/2.6)))};});
+ return{version:1,kind:'story',name:name.slice(0,160),sourceText:normalized,beats};
+}
+export function graphOrder(graph:ProductionGraph):string[]{
+ const ids=new Set(graph.nodes.map(n=>n.id));if(ids.size!==graph.nodes.length)throw bad('Node identities must be unique.');
+ const edgeIds=new Set(graph.edges.map(e=>e.id));if(edgeIds.size!==graph.edges.length)throw bad('Connection identities must be unique.');
+ for(const e of graph.edges)if(!ids.has(e.from)||!ids.has(e.to)||e.from===e.to)throw bad('Every connection needs two different nodes in this canvas.');
+ const remaining=new Set(ids),ordered:string[]=[];while(remaining.size){const ready=[...remaining].filter(id=>!graph.edges.some(e=>e.to===id&&remaining.has(e.from)));if(!ready.length)throw bad('A production canvas cannot contain a circular dependency.');for(const id of ready){ordered.push(id);remaining.delete(id);}}
+ return ordered;
+}
+export function validateDocument(store:Store,projectId:string,document:ProductionDocument){
+ if(!store.getProject(projectId))throw bad('Project not found.',404);
+ if(document.kind==='story'){if(new Set(document.beats.map(b=>b.id)).size!==document.beats.length)throw bad('Story beat identities must be unique.');if(document.sourceAssetId)projectAsset(store,projectId,document.sourceAssetId);for(const b of document.beats){if(b.assetId&&projectAsset(store,projectId,b.assetId).kind!=='image')throw bad('A storyboard panel needs an image.');if(b.shotId&&store.getShot(b.shotId)?.projectId!==projectId)throw bad('The linked shot must belong to this project.');}}
+ else {graphOrder(document);for(const n of document.nodes){if(n.kind==='asset')projectAsset(store,projectId,n.assetId);if(n.kind==='recipe'&&store.getRecipe(n.recipeId)?.projectId!==projectId)throw bad('Choose a recipe from this project.');if(n.kind==='asset'&&document.edges.some(e=>e.to===n.id))throw bad('Source nodes cannot accept incoming connections.');}}
+}
+export async function prepareDocument(store:Store,media:LocalFileStorage,projectId:string,raw:unknown,parentAssetId?:string):Promise<SavedProduction>{
+ const document=productionSchema.parse(raw) as ProductionDocument;validateDocument(store,projectId,document);if(parentAssetId)projectAsset(store,projectId,parentAssetId);
+ const sourceIds=document.kind==='story'?[document.sourceAssetId,...document.beats.map(b=>b.assetId)].filter((x):x is string=>!!x):document.nodes.flatMap(n=>n.kind==='asset'?[n.assetId]:[]);
+ const asset=await media.put({projectId,name:document.name+'.studio.json',mimeType:'application/json',bytes:Buffer.from(JSON.stringify(document,null,2)),kind:'document',provenance:'local-edit',metadata:{operation:'production-'+document.kind,productionDocument:document,parentVersionAssetId:parentAssetId,inputAssetIds:{sources:sourceIds}}});
+ const take=localTake(projectId,asset,'production-'+document.kind,sourceIds,document.name);if(parentAssetId){take.parentTakeId=store.listTakes(projectId).find(t=>t.assetIds.includes(parentAssetId))?.id;take.changes=[{field:'productionDocument',before:parentAssetId,after:asset.id}];}return{asset,take,document};
+}
+export function readDocument(store:Store,projectId:string,assetId:string):ProductionDocument {const asset=projectAsset(store,projectId,assetId);return productionSchema.parse(asset.metadata.productionDocument) as ProductionDocument;}
+const esc=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]!));
+function wrap(s:string,width:number,max=6){const result:string[]=[];let line='';for(const word of s.split(/\s+/)){if((line+' '+word).length>width){result.push(line);line=word;}else line+=(line?' ':'')+word;}if(line)result.push(line);return result.slice(0,max);}
+export async function renderStory(store:Store,media:LocalFileStorage,projectId:string,name:string,panels:{title:string;direction:string;assetId?:string}[],columns=2){
+ if(!panels.length||panels.length>40)throw bad('Choose one to forty story panels.');
+ const width=1600,gap=30,pw=Math.floor((width-120-gap*(columns-1))/columns),ph=480,height=180+Math.ceil(panels.length/columns)*(ph+gap);let svg=`<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="#171719"/><g font-family="Arial,sans-serif" fill="#f4eee8"><text x="60" y="88" font-size="44" font-weight="700">${esc(name.slice(0,65))}</text><text x="60" y="126" font-size="16" fill="#bdb4ad">OPEN TAKE STUDIO / EDITABLE STORY PLAN</text>`;const overlays:sharp.OverlayOptions[]=[];
+ for(const [i,p]of panels.entries()){const x=60+(i%columns)*(pw+gap),y=170+Math.floor(i/columns)*(ph+gap);svg+=`<rect x="${x}" y="${y}" width="${pw}" height="${ph}" rx="12" fill="#27272b"/><text x="${x+24}" y="${y+39}" font-size="23" font-weight="700">${esc(String(i+1).padStart(2,'0')+' / '+p.title.slice(0,42))}</text>`;let ty=y+95;if(p.assetId){const a=projectAsset(store,projectId,p.assetId);if(a.kind!=='image')throw bad('Storyboard panels need image assets.');overlays.push({input:await sharp(await media.read(a)).rotate().resize(pw-48,240,{fit:'cover'}).png().toBuffer(),left:x+24,top:y+62});ty=y+337;}for(const [li,line]of wrap(p.direction,Math.floor((pw-48)/11),p.assetId?4:12).entries())svg+=`<text x="${x+24}" y="${ty+li*27}" font-size="20" fill="#ddd5d0">${esc(line)}</text>`;}
+ svg+='</g></svg>';const bytes=await sharp(Buffer.from(svg)).composite(overlays).png().toBuffer();const sourceIds=panels.flatMap(p=>p.assetId?[p.assetId]:[]);const asset=await media.put({projectId,name:name+' · storyboard.png',mimeType:'image/png',bytes,kind:'image',provenance:'local-edit',metadata:{operation:'document-storyboard',inputAssetIds:{sources:sourceIds},settings:{panels,columns}}});return{asset,take:localTake(projectId,asset,'document-storyboard',sourceIds,name+' · storyboard')};
+}
+/** Pure admission plan: references are originals; no request is submitted here. */
+export function graphGenerationRequest(store:Store,projectId:string,graph:ProductionGraph,run:GraphRun,nodeId:string):GenerationRequest {
+ const node=graph.nodes.find(n=>n.id===nodeId);if(node?.kind!=='recipe')throw bad('This node does not generate media.');const recipe=store.getRecipe(node.recipeId);if(!recipe||recipe.projectId!==projectId)throw bad('Recipe not available in this project.');const model=MODEL_REGISTRY.find(m=>m.id===recipe.modelId);if(!model||model.status==='unavailable')throw bad('Recipe model is unavailable.');const inputAssetIds={...recipe.inputAssetIds};
+ for(const edge of graph.edges.filter(e=>e.to===nodeId)){const upstream=run.nodes.find(n=>n.nodeId===edge.from);if(!upstream?.assetIds.length)throw bad('Finish the connected source before preparing this generation.');const key=edge.inputKey||model.inputs[0]?.key;const descriptor=model.inputs.find(i=>i.key===key);if(!descriptor)throw bad('Choose a supported model input for this connection.');const assets=upstream.assetIds.map(id=>projectAsset(store,projectId,id));if(assets.some(a=>a.kind!==descriptor.kind))throw bad(descriptor.label+' needs '+descriptor.kind+' media.');inputAssetIds[key]=descriptor.multiple?[...(Array.isArray(inputAssetIds[key])?inputAssetIds[key] as string[]:[]),...assets.map(a=>a.id)]:assets[0].id;}
+ for(const input of model.inputs){const value=inputAssetIds[input.key];if(input.required&&(!value||(Array.isArray(value)&&!value.length)))throw bad('Connect '+input.label+' before this node can run.');if(value)for(const id of Array.isArray(value)?value:[value])if(projectAsset(store,projectId,id).kind!==input.kind)throw bad('Recipe input media has the wrong kind.');}
+ return{projectId,modelId:recipe.modelId,prompt:node.prompt??recipe.prompt,settings:validateSupportedSettings(recipe.modelId,recipe.settings),inputAssetIds,name:node.label,clientRequestId:`graph-${run.id}-${node.id}`.slice(0,100)};
+}

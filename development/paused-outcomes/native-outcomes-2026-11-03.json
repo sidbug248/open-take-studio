@@ -1,0 +1,2057 @@
+{
+  "verifiedAt": "2026-11-03T16:38:33.536Z",
+  "source": "https://cloud.comfy.org/api/object_info",
+  "nodes": {
+    "ViduExtendVideoNode": {
+      "input": {
+        "required": {
+          "model": [
+            "COMFY_DYNAMICCOMBO_V3",
+            {
+              "tooltip": "Model to use for video extension.",
+              "options": [
+                {
+                  "key": "viduq2-pro",
+                  "inputs": {
+                    "required": {
+                      "duration": [
+                        "INT",
+                        {
+                          "tooltip": "Duration of the extended video in seconds.",
+                          "default": 4,
+                          "min": 1,
+                          "max": 7,
+                          "step": 1,
+                          "display": "slider"
+                        }
+                      ],
+                      "resolution": [
+                        "COMBO",
+                        {
+                          "tooltip": "Resolution of the output video.",
+                          "multiselect": false,
+                          "options": [
+                            "720p",
+                            "1080p"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "viduq2-turbo",
+                  "inputs": {
+                    "required": {
+                      "duration": [
+                        "INT",
+                        {
+                          "tooltip": "Duration of the extended video in seconds.",
+                          "default": 4,
+                          "min": 1,
+                          "max": 7,
+                          "step": 1,
+                          "display": "slider"
+                        }
+                      ],
+                      "resolution": [
+                        "COMBO",
+                        {
+                          "tooltip": "Resolution of the output video.",
+                          "multiselect": false,
+                          "options": [
+                            "720p",
+                            "1080p"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          "video": [
+            "VIDEO",
+            {
+              "tooltip": "The source video to extend."
+            }
+          ],
+          "prompt": [
+            "STRING",
+            {
+              "tooltip": "An optional text prompt for the extended video (max 2000 characters).",
+              "default": "",
+              "multiline": true
+            }
+          ],
+          "seed": [
+            "INT",
+            {
+              "default": 1,
+              "min": 0,
+              "max": 2147483647,
+              "step": 1,
+              "control_after_generate": true,
+              "display": "number"
+            }
+          ]
+        },
+        "optional": {
+          "end_frame": [
+            "IMAGE",
+            {}
+          ]
+        },
+        "hidden": {
+          "auth_token_comfy_org": [
+            "AUTH_TOKEN_COMFY_ORG"
+          ],
+          "api_key_comfy_org": [
+            "API_KEY_COMFY_ORG"
+          ],
+          "unique_id": [
+            "UNIQUE_ID"
+          ],
+          "comfy_usage_source": [
+            "COMFY_USAGE_SOURCE"
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "model",
+          "video",
+          "prompt",
+          "seed"
+        ],
+        "optional": [
+          "end_frame"
+        ],
+        "hidden": [
+          "auth_token_comfy_org",
+          "api_key_comfy_org",
+          "unique_id",
+          "comfy_usage_source"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "VIDEO"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "VIDEO"
+      ],
+      "output_tooltips": [
+        null
+      ],
+      "output_matchtypes": null,
+      "name": "ViduExtendVideoNode",
+      "display_name": "Vidu Video Extension",
+      "description": "Extend an existing video by generating additional frames.",
+      "python_module": "comfy_api_nodes.nodes_vidu",
+      "category": "partner/video/Vidu",
+      "output_node": false,
+      "deprecated": false,
+      "experimental": false,
+      "dev_only": false,
+      "api_node": true,
+      "price_badge": {
+        "engine": "jsonata",
+        "depends_on": {
+          "widgets": [
+            {
+              "name": "model",
+              "type": "COMFY_DYNAMICCOMBO_V3"
+            },
+            {
+              "name": "model.duration",
+              "type": "INT"
+            },
+            {
+              "name": "model.resolution",
+              "type": "COMBO"
+            }
+          ],
+          "inputs": [],
+          "input_groups": []
+        },
+        "expr": "\n                (\n                  $m := widgets.model;\n                  $d := $lookup(widgets, \"model.duration\");\n                  $res := $lookup(widgets, \"model.resolution\");\n                  $contains($m, \"pro\")\n                    ? (\n                        $base := $lookup({\"720p\": 0.15, \"1080p\": 0.3}, $res);\n                        $perSec := $lookup({\"720p\": 0.05, \"1080p\": 0.075}, $res);\n                        {\"type\":\"usd\",\"usd\": $base + $perSec * ($d - 1)}\n                      )\n                    : (\n                        $base := $lookup({\"720p\": 0.075, \"1080p\": 0.2}, $res);\n                        $perSec := $lookup({\"720p\": 0.025, \"1080p\": 0.05}, $res);\n                        {\"type\":\"usd\",\"usd\": $base + $perSec * ($d - 1)}\n                      )\n                )\n                "
+      },
+      "search_aliases": null,
+      "essentials_category": null,
+      "has_intermediate_output": false
+    },
+    "VeedDubbingNode": {
+      "input": {
+        "required": {
+          "model": [
+            "COMFY_DYNAMICCOMBO_V3",
+            {
+              "tooltip": "standard: lower price, mono audio; Spanish is Latin American and Portuguese is Brazilian. pro: regional accents and stereo audio.",
+              "options": [
+                {
+                  "key": "standard",
+                  "inputs": {
+                    "required": {
+                      "video": [
+                        "VIDEO",
+                        {
+                          "tooltip": "Video with a visible face and speech, up to 599 seconds. The output is as long as its audio track and plays at 25 fps."
+                        }
+                      ],
+                      "target_language": [
+                        "COMBO",
+                        {
+                          "default": "English",
+                          "multiselect": false,
+                          "options": [
+                            "Afrikaans",
+                            "Arabic",
+                            "Armenian",
+                            "Assamese",
+                            "Asturian",
+                            "Azerbaijani",
+                            "Belarusian",
+                            "Bengali",
+                            "Bosnian",
+                            "Bulgarian",
+                            "Burmese",
+                            "Cantonese",
+                            "Catalan",
+                            "Cebuano",
+                            "Chichewa",
+                            "Chinese (Mandarin)",
+                            "Croatian",
+                            "Czech",
+                            "Danish",
+                            "Dutch",
+                            "English",
+                            "Estonian",
+                            "Filipino",
+                            "Finnish",
+                            "French",
+                            "Galician",
+                            "Georgian",
+                            "German",
+                            "Greek",
+                            "Gujarati",
+                            "Hausa",
+                            "Hebrew",
+                            "Hindi",
+                            "Hungarian",
+                            "Icelandic",
+                            "Indonesian",
+                            "Irish",
+                            "Italian",
+                            "Japanese",
+                            "Javanese",
+                            "Kannada",
+                            "Kazakh",
+                            "Korean",
+                            "Kyrgyz",
+                            "Latvian",
+                            "Lingala",
+                            "Lithuanian",
+                            "Luxembourgish",
+                            "Macedonian",
+                            "Malay",
+                            "Malayalam",
+                            "Maltese",
+                            "Maori",
+                            "Marathi",
+                            "Mongolian",
+                            "Nepali",
+                            "Norwegian",
+                            "Occitan",
+                            "Odia",
+                            "Pashto",
+                            "Persian",
+                            "Polish",
+                            "Portuguese",
+                            "Punjabi",
+                            "Romanian",
+                            "Russian",
+                            "Serbian",
+                            "Sindhi",
+                            "Slovak",
+                            "Slovenian",
+                            "Somali",
+                            "Spanish",
+                            "Swahili",
+                            "Swedish",
+                            "Tajik",
+                            "Tamil",
+                            "Telugu",
+                            "Thai",
+                            "Turkish",
+                            "Ukrainian",
+                            "Urdu",
+                            "Uzbek",
+                            "Vietnamese",
+                            "Welsh",
+                            "Yoruba"
+                          ]
+                        }
+                      ],
+                      "source_language": [
+                        "COMBO",
+                        {
+                          "tooltip": "Language spoken in the video.",
+                          "multiselect": false,
+                          "options": [
+                            "auto",
+                            "Afrikaans",
+                            "Arabic",
+                            "Armenian",
+                            "Assamese",
+                            "Asturian",
+                            "Azerbaijani",
+                            "Belarusian",
+                            "Bengali",
+                            "Bosnian",
+                            "Bulgarian",
+                            "Burmese",
+                            "Cantonese",
+                            "Catalan",
+                            "Cebuano",
+                            "Chichewa",
+                            "Chinese (Mandarin)",
+                            "Croatian",
+                            "Czech",
+                            "Danish",
+                            "Dutch",
+                            "English",
+                            "Estonian",
+                            "Filipino",
+                            "Finnish",
+                            "French",
+                            "Galician",
+                            "Georgian",
+                            "German",
+                            "Greek",
+                            "Gujarati",
+                            "Hausa",
+                            "Hebrew",
+                            "Hindi",
+                            "Hungarian",
+                            "Icelandic",
+                            "Indonesian",
+                            "Irish",
+                            "Italian",
+                            "Japanese",
+                            "Javanese",
+                            "Kannada",
+                            "Kazakh",
+                            "Korean",
+                            "Kyrgyz",
+                            "Latvian",
+                            "Lingala",
+                            "Lithuanian",
+                            "Luxembourgish",
+                            "Macedonian",
+                            "Malay",
+                            "Malayalam",
+                            "Maltese",
+                            "Maori",
+                            "Marathi",
+                            "Mongolian",
+                            "Nepali",
+                            "Norwegian",
+                            "Occitan",
+                            "Odia",
+                            "Pashto",
+                            "Persian",
+                            "Polish",
+                            "Portuguese",
+                            "Punjabi",
+                            "Romanian",
+                            "Russian",
+                            "Serbian",
+                            "Sindhi",
+                            "Slovak",
+                            "Slovenian",
+                            "Somali",
+                            "Spanish",
+                            "Swahili",
+                            "Swedish",
+                            "Tajik",
+                            "Tamil",
+                            "Telugu",
+                            "Thai",
+                            "Turkish",
+                            "Ukrainian",
+                            "Urdu",
+                            "Uzbek",
+                            "Vietnamese",
+                            "Welsh",
+                            "Yoruba"
+                          ]
+                        }
+                      ],
+                      "seed": [
+                        "INT",
+                        {
+                          "tooltip": "Seed controls whether the node should re-run; results are non-deterministic regardless of seed.",
+                          "default": 42,
+                          "min": 0,
+                          "max": 2147483647,
+                          "control_after_generate": true,
+                          "display": "number"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "pro",
+                  "inputs": {
+                    "required": {
+                      "video": [
+                        "VIDEO",
+                        {
+                          "tooltip": "Video with a visible face and speech, up to 599 seconds. The output is as long as its audio track and plays at 25 fps."
+                        }
+                      ],
+                      "target_language": [
+                        "COMBO",
+                        {
+                          "default": "English (US)",
+                          "multiselect": false,
+                          "options": [
+                            "Afrikaans",
+                            "Akan",
+                            "Albanian",
+                            "Amharic",
+                            "Arabic",
+                            "Arabic (Egypt)",
+                            "Armenian",
+                            "Assamese",
+                            "Azerbaijani",
+                            "Basque",
+                            "Belarusian",
+                            "Bosnian",
+                            "Bulgarian",
+                            "Burmese",
+                            "Cantonese",
+                            "Catalan",
+                            "Cebuano",
+                            "Chinese (Mandarin)",
+                            "Chinese (Taiwan)",
+                            "Croatian",
+                            "Czech",
+                            "Danish",
+                            "Dutch",
+                            "English (Australia)",
+                            "English (Canada)",
+                            "English (UK)",
+                            "English (US)",
+                            "Estonian",
+                            "Filipino",
+                            "Finnish",
+                            "French (Canada)",
+                            "French (France)",
+                            "Galician",
+                            "Ganda",
+                            "Georgian",
+                            "German",
+                            "Greek",
+                            "Gujarati",
+                            "Hausa",
+                            "Hebrew",
+                            "Hindi",
+                            "Hungarian",
+                            "Icelandic",
+                            "Indonesian",
+                            "Italian",
+                            "Japanese",
+                            "Javanese",
+                            "Kannada",
+                            "Kazakh",
+                            "Kikuyu",
+                            "Kinyarwanda",
+                            "Kirundi",
+                            "Korean",
+                            "Kyrgyz",
+                            "Latvian",
+                            "Lithuanian",
+                            "Macedonian",
+                            "Malay",
+                            "Malayalam",
+                            "Marathi",
+                            "Mongolian",
+                            "Nepali",
+                            "Northern Sotho",
+                            "Norwegian",
+                            "Persian",
+                            "Polish",
+                            "Portuguese (Brazil)",
+                            "Portuguese (Portugal)",
+                            "Punjabi",
+                            "Romanian",
+                            "Russian",
+                            "Sindhi",
+                            "Slovak",
+                            "Slovenian",
+                            "Southern Sotho",
+                            "Spanish (Argentina)",
+                            "Spanish (Chile)",
+                            "Spanish (Mexico)",
+                            "Spanish (Spain)",
+                            "Sundanese",
+                            "Swahili",
+                            "Swati",
+                            "Swedish",
+                            "Tajik",
+                            "Tamil",
+                            "Telugu",
+                            "Thai",
+                            "Tibetan",
+                            "Tsonga",
+                            "Tswana",
+                            "Turkish",
+                            "Ukrainian",
+                            "Urdu",
+                            "Uyghur",
+                            "Uzbek",
+                            "Venda",
+                            "Vietnamese",
+                            "Welsh",
+                            "Wolof",
+                            "Yoruba",
+                            "Zulu"
+                          ]
+                        }
+                      ],
+                      "source_language": [
+                        "COMBO",
+                        {
+                          "tooltip": "Language spoken in the video.",
+                          "multiselect": false,
+                          "options": [
+                            "auto",
+                            "Afrikaans",
+                            "Akan",
+                            "Albanian",
+                            "Amharic",
+                            "Arabic",
+                            "Armenian",
+                            "Assamese",
+                            "Azerbaijani",
+                            "Basque",
+                            "Belarusian",
+                            "Bosnian",
+                            "Bulgarian",
+                            "Burmese",
+                            "Cantonese",
+                            "Catalan",
+                            "Cebuano",
+                            "Chinese (Mandarin)",
+                            "Croatian",
+                            "Czech",
+                            "Danish",
+                            "Dutch",
+                            "English",
+                            "Estonian",
+                            "Filipino",
+                            "Finnish",
+                            "French",
+                            "Galician",
+                            "Ganda",
+                            "Georgian",
+                            "German",
+                            "Greek",
+                            "Gujarati",
+                            "Hausa",
+                            "Hebrew",
+                            "Hindi",
+                            "Hungarian",
+                            "Icelandic",
+                            "Indonesian",
+                            "Italian",
+                            "Japanese",
+                            "Javanese",
+                            "Kannada",
+                            "Kazakh",
+                            "Kikuyu",
+                            "Kinyarwanda",
+                            "Kirundi",
+                            "Korean",
+                            "Kyrgyz",
+                            "Latvian",
+                            "Lithuanian",
+                            "Macedonian",
+                            "Malay",
+                            "Malayalam",
+                            "Marathi",
+                            "Mongolian",
+                            "Nepali",
+                            "Northern Sotho",
+                            "Norwegian",
+                            "Persian",
+                            "Polish",
+                            "Portuguese",
+                            "Punjabi",
+                            "Romanian",
+                            "Russian",
+                            "Sindhi",
+                            "Slovak",
+                            "Slovenian",
+                            "Southern Sotho",
+                            "Spanish",
+                            "Sundanese",
+                            "Swahili",
+                            "Swati",
+                            "Swedish",
+                            "Tajik",
+                            "Tamil",
+                            "Telugu",
+                            "Thai",
+                            "Tibetan",
+                            "Tsonga",
+                            "Tswana",
+                            "Turkish",
+                            "Ukrainian",
+                            "Urdu",
+                            "Uyghur",
+                            "Uzbek",
+                            "Venda",
+                            "Vietnamese",
+                            "Welsh",
+                            "Wolof",
+                            "Yoruba",
+                            "Zulu"
+                          ]
+                        }
+                      ],
+                      "seed": [
+                        "INT",
+                        {
+                          "tooltip": "Seed controls whether the node should re-run; results are non-deterministic regardless of seed.",
+                          "default": 42,
+                          "min": 0,
+                          "max": 2147483647,
+                          "control_after_generate": true,
+                          "display": "number"
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "hidden": {
+          "auth_token_comfy_org": [
+            "AUTH_TOKEN_COMFY_ORG"
+          ],
+          "api_key_comfy_org": [
+            "API_KEY_COMFY_ORG"
+          ],
+          "unique_id": [
+            "UNIQUE_ID"
+          ],
+          "comfy_usage_source": [
+            "COMFY_USAGE_SOURCE"
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "model"
+        ],
+        "hidden": [
+          "auth_token_comfy_org",
+          "api_key_comfy_org",
+          "unique_id",
+          "comfy_usage_source"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "VIDEO"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "VIDEO"
+      ],
+      "output_tooltips": [
+        null
+      ],
+      "output_matchtypes": null,
+      "name": "VeedDubbingNode",
+      "display_name": "VEED Dubbing",
+      "description": "Translate the speech in a video into another language with VEED. Each speaker's voice is cloned and their lips are synced to the translation.",
+      "python_module": "comfy_api_nodes.nodes_veed",
+      "category": "partner/video/VEED",
+      "output_node": false,
+      "deprecated": false,
+      "experimental": false,
+      "dev_only": false,
+      "api_node": true,
+      "price_badge": {
+        "engine": "jsonata",
+        "depends_on": {
+          "widgets": [
+            {
+              "name": "model",
+              "type": "COMFY_DYNAMICCOMBO_V3"
+            }
+          ],
+          "inputs": [],
+          "input_groups": []
+        },
+        "expr": "{\"type\":\"usd\",\"usd\": widgets.model = \"pro\" ? 0.2574 : 0.1573, \"format\":{\"suffix\":\"/second\"}}"
+      },
+      "search_aliases": null,
+      "essentials_category": null,
+      "has_intermediate_output": false
+    },
+    "SoniloTextToMusic": {
+      "input": {
+        "required": {
+          "prompt": [
+            "STRING",
+            {
+              "tooltip": "Text prompt describing the music to generate.",
+              "default": "",
+              "multiline": true
+            }
+          ],
+          "duration": [
+            "INT",
+            {
+              "tooltip": "Target duration in seconds. Maximum: 6 minutes.",
+              "default": 30,
+              "min": 1,
+              "max": 360
+            }
+          ],
+          "seed": [
+            "INT",
+            {
+              "tooltip": "Seed for reproducibility. Currently ignored by the Sonilo service but kept for graph consistency.",
+              "default": 0,
+              "min": 0,
+              "max": 18446744073709552000,
+              "control_after_generate": true
+            }
+          ]
+        },
+        "hidden": {
+          "auth_token_comfy_org": [
+            "AUTH_TOKEN_COMFY_ORG"
+          ],
+          "api_key_comfy_org": [
+            "API_KEY_COMFY_ORG"
+          ],
+          "unique_id": [
+            "UNIQUE_ID"
+          ],
+          "comfy_usage_source": [
+            "COMFY_USAGE_SOURCE"
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "prompt",
+          "duration",
+          "seed"
+        ],
+        "hidden": [
+          "auth_token_comfy_org",
+          "api_key_comfy_org",
+          "unique_id",
+          "comfy_usage_source"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "AUDIO"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "AUDIO"
+      ],
+      "output_tooltips": [
+        null
+      ],
+      "output_matchtypes": null,
+      "name": "SoniloTextToMusic",
+      "display_name": "Sonilo Text to Music",
+      "description": "Generate music from a text prompt using Sonilo's AI model.",
+      "python_module": "comfy_api_nodes.nodes_sonilo",
+      "category": "partner/audio/Sonilo",
+      "output_node": false,
+      "deprecated": false,
+      "experimental": false,
+      "dev_only": false,
+      "api_node": true,
+      "price_badge": {
+        "engine": "jsonata",
+        "depends_on": {
+          "widgets": [
+            {
+              "name": "duration",
+              "type": "INT"
+            }
+          ],
+          "inputs": [],
+          "input_groups": []
+        },
+        "expr": "{\"type\":\"usd\",\"usd\": 0.0025 * widgets.duration}"
+      },
+      "search_aliases": null,
+      "essentials_category": null,
+      "has_intermediate_output": false
+    },
+    "ElevenLabsAudioIsolation": {
+      "input": {
+        "required": {
+          "audio": [
+            "AUDIO",
+            {
+              "tooltip": "Audio to process for background noise removal."
+            }
+          ]
+        },
+        "hidden": {
+          "auth_token_comfy_org": [
+            "AUTH_TOKEN_COMFY_ORG"
+          ],
+          "api_key_comfy_org": [
+            "API_KEY_COMFY_ORG"
+          ],
+          "unique_id": [
+            "UNIQUE_ID"
+          ],
+          "comfy_usage_source": [
+            "COMFY_USAGE_SOURCE"
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "audio"
+        ],
+        "hidden": [
+          "auth_token_comfy_org",
+          "api_key_comfy_org",
+          "unique_id",
+          "comfy_usage_source"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "AUDIO"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "AUDIO"
+      ],
+      "output_tooltips": [
+        null
+      ],
+      "output_matchtypes": null,
+      "name": "ElevenLabsAudioIsolation",
+      "display_name": "ElevenLabs Voice Isolation",
+      "description": "Remove background noise from audio, isolating vocals or speech.",
+      "python_module": "comfy_api_nodes.nodes_elevenlabs",
+      "category": "partner/audio/ElevenLabs",
+      "output_node": false,
+      "deprecated": false,
+      "experimental": false,
+      "dev_only": false,
+      "api_node": true,
+      "price_badge": {
+        "engine": "jsonata",
+        "depends_on": {
+          "widgets": [],
+          "inputs": [],
+          "input_groups": []
+        },
+        "expr": "{\"type\":\"usd\",\"usd\":0.24,\"format\":{\"approximate\":true,\"suffix\":\"/minute\"}}"
+      },
+      "search_aliases": null,
+      "essentials_category": null,
+      "has_intermediate_output": false
+    },
+    "MeshyImageToModelNode": {
+      "input": {
+        "required": {
+          "model": [
+            "COMBO",
+            {
+              "multiselect": false,
+              "options": [
+                "meshy-7.1",
+                "meshy-7",
+                "meshy-6",
+                "latest"
+              ]
+            }
+          ],
+          "image": [
+            "IMAGE",
+            {}
+          ],
+          "should_remesh": [
+            "COMFY_DYNAMICCOMBO_V3",
+            {
+              "tooltip": "When set to false, returns an unprocessed triangular mesh.",
+              "options": [
+                {
+                  "key": "true",
+                  "inputs": {
+                    "required": {
+                      "topology": [
+                        "COMBO",
+                        {
+                          "multiselect": false,
+                          "options": [
+                            "triangle",
+                            "quad"
+                          ]
+                        }
+                      ],
+                      "target_polycount": [
+                        "INT",
+                        {
+                          "default": 300000,
+                          "min": 100,
+                          "max": 300000,
+                          "display": "number"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "false",
+                  "inputs": {
+                    "required": {}
+                  }
+                }
+              ]
+            }
+          ],
+          "symmetry_mode": [
+            "COMBO",
+            {
+              "multiselect": false,
+              "options": [
+                "auto",
+                "on",
+                "off"
+              ]
+            }
+          ],
+          "should_texture": [
+            "COMFY_DYNAMICCOMBO_V3",
+            {
+              "tooltip": "Determines whether textures are generated. Setting it to false skips the texture phase and returns a mesh without textures.",
+              "options": [
+                {
+                  "key": "true",
+                  "inputs": {
+                    "required": {
+                      "enable_pbr": [
+                        "BOOLEAN",
+                        {
+                          "tooltip": "Generate PBR Maps (metallic, roughness, normal) in addition to the base color.",
+                          "default": false
+                        }
+                      ],
+                      "texture_prompt": [
+                        "STRING",
+                        {
+                          "tooltip": "Provide a text prompt to guide the texturing process. Maximum 600 characters. Cannot be used at the same time as 'texture_image'.",
+                          "default": "",
+                          "multiline": true
+                        }
+                      ],
+                      "texture_resolution": [
+                        "COMBO",
+                        {
+                          "tooltip": "Base color texture resolution. Higher resolutions capture more surface detail.",
+                          "multiselect": false,
+                          "options": [
+                            "2k",
+                            "4k",
+                            "8k"
+                          ]
+                        }
+                      ]
+                    },
+                    "optional": {
+                      "texture_image": [
+                        "IMAGE",
+                        {
+                          "tooltip": "Only one of 'texture_image' or 'texture_prompt' may be used at the same time."
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "false",
+                  "inputs": {
+                    "required": {}
+                  }
+                }
+              ]
+            }
+          ],
+          "pose_mode": [
+            "COMBO",
+            {
+              "tooltip": "Specify the pose mode for the generated model.",
+              "advanced": true,
+              "multiselect": false,
+              "options": [
+                "",
+                "A-pose",
+                "T-pose"
+              ]
+            }
+          ],
+          "seed": [
+            "INT",
+            {
+              "tooltip": "Seed controls whether the node should re-run; results are non-deterministic regardless of seed.",
+              "default": 0,
+              "min": 0,
+              "max": 2147483647,
+              "control_after_generate": true,
+              "display": "number"
+            }
+          ],
+          "ultra_mode": [
+            "BOOLEAN",
+            {
+              "tooltip": "Run an extra refinement pass for higher-fidelity geometry with finer surface detail.",
+              "default": false
+            }
+          ]
+        },
+        "optional": {
+          "ultra_resolution": [
+            "COMBO",
+            {
+              "tooltip": "Resolution of the ultra pass: 2k runs it at 2048³, 4k at 4096³ for the finest surface detail. 4k requires meshy-7.1 or latest. Used only when ultra_mode is enabled.",
+              "multiselect": false,
+              "options": [
+                "2k",
+                "4k"
+              ]
+            }
+          ]
+        },
+        "hidden": {
+          "auth_token_comfy_org": [
+            "AUTH_TOKEN_COMFY_ORG"
+          ],
+          "api_key_comfy_org": [
+            "API_KEY_COMFY_ORG"
+          ],
+          "unique_id": [
+            "UNIQUE_ID"
+          ],
+          "comfy_usage_source": [
+            "COMFY_USAGE_SOURCE"
+          ],
+          "prompt": [
+            "PROMPT"
+          ],
+          "extra_pnginfo": [
+            "EXTRA_PNGINFO"
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "model",
+          "image",
+          "should_remesh",
+          "symmetry_mode",
+          "should_texture",
+          "pose_mode",
+          "seed",
+          "ultra_mode"
+        ],
+        "optional": [
+          "ultra_resolution"
+        ],
+        "hidden": [
+          "auth_token_comfy_org",
+          "api_key_comfy_org",
+          "unique_id",
+          "comfy_usage_source",
+          "prompt",
+          "extra_pnginfo"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "STRING",
+        "MESHY_TASK_ID",
+        "FILE_3D_GLB",
+        "FILE_3D_FBX"
+      ],
+      "output_is_list": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "output_name": [
+        "model_file",
+        "meshy_task_id",
+        "GLB",
+        "FBX"
+      ],
+      "output_tooltips": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "output_matchtypes": null,
+      "name": "MeshyImageToModelNode",
+      "display_name": "Meshy: Image to Model",
+      "description": "",
+      "python_module": "comfy_api_nodes.nodes_meshy",
+      "category": "partner/3d/Meshy",
+      "output_node": true,
+      "deprecated": false,
+      "experimental": false,
+      "dev_only": false,
+      "api_node": true,
+      "price_badge": {
+        "engine": "jsonata",
+        "depends_on": {
+          "widgets": [
+            {
+              "name": "model",
+              "type": "COMBO"
+            },
+            {
+              "name": "should_texture",
+              "type": "COMFY_DYNAMICCOMBO_V3"
+            },
+            {
+              "name": "should_texture.texture_resolution",
+              "type": "COMBO"
+            },
+            {
+              "name": "ultra_mode",
+              "type": "BOOLEAN"
+            }
+          ],
+          "inputs": [],
+          "input_groups": []
+        },
+        "expr": "\n                (\n                  $textured := widgets.should_texture = \"true\";\n                  $resolution := $textured ? $lookup(widgets, \"should_texture.texture_resolution\") : \"2k\";\n                  $credits := ($textured ? 30 : 20)\n                    + ($resolution = \"8k\" ? 5 : 0)\n                    + ((widgets.ultra_mode and widgets.model in [\"meshy-7.1\", \"meshy-7\", \"latest\"]) ? 5 : 0);\n                  {\"type\":\"usd\",\"usd\": $credits * 0.0572}\n                )\n                "
+      },
+      "search_aliases": null,
+      "essentials_category": null,
+      "has_intermediate_output": false
+    },
+    "LoadImage": {
+      "input": {
+        "required": {
+          "image": [
+            [
+              "4daa65180ddc39dd3c6feb3fcff5650321451a7cee1242fc5a72a5c89ef412d7.png"
+            ],
+            {
+              "image_upload": true
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "image"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "IMAGE",
+        "MASK"
+      ],
+      "output_is_list": [
+        false,
+        false
+      ],
+      "output_name": [
+        "IMAGE",
+        "MASK"
+      ],
+      "name": "LoadImage",
+      "display_name": "Load Image",
+      "description": "",
+      "python_module": "nodes",
+      "category": "image",
+      "output_node": false,
+      "has_intermediate_output": false,
+      "search_aliases": [
+        "load image",
+        "open image",
+        "import image",
+        "image input",
+        "upload image",
+        "read image",
+        "image loader"
+      ],
+      "essentials_category": "Basics"
+    },
+    "LoadVideo": {
+      "input": {
+        "required": {
+          "file": [
+            "COMBO",
+            {
+              "multiselect": false,
+              "options": [
+                "9760f6b08a4dc22fb735f155a2d8a7b7f214ba66433d0cbc8ac76e231b29f2f5.mp4"
+              ],
+              "video_upload": true
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "file"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "VIDEO"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "VIDEO"
+      ],
+      "output_tooltips": [
+        null
+      ],
+      "output_matchtypes": null,
+      "name": "LoadVideo",
+      "display_name": "Load Video",
+      "description": "",
+      "python_module": "comfy_extras.nodes_video",
+      "category": "video",
+      "output_node": false,
+      "deprecated": false,
+      "experimental": false,
+      "dev_only": false,
+      "api_node": false,
+      "price_badge": null,
+      "search_aliases": [
+        "import video",
+        "open video",
+        "video file"
+      ],
+      "essentials_category": "Basics",
+      "has_intermediate_output": true
+    },
+    "LoadAudio": {
+      "input": {
+        "required": {
+          "audio": [
+            "COMBO",
+            {
+              "multiselect": false,
+              "options": [
+                "9760f6b08a4dc22fb735f155a2d8a7b7f214ba66433d0cbc8ac76e231b29f2f5.mp4"
+              ],
+              "audio_upload": true
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "audio"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "AUDIO"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "AUDIO"
+      ],
+      "output_tooltips": [
+        null
+      ],
+      "output_matchtypes": null,
+      "name": "LoadAudio",
+      "display_name": "Load Audio",
+      "description": "",
+      "python_module": "comfy_extras.nodes_audio",
+      "category": "audio",
+      "output_node": false,
+      "deprecated": false,
+      "experimental": false,
+      "dev_only": false,
+      "api_node": false,
+      "price_badge": null,
+      "search_aliases": [
+        "import audio",
+        "open audio",
+        "audio file"
+      ],
+      "essentials_category": "Audio",
+      "has_intermediate_output": false
+    },
+    "SaveAudioAdvanced": {
+      "input": {
+        "required": {
+          "audio": [
+            "AUDIO",
+            {
+              "tooltip": "The audio to save."
+            }
+          ],
+          "filename_prefix": [
+            "STRING",
+            {
+              "tooltip": "The prefix for the file to save. May include formatting tokens such as %date:yyyy-MM-dd%.",
+              "default": "audio/ComfyUI",
+              "multiline": false
+            }
+          ],
+          "format": [
+            "COMFY_DYNAMICCOMBO_V3",
+            {
+              "tooltip": "The file format in which to save the audio.",
+              "options": [
+                {
+                  "key": "flac",
+                  "inputs": {
+                    "required": {}
+                  }
+                },
+                {
+                  "key": "mp3",
+                  "inputs": {
+                    "required": {
+                      "quality": [
+                        "COMBO",
+                        {
+                          "default": "V0",
+                          "multiselect": false,
+                          "options": [
+                            "V0",
+                            "128k",
+                            "320k"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "opus",
+                  "inputs": {
+                    "required": {
+                      "quality": [
+                        "COMBO",
+                        {
+                          "default": "128k",
+                          "multiselect": false,
+                          "options": [
+                            "64k",
+                            "96k",
+                            "128k",
+                            "192k",
+                            "320k"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "hidden": {
+          "prompt": [
+            "PROMPT"
+          ],
+          "extra_pnginfo": [
+            "EXTRA_PNGINFO"
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "audio",
+          "filename_prefix",
+          "format"
+        ],
+        "hidden": [
+          "prompt",
+          "extra_pnginfo"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "AUDIO"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "audio"
+      ],
+      "output_tooltips": [
+        null
+      ],
+      "output_matchtypes": null,
+      "name": "SaveAudioAdvanced",
+      "display_name": "Save Audio (Advanced)",
+      "description": "Saves the input audio to your ComfyUI output directory.",
+      "python_module": "comfy_extras.nodes_audio",
+      "category": "audio",
+      "output_node": true,
+      "deprecated": false,
+      "experimental": false,
+      "dev_only": false,
+      "api_node": false,
+      "price_badge": null,
+      "search_aliases": [
+        "save audio",
+        "export audio",
+        "output audio",
+        "write audio",
+        "flac",
+        "mp3",
+        "opus"
+      ],
+      "essentials_category": null,
+      "has_intermediate_output": false
+    },
+    "SaveVideo": {
+      "input": {
+        "required": {
+          "video": [
+            "VIDEO",
+            {
+              "tooltip": "The video to save."
+            }
+          ],
+          "filename_prefix": [
+            "STRING",
+            {
+              "tooltip": "The prefix for the file to save. This may include formatting information such as %date:yyyy-MM-dd% or %Empty Latent Image.width% to include values from nodes.",
+              "default": "video/ComfyUI",
+              "multiline": false
+            }
+          ],
+          "format": [
+            "COMFY_DYNAMICCOMBO_V3",
+            {
+              "tooltip": "The output container. Auto uses MP4 for Auto/H.264 and WebM for AV1. MP4, MKV, and WebM select a specific container.",
+              "options": [
+                {
+                  "key": "auto",
+                  "inputs": {
+                    "required": {
+                      "codec": [
+                        "COMFY_DYNAMICCOMBO_V3",
+                        {
+                          "tooltip": "The output video codec. Auto preserves a compatible source stream. H.264 and AV1 re-encoding support SDR, HDR (HLG), and HDR PQ.",
+                          "options": [
+                            {
+                              "key": "auto",
+                              "inputs": {
+                                "required": {}
+                              }
+                            },
+                            {
+                              "key": "h264",
+                              "inputs": {
+                                "required": {},
+                                "optional": {
+                                  "encoding": [
+                                    "COMFY_DYNAMICCOMBO_V3",
+                                    {
+                                      "display_name": "encoding mode",
+                                      "tooltip": "Automatic preserves compatible H.264 streams. Re-encode applies custom encoding options.",
+                                      "options": [
+                                        {
+                                          "key": "auto",
+                                          "inputs": {
+                                            "required": {}
+                                          }
+                                        },
+                                        {
+                                          "key": "re-encode",
+                                          "inputs": {
+                                            "required": {
+                                              "crf": [
+                                                "FLOAT",
+                                                {
+                                                  "tooltip": "Lower values produce higher quality and larger files.",
+                                                  "default": 18,
+                                                  "min": 0,
+                                                  "max": 51,
+                                                  "step": 1
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              }
+                            },
+                            {
+                              "key": "av1",
+                              "inputs": {
+                                "required": {},
+                                "optional": {
+                                  "encoding": [
+                                    "COMFY_DYNAMICCOMBO_V3",
+                                    {
+                                      "display_name": "encoding mode",
+                                      "tooltip": "Automatic preserves compatible AV1 streams. Re-encode applies custom encoding options.",
+                                      "options": [
+                                        {
+                                          "key": "auto",
+                                          "inputs": {
+                                            "required": {}
+                                          }
+                                        },
+                                        {
+                                          "key": "re-encode",
+                                          "inputs": {
+                                            "required": {
+                                              "crf": [
+                                                "FLOAT",
+                                                {
+                                                  "tooltip": "Lower values produce higher quality and larger files.",
+                                                  "default": 24,
+                                                  "min": 0,
+                                                  "max": 63,
+                                                  "step": 1
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "mp4",
+                  "inputs": {
+                    "required": {
+                      "codec": [
+                        "COMFY_DYNAMICCOMBO_V3",
+                        {
+                          "tooltip": "The output video codec. Auto preserves a compatible source stream. H.264 and AV1 re-encoding support SDR, HDR (HLG), and HDR PQ.",
+                          "options": [
+                            {
+                              "key": "auto",
+                              "inputs": {
+                                "required": {}
+                              }
+                            },
+                            {
+                              "key": "h264",
+                              "inputs": {
+                                "required": {},
+                                "optional": {
+                                  "encoding": [
+                                    "COMFY_DYNAMICCOMBO_V3",
+                                    {
+                                      "display_name": "encoding mode",
+                                      "tooltip": "Automatic preserves compatible H.264 streams. Re-encode applies custom encoding options.",
+                                      "options": [
+                                        {
+                                          "key": "auto",
+                                          "inputs": {
+                                            "required": {}
+                                          }
+                                        },
+                                        {
+                                          "key": "re-encode",
+                                          "inputs": {
+                                            "required": {
+                                              "crf": [
+                                                "FLOAT",
+                                                {
+                                                  "tooltip": "Lower values produce higher quality and larger files.",
+                                                  "default": 18,
+                                                  "min": 0,
+                                                  "max": 51,
+                                                  "step": 1
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              }
+                            },
+                            {
+                              "key": "av1",
+                              "inputs": {
+                                "required": {},
+                                "optional": {
+                                  "encoding": [
+                                    "COMFY_DYNAMICCOMBO_V3",
+                                    {
+                                      "display_name": "encoding mode",
+                                      "tooltip": "Automatic preserves compatible AV1 streams. Re-encode applies custom encoding options.",
+                                      "options": [
+                                        {
+                                          "key": "auto",
+                                          "inputs": {
+                                            "required": {}
+                                          }
+                                        },
+                                        {
+                                          "key": "re-encode",
+                                          "inputs": {
+                                            "required": {
+                                              "crf": [
+                                                "FLOAT",
+                                                {
+                                                  "tooltip": "Lower values produce higher quality and larger files.",
+                                                  "default": 24,
+                                                  "min": 0,
+                                                  "max": 63,
+                                                  "step": 1
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "mkv",
+                  "inputs": {
+                    "required": {
+                      "codec": [
+                        "COMFY_DYNAMICCOMBO_V3",
+                        {
+                          "tooltip": "The output video codec. Auto preserves a compatible source stream. H.264 and AV1 re-encoding support SDR, HDR (HLG), and HDR PQ.",
+                          "options": [
+                            {
+                              "key": "auto",
+                              "inputs": {
+                                "required": {}
+                              }
+                            },
+                            {
+                              "key": "h264",
+                              "inputs": {
+                                "required": {},
+                                "optional": {
+                                  "encoding": [
+                                    "COMFY_DYNAMICCOMBO_V3",
+                                    {
+                                      "display_name": "encoding mode",
+                                      "tooltip": "Automatic preserves compatible H.264 streams. Re-encode applies custom encoding options.",
+                                      "options": [
+                                        {
+                                          "key": "auto",
+                                          "inputs": {
+                                            "required": {}
+                                          }
+                                        },
+                                        {
+                                          "key": "re-encode",
+                                          "inputs": {
+                                            "required": {
+                                              "crf": [
+                                                "FLOAT",
+                                                {
+                                                  "tooltip": "Lower values produce higher quality and larger files.",
+                                                  "default": 18,
+                                                  "min": 0,
+                                                  "max": 51,
+                                                  "step": 1
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              }
+                            },
+                            {
+                              "key": "av1",
+                              "inputs": {
+                                "required": {},
+                                "optional": {
+                                  "encoding": [
+                                    "COMFY_DYNAMICCOMBO_V3",
+                                    {
+                                      "display_name": "encoding mode",
+                                      "tooltip": "Automatic preserves compatible AV1 streams. Re-encode applies custom encoding options.",
+                                      "options": [
+                                        {
+                                          "key": "auto",
+                                          "inputs": {
+                                            "required": {}
+                                          }
+                                        },
+                                        {
+                                          "key": "re-encode",
+                                          "inputs": {
+                                            "required": {
+                                              "crf": [
+                                                "FLOAT",
+                                                {
+                                                  "tooltip": "Lower values produce higher quality and larger files.",
+                                                  "default": 24,
+                                                  "min": 0,
+                                                  "max": 63,
+                                                  "step": 1
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "webm",
+                  "inputs": {
+                    "required": {
+                      "codec": [
+                        "COMFY_DYNAMICCOMBO_V3",
+                        {
+                          "tooltip": "The output video codec. Auto preserves a compatible source stream. H.264 and AV1 re-encoding support SDR, HDR (HLG), and HDR PQ.",
+                          "options": [
+                            {
+                              "key": "auto",
+                              "inputs": {
+                                "required": {}
+                              }
+                            },
+                            {
+                              "key": "av1",
+                              "inputs": {
+                                "required": {},
+                                "optional": {
+                                  "encoding": [
+                                    "COMFY_DYNAMICCOMBO_V3",
+                                    {
+                                      "display_name": "encoding mode",
+                                      "tooltip": "Automatic preserves compatible AV1 streams. Re-encode applies custom encoding options.",
+                                      "options": [
+                                        {
+                                          "key": "auto",
+                                          "inputs": {
+                                            "required": {}
+                                          }
+                                        },
+                                        {
+                                          "key": "re-encode",
+                                          "inputs": {
+                                            "required": {
+                                              "crf": [
+                                                "FLOAT",
+                                                {
+                                                  "tooltip": "Lower values produce higher quality and larger files.",
+                                                  "default": 24,
+                                                  "min": 0,
+                                                  "max": 63,
+                                                  "step": 1
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "optional": {
+          "codec": [
+            "COMFY_DYNAMICCOMBO_V3",
+            {
+              "tooltip": "The output video codec. Auto preserves a compatible source stream. H.264 and AV1 re-encoding support SDR, HDR (HLG), and HDR PQ.",
+              "hidden": true,
+              "options": [
+                {
+                  "key": "auto",
+                  "inputs": {
+                    "required": {}
+                  }
+                },
+                {
+                  "key": "h264",
+                  "inputs": {
+                    "required": {},
+                    "optional": {
+                      "encoding": [
+                        "COMFY_DYNAMICCOMBO_V3",
+                        {
+                          "display_name": "encoding mode",
+                          "tooltip": "Automatic preserves compatible H.264 streams. Re-encode applies custom encoding options.",
+                          "options": [
+                            {
+                              "key": "auto",
+                              "inputs": {
+                                "required": {}
+                              }
+                            },
+                            {
+                              "key": "re-encode",
+                              "inputs": {
+                                "required": {
+                                  "crf": [
+                                    "FLOAT",
+                                    {
+                                      "tooltip": "Lower values produce higher quality and larger files.",
+                                      "default": 18,
+                                      "min": 0,
+                                      "max": 51,
+                                      "step": 1
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "av1",
+                  "inputs": {
+                    "required": {},
+                    "optional": {
+                      "encoding": [
+                        "COMFY_DYNAMICCOMBO_V3",
+                        {
+                          "display_name": "encoding mode",
+                          "tooltip": "Automatic preserves compatible AV1 streams. Re-encode applies custom encoding options.",
+                          "options": [
+                            {
+                              "key": "auto",
+                              "inputs": {
+                                "required": {}
+                              }
+                            },
+                            {
+                              "key": "re-encode",
+                              "inputs": {
+                                "required": {
+                                  "crf": [
+                                    "FLOAT",
+                                    {
+                                      "tooltip": "Lower values produce higher quality and larger files.",
+                                      "default": 24,
+                                      "min": 0,
+                                      "max": 63,
+                                      "step": 1
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "hidden": {
+          "prompt": [
+            "PROMPT"
+          ],
+          "extra_pnginfo": [
+            "EXTRA_PNGINFO"
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "video",
+          "filename_prefix",
+          "format"
+        ],
+        "optional": [
+          "codec"
+        ],
+        "hidden": [
+          "prompt",
+          "extra_pnginfo"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "VIDEO"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "video"
+      ],
+      "output_tooltips": [
+        "The input video, unchanged."
+      ],
+      "output_matchtypes": null,
+      "name": "SaveVideo",
+      "display_name": "Save Video",
+      "description": "Saves the input videos to your ComfyUI output directory.",
+      "python_module": "comfy_extras.nodes_video",
+      "category": "video",
+      "output_node": true,
+      "deprecated": false,
+      "experimental": false,
+      "dev_only": false,
+      "api_node": false,
+      "price_badge": null,
+      "search_aliases": [
+        "export video"
+      ],
+      "essentials_category": "Basics",
+      "has_intermediate_output": false
+    },
+    "SaveGLB": {
+      "input": {
+        "required": {
+          "mesh": [
+            "MESH,FILE_3D_GLB,FILE_3D_GLTF,FILE_3D_OBJ,FILE_3D_FBX,FILE_3D_STL,FILE_3D_USDZ,FILE_3D_PLY,FILE_3D_SPLAT,FILE_3D_SPZ,FILE_3D_KSPLAT,FILE_3D_SPLAT_ANY,FILE_3D_POINT_CLOUD_ANY,FILE_3D",
+            {
+              "tooltip": "Mesh or 3D file to save"
+            }
+          ],
+          "filename_prefix": [
+            "STRING",
+            {
+              "default": "3d/ComfyUI",
+              "multiline": false
+            }
+          ]
+        },
+        "hidden": {
+          "prompt": [
+            "PROMPT"
+          ],
+          "extra_pnginfo": [
+            "EXTRA_PNGINFO"
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "mesh",
+          "filename_prefix"
+        ],
+        "hidden": [
+          "prompt",
+          "extra_pnginfo"
+        ]
+      },
+      "is_input_list": false,
+      "output": [],
+      "output_is_list": [],
+      "output_name": [],
+      "output_tooltips": [],
+      "output_matchtypes": null,
+      "name": "SaveGLB",
+      "display_name": "Save 3D Model",
+      "description": "",
+      "python_module": "comfy_extras.nodes_save_3d",
+      "category": "3d",
+      "output_node": true,
+      "deprecated": false,
+      "experimental": false,
+      "dev_only": false,
+      "api_node": false,
+      "price_badge": null,
+      "search_aliases": [
+        "export 3d model",
+        "save mesh"
+      ],
+      "essentials_category": "Basics",
+      "has_intermediate_output": false
+    }
+  }
+}
