@@ -2,13 +2,15 @@
 
 [🚀 Open the live app](https://open-take-studio.onrender.com)
 
-**Post-submission reviewer access — November 3, 2026.** Open the live app to explore the cinematic homepage, moving previews, interactive 3D, and curated work immediately. Your isolated browser workspace starts automatically; viewing, remixing examples, and local editing/export need no account, owner password, or API key. **Generate** opens a dismissible connection dialog when needed. Connect your own [Comfy workspace API key](https://platform.comfy.org/profile/api-keys) with credits and the required model access, then choose Generate again: connecting never automatically submits a generation. Closing the dialog preserves your prompt, references, and selected take. [Private owner sign-in](https://open-take-studio.onrender.com/login) remains separate.
+**[Open the full studio at the original submitted URL](https://open-take-studio-review.vercel.app/)** — the cinematic homepage and authoring app now open directly, keeping the Vercel address. Render remains the application and persistent-storage backend.
 
-Reviewer keys are encrypted on the server, expire after **12 hours**, and are removed on disconnect. The anonymous browser session lasts **7 days**. Export projects before signing out, clearing cookies, or changing browsers. Reconnect the same key to resume that workspace's pending jobs; a different key requires a new reviewer workspace. Never put an API key in a prompt, project package, or chat.
+**Post-submission arrival and routing update — November 3, 2026.** Explore the cinematic homepage, moving previews, interactive 3D, recipes, and curated work without a login, API key, or reserved workspace. An isolated workspace starts only when you create, import, edit/remix, or submit a key connection. If creation is temporarily at capacity, the showcase stays visible and your current prompt and selected files remain with a retry action. **Generate** opens a dismissible connection dialog when needed. Connect your own [Comfy workspace API key](https://platform.comfy.org/profile/api-keys) with credits and model access, then choose Generate again. Connecting never starts a generation automatically. [Private owner sign-in](https://open-take-studio.onrender.com/login) remains separate.
+
+Reviewer keys are encrypted on the server, expire after **12 hours**, and are removed on disconnect. Once created, the private browser session lasts **7 days**. The Vercel and Render hostnames have separate browser cookies and workspaces: return through the same URL and browser, or use an exported project package to transfer work. Export projects before signing out, clearing cookies, or changing browsers. Reconnect the same key to resume that workspace's pending jobs; a different key requires a new reviewer workspace. Never put an API key in a prompt, project package, or chat.
 
 **The owner's original event credit allocation has ended.** Reviewer requests use only the reviewer's connected key. Live HTTP checks verified isolated media access, saving, downloads, exports, invalid-key rejection, and connect/disconnect/reconnect with the known unfunded key. Concurrent execution and recovery were tested with mocked providers. A fresh live generation with a funded reviewer key has **not** been verified.
 
-This update follows the submission. The original reviewer demonstrations and immutable `v0.1.0-submission` release below remain unchanged; the local setup instructions still apply to that source snapshot.
+This update follows the submission. [Current post-submission authoring source](https://github.com/sidbug248/open-take-studio/tree/codex/authoring-live) includes the hosted access and routing corrections. The original reviewer demonstrations and immutable `v0.1.0-submission` release below remain unchanged; the local setup instructions still apply to that source snapshot.
 
 **A local creative studio for branching films, directed 3D scenes, editable sound-driven motion, and source-preserving iteration.**
 
@@ -16,11 +18,12 @@ Open Take combines a React/TypeScript interface, Express, SQLite, managed local 
 
 ## See it in action
 
-- [Open the public reviewer demo](https://open-take-studio-review.vercel.app/).
+- [Open the full studio at the submitted URL](https://open-take-studio-review.vercel.app/).
+- [Preserved competition demo and downloads](https://open-take-studio-review.vercel.app/competition/).
 - [Watch the 100-second competition video](https://x.com/ayosiddy/status/2117645518000279974).
 - [Download the tagged source release](https://github.com/sidbug248/open-take-studio/releases/tag/v0.1.0-submission).
 
-The reviewer demo preserves the submission's playable outputs. The [live authoring studio](https://open-take-studio.onrender.com) offers isolated reviewer workspaces and separate private owner sign-in. You can also run the source locally with your own authorized Comfy credentials.
+The competition page preserves the submission's playable outputs and all original video, film, and download URLs. The [live authoring studio](https://open-take-studio.onrender.com) offers isolated reviewer workspaces and separate private owner sign-in. You can also run the source locally with your own authorized Comfy credentials.
 
 ## Try the three connected journeys
 
