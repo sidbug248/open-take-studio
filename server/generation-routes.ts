@@ -10,6 +10,7 @@ import { validateAssetConstraints, validateRouterBodySize } from './input-valida
 import { hostedInput } from './hosted-input-cache.ts';
 import { summarizeInlineMedia } from './project-routes.ts';
 import { listModelDependencies, validateModelDependencies } from './model-dependencies.ts';
+import {bindJobCredential,type CredentialSource} from './credential-source.ts';
 
 const publicJob=(job:Job)=>({...job,inputs:summarizeInlineMedia(job.inputs),result:summarizeInlineMedia(job.result)});
 
@@ -23,11 +24,13 @@ export function recordedChanges(parent:Take|undefined,current:Pick<Take,'modelId
   for(const key of new Set([...Object.keys(parent.settings),...Object.keys(current.settings)]))if(canonical(parent.settings[key])!==canonical(current.settings[key]))changes.push({field:`settings.${key}`,before:parent.settings[key]??null,after:current.settings[key]??null});
   return changes;
 }
-export function createGenerationRouter(store:Store,media:LocalFileStorage,worker:GenerationWorker){
+export function createGenerationRouter(store:Store,media:LocalFileStorage,worker:GenerationWorker,credentialSource?:CredentialSource){
   const api=Router();
+  api.use('/jobs',(req,_res,next)=>{if(credentialSource&&req.method==='POST')credentialSource.resolve();next();});
   api.get('/models',(_req,res)=>res.json({models:MODEL_REGISTRY}));
   api.get('/projects/:id/model-dependencies',(req,res)=>{if(!store.getProject(req.params.id)){res.status(404).json({error:'Project not found.'});return;}res.json({dependencies:listModelDependencies(store,req.params.id)});});
   api.post('/generate',async(req,res)=>{
+    if(credentialSource){const credential=credentialSource.resolve();if(JSON.stringify(req.body).includes(credential.apiKey)){res.status(400).json({error:'Keep API credentials out of prompts and project inputs.'});return;}}
     const parsed=requestSchema.safeParse(req.body);if(!parsed.success){res.status(400).json({error:parsed.error.issues.map(x=>`${x.path.join('.')}: ${x.message}`).join('; ')});return;}
     const body=parsed.data;
     const project=store.getProject(body.projectId);if(!project){res.status(404).json({error:'Project not found.'});return;}
@@ -66,7 +69,7 @@ export function createGenerationRouter(store:Store,media:LocalFileStorage,worker
       for(const input of model.inputs.filter(i=>i.transport==='cloud-asset-url')){
         const selected=inputAssets[input.key];if(!selected)continue;
         const assets=Array.isArray(selected)?selected:[selected],urls:string[]=[];
-        for(const asset of assets)urls.push((await hostedInput(asset,media,store.dataDir)).url);
+        for(const asset of assets)urls.push((await hostedInput(asset,media,store.dataDir,{credentialSource})).url);
         inputData[input.key]=input.multiple?urls:urls[0];
       }
       inputs=buildModelInput(model.id,{prompt:body.prompt,settings,inputData});validateRouterBodySize(inputs);
@@ -79,7 +82,7 @@ export function createGenerationRouter(store:Store,media:LocalFileStorage,worker
     // Input resolution awaits disk I/O. Recheck after that gap before committing admission.
     const concurrent=store.getJobByIdempotencyKey(idempotencyKey);
     if(concurrent){if(concurrent.fingerprint!==fingerprint){res.status(409).json({error:'Submission identity belongs to different inputs.'});return;}res.json({take:store.getTake(concurrent.takeId),job:publicJob(concurrent)});return;}
-    store.saveTakeAndJob(take,job);
+    credentialSource?.resolve();store.saveTakeAndJob(take,job);if(credentialSource)bindJobCredential(store,job.id,credentialSource);
     res.status(202).json({take,job:publicJob(job)});
     void worker.tick();
   });

@@ -3,11 +3,13 @@ import { createHash } from 'node:crypto';
 import type { Asset } from '../shared/types.ts';
 import { downloadMedia } from './download.ts';
 import { identifyMedia } from './media.ts';
+import {credentialSafeError,environmentCredentialSource,type CredentialSource} from './credential-source.ts';
 
 const CLOUD_ASSETS = 'https://cloud.comfy.org/api/v2/assets';
 /** Server-only transport evidence. url contains a temporary signed credential:
  * retain it only in protected execution storage, never logs or public audit text. */
 export interface HostedMediaReference {
+  credentialScopeId?: string;
   host: 'comfy-cloud';
   assetId: string;
   sourceAssetId: string;
@@ -22,7 +24,9 @@ export interface HostedMediaReference {
   verifiedAt: string;
 }
 export type MediaTransportOptions = {
+  credentialSource?: CredentialSource;
   apiKey?: string;
+  signal?: AbortSignal;
   fetchImpl?: typeof fetch;
   download?: typeof downloadMedia;
   now?: () => number;
@@ -30,12 +34,17 @@ export type MediaTransportOptions = {
 
 /** Uploads one explicitly selected owned asset. No workflow or inference endpoint
  * is used. The caller must establish project ownership before calling this. */
-export async function uploadRouterInputAsset(asset: Asset, bytes: Uint8Array, options: MediaTransportOptions = {}): Promise<HostedMediaReference> {
+export async function uploadRouterInputAsset(asset:Asset,bytes:Uint8Array,options:MediaTransportOptions={}):Promise<HostedMediaReference>{
+  const credential=options.credentialSource?options.credentialSource.resolve():options.apiKey!==undefined?{apiKey:options.apiKey.trim(),id:createHash('sha256').update(options.apiKey).digest('hex'),signal:options.signal}:environmentCredentialSource.resolve();
+  if(!credential.apiKey)throw new Error('Project COMFY_API_KEY is required for temporary media hosting.');
+  try{return{...await uploadWithCredential(asset,bytes,{...options,apiKey:credential.apiKey,signal:credential.signal}),credentialScopeId:credential.id};}catch(error){throw credentialSafeError(error,credential.apiKey);}
+}
+async function uploadWithCredential(asset: Asset, bytes: Uint8Array, options: MediaTransportOptions): Promise<HostedMediaReference> {
   if (!['image', 'video', 'audio'].includes(asset.kind)) throw new Error('Remote model inputs must be image, video or audio assets.');
   const original = Buffer.from(bytes);
   const sourceHash = createHash('sha256').update(original).digest('hex');
   if (sourceHash !== asset.sha256 || original.length !== asset.size) throw new Error('Source media integrity check failed before upload.');
-  const key = (options.apiKey ?? process.env.COMFY_API_KEY)?.trim();
+  const key = options.apiKey?.trim();
   if (!key) throw new Error('Project COMFY_API_KEY is required for temporary media hosting.');
   const now = options.now ?? Date.now;
   const form = new FormData();
@@ -46,7 +55,7 @@ export async function uploadRouterInputAsset(asset: Asset, bytes: Uint8Array, op
   form.append('file', new Blob([new Uint8Array(original)], { type: asset.mimeType }), asset.fileName);
   const response = await (options.fetchImpl ?? fetch)(CLOUD_ASSETS, {
     method: 'POST', headers: { Authorization: `Bearer ${key}` }, body: form,
-    redirect: 'error', signal: AbortSignal.timeout(180_000),
+    redirect: 'error', signal: options.signal?AbortSignal.any([options.signal,AbortSignal.timeout(180_000)]):AbortSignal.timeout(180_000),
   });
   if (!response.ok) {
     await response.body?.cancel();

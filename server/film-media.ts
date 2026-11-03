@@ -17,7 +17,7 @@ export function mediaToolPaths():{ffmpeg:string;ffprobe:string}{
 }
 /** Argument arrays only; filenames and labels never enter a shell. */
 export function runMediaTool(binary:string,args:string[],maxBuffer=32*1024*1024,timeout=120_000):Promise<Buffer>{
-  const childEnv={...process.env};delete childEnv.COMFY_API_KEY;
+  const childEnv=Object.fromEntries(['PATH','SystemRoot','TEMP','TMP','TMPDIR','HOME','LANG'].filter(key=>process.env[key]!==undefined).map(key=>[key,process.env[key]!]));
   return new Promise((resolve,reject)=>execFile(binary,args,{windowsHide:true,encoding:'buffer',maxBuffer,timeout,env:childEnv},(error,stdout,stderr)=>{
     if(error){const message=Buffer.from(stderr??'').toString('utf8').trim().split('\n').slice(-3).join(' ').slice(0,700);reject(new FilmError(`Media processing failed${message?`: ${message}`:'. Check the source clip and retry.'}`,422));return;}
     resolve(Buffer.from(stdout));

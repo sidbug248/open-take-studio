@@ -6,6 +6,7 @@ import type { WorkflowGraph, WorkflowVersion } from '../shared/workflow-types.ts
 import type { WorkflowPort, WorkflowSnapshot } from './workflow-port.ts';
 import { WorkflowError, rejectWorkflowSecrets } from './workflow-schema.ts';
 import { safeMessage } from './config.ts';
+import {bindJobCredential,suspendCredentialJob,type CredentialSource} from './credential-source.ts';
 
 const terminal=new Set(['COMPLETED','FAILED','BLOCKED','EXPIRED']);
 const now=()=>new Date().toISOString();
@@ -14,7 +15,7 @@ export class WorkflowWorker {
   private active=new Set<string>();
   private streams=new Map<string,AbortController>();
   private stopping=false;
-  constructor(private store:Store,private media:LocalFileStorage,private port:WorkflowPort,private keyConfigured:()=>boolean){}
+  constructor(private store:Store,private media:LocalFileStorage,private port:WorkflowPort,private keyConfigured:()=>boolean,private credentialSource?:CredentialSource){}
   start(){if(this.timer)return;this.stopping=false;this.timer=setInterval(()=>void this.tick(),1500);this.timer.unref();void this.tick();}
   stop(){this.stopping=true;if(this.timer)clearInterval(this.timer);this.timer=undefined;for(const controller of this.streams.values())controller.abort();this.streams.clear();}
   async drain(timeoutMs=25000){this.stop();const deadline=Date.now()+timeoutMs;while(this.active.size&&Date.now()<deadline)await new Promise(resolve=>setTimeout(resolve,25));return this.active.size===0;}
@@ -24,6 +25,7 @@ export class WorkflowWorker {
     const initial=this.store.getJob(id);if(!initial||initial.executionRoute!=='comfy-workflow'||!initial.workflow||terminal.has(initial.state)||this.store.isArchivedJob(id)||this.active.has(id))return;
     this.active.add(id);let job=initial;
     try{
+      if(this.credentialSource)bindJobCredential(this.store,id,this.credentialSource);
       if(!this.keyConfigured()){this.store.patchJob(id,{state:'BLOCKED',errorType:'missing_credentials',errorMessage:'Configure COMFY_API_KEY in the project .env, then retry this native job.'});return;}
       if(!job.requestId){
         if(job.workflow!.submissionOutcome==='unknown'||job.state==='SUBMITTING'){
@@ -51,6 +53,7 @@ export class WorkflowWorker {
       if(job.state==='COLLECTING'&&job.result){await this.collect(job,job.result as WorkflowSnapshot);return;}
       await this.observe(job,await this.port.get(job.requestId));
     }catch(error){
+      if(this.credentialSource&&(!this.credentialSource.available()||(error as {errorType?:string}).errorType==='credential_unavailable')){suspendCredentialJob(this.store,id);return;}
       const current=this.store.getJob(id)!;const e=error as {code?:string;httpStatus?:number;retryAfter?:number;details?:unknown};
       const message=safeMessage(error),retryMs=Math.max(3000,Math.min(300000,(e.retryAfter??5)*1000));
       if(current.requestId){

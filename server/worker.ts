@@ -5,8 +5,9 @@ import type { Job, JobState, MediaKind } from '../shared/types.ts';
 import { extractModelMedia } from './model-registry.ts';
 import { downloadMedia } from './download.ts';
 import { safeMessage } from './config.ts';
+import {bindJobCredential,suspendCredentialJob,type CredentialSource} from './credential-source.ts';
 
-export type WorkerOptions={keyConfigured:()=>boolean;now?:()=>number;download?:typeof downloadMedia;extract?:typeof extractModelMedia;};
+export type WorkerOptions={keyConfigured:()=>boolean;credentialSource?:CredentialSource;now?:()=>number;download?:typeof downloadMedia;extract?:typeof extractModelMedia;};
 const permanent=new Set(['insufficient_credits','not_enabled','model_not_found','invalid_input','content_policy_violation','unauthorized','forbidden','cancelled','queue_timeout','request_not_found']);
 export class GenerationWorker {
   private timer?:ReturnType<typeof setInterval>;
@@ -30,6 +31,7 @@ export class GenerationWorker {
     this.active.add(id);
     let job=initial;
     try {
+      if(this.options.credentialSource)bindJobCredential(this.store,id,this.options.credentialSource);
       if(job.result && job.delivery!=='sync'){
         job=this.store.patchJob(id,{state:'COLLECTING',collectAttempts:(job.collectAttempts||0)+1});
         await this.collect(job,{kind:'json',data:job.result,...job.resultMetadata});return;
@@ -63,6 +65,7 @@ export class GenerationWorker {
       const result=await this.router.result(job.modelId,job.requestId!);
       await this.collect(job,result);
     }catch(err){
+      if(this.options.credentialSource&&(!this.options.credentialSource.available()||(err as {errorType?:string}).errorType==='credential_unavailable')){suspendCredentialJob(this.store,id);return;}
       const e=err as {errorType?:string;httpStatus?:number;status?:number;statusCode?:number;retryAfter?:number;message?:string;requestId?:string;};
       const httpStatus=e.httpStatus??e.status??e.statusCode;
       const errorType=httpStatus===410?'expired':e.errorType||'transport_or_collection_error';

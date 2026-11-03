@@ -23,6 +23,8 @@ services:
         sync: false
       - key: COMFY_API_KEY
         sync: false
+      - key: OTS_CREDENTIAL_ENCRYPTION_KEY
+        sync: false
       - key: OTS_MAX_CONCURRENT_WRITES
         value: "2"
       - key: OTS_MAX_ACTIVE_JOBS
