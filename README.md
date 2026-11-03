@@ -2,9 +2,11 @@
 
 [🚀 Open the live app](https://open-take-studio.onrender.com)
 
-**Post-submission reviewer access — November 3, 2026.** Open the live app to explore three visual journeys immediately. An isolated browser workspace starts automatically; viewing saved media, remixing examples, and local editing/export need no account, OAuth, owner password, or API key. **Generate** opens an optional connection dialog when needed. Connect your own [Comfy workspace API key](https://platform.comfy.org/profile/api-keys) with credits and the required model access, then choose Generate again: connecting never submits a generation automatically. Private owner sign-in remains separate at `/login`.
+**Submitted studio URL: [open-take-studio-review.vercel.app](https://open-take-studio-review.vercel.app/).** The full studio is live at this original URL; the competition demo remains at `/competition/`. Anonymous arrival, private workspaces, existing-media editing, downloads, and proxy isolation have been verified. See [deployment evidence and limits](docs/POST-SUBMISSION-PROXY-2026-11-03.md).
 
-Reviewer keys are encrypted on the server, expire after **12 hours**, and are removed on disconnect. The anonymous browser session lasts **7 days**; export your projects before signing out, clearing cookies, or changing browsers. Reconnect the same key to resume that workspace's pending jobs; a different key requires a new reviewer workspace. Keys never belong in prompts, project packages, or chat.
+**Post-submission reviewer access — November 3, 2026.** Browse the visual Explore page, saved media, recipes, and catalogue without an account, key, cookie, or reserved workspace. A private browser workspace is created only when you start creating, import, remix/edit an example, or submit a key connection. If workspace capacity is full, the current prompt and selected files remain in place with an explicit retry action. Local editing/export need no inference key. **Generate** opens the connection dialog when needed. Connect your own [Comfy workspace API key](https://platform.comfy.org/profile/api-keys) with credits and model access, then choose Generate again: connecting never submits automatically. Private owner sign-in remains separate at `/login`.
+
+Reviewer keys are encrypted on the server, expire after **12 hours**, and are removed on disconnect. Once created, the private reviewer session lasts **7 days**; export your projects before signing out, clearing cookies, or changing browsers. The submitted Vercel URL and direct Render URL have **separate cookies and reviewer workspaces**; use the same URL to return to your work, or export/import a project package to transfer it. Reconnect the same key to resume that workspace's pending jobs; a different key requires a new reviewer workspace. Keys never belong in prompts, project packages, or chat.
 
 **The original event credit allocation has ended.** The owner's key cannot fund new work; reviewer generation uses only that reviewer's connected key. Isolation and recovery are tested with mocked providers. A fresh live generation with a funded reviewer key has **not** been verified. The immutable competition tag and its original media remain unchanged.
 
@@ -14,11 +16,12 @@ Open Take combines a React/TypeScript interface, Express, SQLite, managed local 
 
 ## See it in action
 
-- [Open the public reviewer demo](https://open-take-studio-review.vercel.app/).
+- [Open the studio at its original submitted URL](https://open-take-studio-review.vercel.app/).
+- [Preserved competition demo](https://open-take-studio-review.vercel.app/competition/) — original playable outputs and downloads.
 - [Watch the 100-second competition video](https://x.com/ayosiddy/status/2117645518000279974).
 - [Download the tagged source release](https://github.com/sidbug248/open-take-studio/releases/tag/v0.1.0-submission).
 
-The public reviewer demo preserves the submission's playable outputs. The [full authoring application on Render](https://open-take-studio.onrender.com) offers isolated reviewer workspaces and separate private owner sign-in. Saved media, local processing, and exports need no inference credits. You can also run the source locally with your own authorized Comfy credentials and credits.
+The competition demo preserves the submission's playable outputs and downloads. The submitted URL routes the full application to its Render runtime; the [direct Render entry](https://open-take-studio.onrender.com) remains available separately. Saved media, local processing, and exports need no inference credits. You can also run the source locally with your own authorized Comfy credentials and credits.
 
 ## Try the three connected journeys
 
@@ -79,6 +82,8 @@ Comfy Router and native Comfy Cloud execution remain explicit separate routes in
 The catalogue describes 66 creative outcomes: 55 marked executable (some require source inputs), and 11 explicitly planned/unavailable. The 253-entry model directory is broader than the 21 implemented adapters and must not be interpreted as 253 runnable integrations.
 
 The current three-journey validation includes two fresh H3 videos, actual scene-render input-byte matching, a mixed-soundtrack motion export, saved/reopened edits, project package restoration and standalone branching-film playback. A 154-test host run passed before final display-only changes; the final build/typecheck and visual checks followed those display changes. See `submission-evidence/verification-summary.json` and `docs/first-impression-validation.md` for scope.
+
+The post-submission hosted update passed **192 tests and the production build**, plus live HTTP and rendered-browser checks at the submitted URL. Two isolated reviewer workspaces each completed a 5,318,153-byte image upload, save/edit/reopen, download, and package export without generation. See [the proxy verification record](docs/POST-SUBMISSION-PROXY-2026-11-03.md).
 
 Physical-phone behavior remains unverified. Hosted reviewer workspaces use separate SQLite/media storage, credential-bound jobs and recovery, bounded admission, and explicit curated example copies. The owner's workspace remains private. Reviewer access is an anonymous browser session, not an account system with cross-device recovery or team collaboration. See `deploy/README.md` and `docs/hosted-release-2026-11-03.md` for deployment evidence and current limits.
 
