@@ -4,6 +4,14 @@
 
 Open Take combines a React/TypeScript interface, Express, SQLite, managed local media, Comfy Router, and a separate native Comfy Cloud workflow client. AI inference uses hosted Comfy/provider routes. Scene rendering, media editing, sound mixing, and portable exports run locally.
 
+## See it in action
+
+- [Open the public reviewer demo](https://open-take-studio-review.vercel.app/).
+- [Watch the 100-second competition video](https://x.com/ayosiddy/status/2117645518000279974).
+- [Download the tagged source release](https://github.com/sidbug248/open-take-studio/releases/tag/v0.1.0-submission).
+
+The reviewer demo shows playable outputs; run the source locally for the complete authoring studio.
+
 ## Try the three connected journeys
 
 - **Change the ending:** select an actual video frame, generate a new continuation, preserve the earlier film version, and export either a selected cut or a portable branching player.
