@@ -2,7 +2,7 @@
 
 [🚀 Open the live app](https://open-take-studio.onrender.com)
 
-**Post-submission reviewer access — November 3, 2026.** Choose **Try the studio with your own Comfy key** to enter an isolated workspace without an account, OAuth, or the owner's password. Explore curated saved examples, remix them into your workspace, and use local editing/export tools. To request new AI generation, connect your own [Comfy workspace API key](https://platform.comfy.org/profile/api-keys) with credits and the required model access.
+**Post-submission reviewer access — November 3, 2026.** Open the live app to explore the cinematic homepage, moving previews, interactive 3D, and curated work immediately. Your isolated browser workspace starts automatically; viewing, remixing examples, and local editing/export need no account, owner password, or API key. **Generate** opens a dismissible connection dialog when needed. Connect your own [Comfy workspace API key](https://platform.comfy.org/profile/api-keys) with credits and the required model access, then choose Generate again: connecting never automatically submits a generation. Closing the dialog preserves your prompt, references, and selected take. [Private owner sign-in](https://open-take-studio.onrender.com/login) remains separate.
 
 Reviewer keys are encrypted on the server, expire after **12 hours**, and are removed on disconnect. The anonymous browser session lasts **7 days**. Export projects before signing out, clearing cookies, or changing browsers. Reconnect the same key to resume that workspace's pending jobs; a different key requires a new reviewer workspace. Never put an API key in a prompt, project package, or chat.
 
