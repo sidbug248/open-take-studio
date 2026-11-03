@@ -13,11 +13,14 @@ export class WorkflowWorker {
   private timer?:ReturnType<typeof setInterval>;
   private active=new Set<string>();
   private streams=new Map<string,AbortController>();
+  private stopping=false;
   constructor(private store:Store,private media:LocalFileStorage,private port:WorkflowPort,private keyConfigured:()=>boolean){}
-  start(){if(this.timer)return;this.timer=setInterval(()=>void this.tick(),1500);this.timer.unref();void this.tick();}
-  stop(){if(this.timer)clearInterval(this.timer);this.timer=undefined;for(const controller of this.streams.values())controller.abort();this.streams.clear();}
-  async tick(){const capacity=Math.max(0,2-this.active.size);if(!capacity)return;const due=this.store.listRunnableJobs({executionRoute:'comfy-workflow',dueAt:now(),excludeIds:[...this.active],limit:capacity});await Promise.all(due.map(job=>this.process(job.id)));}
+  start(){if(this.timer)return;this.stopping=false;this.timer=setInterval(()=>void this.tick(),1500);this.timer.unref();void this.tick();}
+  stop(){this.stopping=true;if(this.timer)clearInterval(this.timer);this.timer=undefined;for(const controller of this.streams.values())controller.abort();this.streams.clear();}
+  async drain(timeoutMs=25000){this.stop();const deadline=Date.now()+timeoutMs;while(this.active.size&&Date.now()<deadline)await new Promise(resolve=>setTimeout(resolve,25));return this.active.size===0;}
+  async tick(){if(this.stopping)return;const capacity=Math.max(0,2-this.active.size);if(!capacity)return;const due=this.store.listRunnableJobs({executionRoute:'comfy-workflow',dueAt:now(),excludeIds:[...this.active],limit:capacity});await Promise.all(due.map(job=>this.process(job.id)));}
   async process(id:string){
+    if(this.stopping)return;
     const initial=this.store.getJob(id);if(!initial||initial.executionRoute!=='comfy-workflow'||!initial.workflow||terminal.has(initial.state)||this.store.isArchivedJob(id)||this.active.has(id))return;
     this.active.add(id);let job=initial;
     try{
@@ -60,7 +63,7 @@ export class WorkflowWorker {
       }else this.store.patchJob(id,{state:e.httpStatus===429?'RETRY_WAIT':'BLOCKED',errorType:e.code??'workflow_input',errorMessage:message,nextPollAt:e.httpStatus===429?new Date(Date.now()+retryMs).toISOString():undefined});
     }finally{this.active.delete(id);}
   }
-  private watch(job:Job){if(!job.requestId||!this.port.watch||this.streams.has(job.id)||this.streams.size>=4)return;const controller=new AbortController();this.streams.set(job.id,controller);void this.port.watch(job.requestId,progress=>{const current=this.store.getJob(job.id);if(current?.workflow&&!terminal.has(current.state)&&Number.isFinite(progress.value)&&progress.value>=0&&progress.value<=1)this.store.patchJob(job.id,{workflow:{...current.workflow,progress}});},controller.signal).catch(()=>undefined).finally(()=>this.streams.delete(job.id));}
+  private watch(job:Job){if(this.stopping||!job.requestId||!this.port.watch||this.streams.has(job.id)||this.streams.size>=4)return;const controller=new AbortController();this.streams.set(job.id,controller);void this.port.watch(job.requestId,progress=>{if(this.stopping)return;const current=this.store.getJob(job.id);if(current?.workflow&&!terminal.has(current.state)&&Number.isFinite(progress.value)&&progress.value>=0&&progress.value<=1)this.store.patchJob(job.id,{workflow:{...current.workflow,progress}});},controller.signal).catch(()=>undefined).finally(()=>this.streams.delete(job.id));}
   private async observe(job:Job,snapshot:WorkflowSnapshot){
     const status=snapshot.status;const wf={...job.workflow!,cloudStatus:status,progress:snapshot.progress??job.workflow!.progress,expiresAt:snapshot.expiresAt};
     if(status==='succeeded'&&!snapshot.error){job=this.store.patchJob(job.id,{state:'COLLECTING',result:snapshot,workflow:wf,queuePosition:undefined});this.streams.get(job.id)?.abort();await this.collect(job,snapshot);return;}

@@ -11,16 +11,20 @@ const permanent=new Set(['insufficient_credits','not_enabled','model_not_found',
 export class GenerationWorker {
   private timer?:ReturnType<typeof setInterval>;
   private active=new Set<string>();
+  private stopping=false;
   private now:()=>number;
   constructor(private store:Store,private media:LocalFileStorage,private router:RouterPort,private options:WorkerOptions){this.now=options.now||Date.now;}
-  start(){this.timer=setInterval(()=>void this.tick(),1000);this.timer.unref();void this.tick();}
-  stop(){if(this.timer)clearInterval(this.timer);}
+  start(){if(this.timer)return;this.stopping=false;this.timer=setInterval(()=>void this.tick(),1000);this.timer.unref();void this.tick();}
+  stop(){this.stopping=true;if(this.timer)clearInterval(this.timer);this.timer=undefined;}
+  async drain(timeoutMs=25000){this.stop();const deadline=Date.now()+timeoutMs;while(this.active.size&&Date.now()<deadline)await new Promise(resolve=>setTimeout(resolve,25));return this.active.size===0;}
   async tick(){
+    if(this.stopping)return;
     const capacity=Math.max(0,4-this.active.size);if(!capacity)return;
     const due=this.store.listRunnableJobs({executionRoute:'router',dueAt:new Date(this.now()).toISOString(),excludeIds:[...this.active],limit:capacity});
     await Promise.all(due.map(j=>this.process(j.id)));
   }
   async process(id:string){
+    if(this.stopping)return;
     if(this.active.has(id)||this.store.isArchivedJob(id))return;
     const initial=this.store.getJob(id);if(!initial||initial.executionRoute==='comfy-workflow'||['COMPLETED','FAILED','EXPIRED','BLOCKED'].includes(initial.state))return;
     this.active.add(id);
