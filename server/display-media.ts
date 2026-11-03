@@ -1,6 +1,9 @@
 import {mkdir,readFile,writeFile,rename,stat,unlink} from 'node:fs/promises';
+import {readFileSync} from 'node:fs';
 import {createHash,randomUUID} from 'node:crypto';
 import path from 'node:path';
+import {setTimeout as delay} from 'node:timers/promises';
+import {performance} from 'node:perf_hooks';
 import sharp from 'sharp';
 import type {Asset} from '../shared/types.ts';
 import type {AssetPresentation,PresentationPoster,PosterVariant} from '../shared/presentation-contract.ts';
@@ -9,11 +12,43 @@ import type {LocalFileStorage} from './media.ts';
 import {FilmMediaTools,mediaToolPaths,runMediaTool} from './film-media.ts';
 export const DISPLAY_VERSION='display-v1';
 const digest=(bytes:Buffer)=>createHash('sha256').update(bytes).digest('hex');
+const revisionPublications=new Map<string,Promise<void>>();
+/** Assets in one presentation directory share a revision file. Serialize only its
+ * publication, including across DisplayMediaStore instances, while media work stays parallel. */
+function publishDisplayRevision(revisionFile:string):Promise<void>{
+  const absoluteDirectory=path.resolve(path.dirname(revisionFile));
+  const key=process.platform==='win32'?absoluteDirectory.toLowerCase():absoluteDirectory;
+  const publish=(revisionPublications.get(key)??Promise.resolve()).catch(()=>undefined).then(async()=>{
+    const temporary=revisionFile+'.'+randomUUID();
+    try{
+      await writeFile(temporary,JSON.stringify({version:DISPLAY_VERSION,revision:randomUUID()}));
+      // Windows readers/virus scanners may briefly retain a handle that disallows
+      // replacement. Never unlink the published destination: readers must see old or new JSON.
+      const deadline=performance.now()+5000;
+      for(let attempt=0;;attempt++){
+        try{await rename(temporary,revisionFile);break;}
+        catch(error){
+          const code=(error as NodeJS.ErrnoException).code,remaining=deadline-performance.now();
+          if(!['EPERM','EBUSY'].includes(code??'')||remaining<=0)throw error;
+          // Scanners can retain a no-delete-share handle for seconds under load.
+          // Jitter avoids repeatedly colliding with a periodic reader at the same cadence.
+          await delay(Math.min(remaining,Math.min(500,25*2**Math.min(attempt,5))+Math.floor(Math.random()*50)));
+        }
+      }
+    }finally{await unlink(temporary).catch(error=>{if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error;});}
+  });
+  revisionPublications.set(key,publish);
+  void publish.finally(()=>{if(revisionPublications.get(key)===publish)revisionPublications.delete(key);}).catch(()=>undefined);
+  return publish;
+}
 interface CachedDisplay {version:string;assetId:string;sourceSha256:string;posterSourceSha256?:string;preparedAt:string;optionsKey:string;presentation:AssetPresentation;files:{file:string;sha256:string;bytes:number}[];}
 export class DisplayMediaStore {
   readonly root:string;readonly tools:FilmMediaTools;readonly revisionFile:string;
   constructor(readonly store:Store,readonly media:LocalFileStorage){this.root=path.resolve(store.dataDir,'presentation',DISPLAY_VERSION);this.tools=new FilmMediaTools(store.dataDir,media);this.revisionFile=path.resolve(store.dataDir,'presentation','display-revision.json');}
-  private async publishRevision(){const temporary=this.revisionFile+'.'+randomUUID();await writeFile(temporary,JSON.stringify({version:DISPLAY_VERSION,revision:randomUUID()}));await rename(temporary,this.revisionFile);}
+  publishRevision(){return publishDisplayRevision(this.revisionFile);}
+  /** This tiny marker is read/opened/closed in one synchronous operation so a busy
+   * image threadpool cannot hold a Windows reader handle across revision replacement. */
+  readRevision():string{try{return readFileSync(this.revisionFile,'utf8');}catch{return '';}}
   directory(asset:Asset){if(!/^[A-Za-z0-9_-]+$/.test(asset.id)||!/^[a-f0-9]{64}$/.test(asset.sha256))throw new Error('Invalid presentation source identity');return path.join(this.root,asset.id,asset.sha256);}
   original(asset:Asset):AssetPresentation['original']{return{assetId:asset.id,projectId:asset.projectId,sha256:asset.sha256,version:asset.sha256,kind:asset.kind,mimeType:asset.mimeType,url:asset.url,bytes:asset.size};}
   async describe(asset:Asset):Promise<AssetPresentation>{try{const saved=JSON.parse(await readFile(path.join(this.directory(asset),'index.json'),'utf8')) as CachedDisplay;if(saved.version===DISPLAY_VERSION&&saved.assetId===asset.id&&saved.sourceSha256===asset.sha256)return{...saved.presentation,original:this.original(asset)};}catch{}try{const failure=JSON.parse(await readFile(path.join(this.directory(asset),'failure.json'),'utf8'));if(failure.assetId===asset.id&&failure.sourceSha256===asset.sha256)return{original:this.original(asset),presentationVersion:DISPLAY_VERSION,state:'failed',description:failure.description};}catch{}return{original:this.original(asset),presentationVersion:DISPLAY_VERSION,state:'unprepared'};}

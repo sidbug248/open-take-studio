@@ -24,9 +24,14 @@ import {projectAuthorization} from './auth-access.ts';
 import {createRuntimeAdmission} from './runtime-security.ts';
 import {environmentCredentialSource,type CredentialSource} from './credential-source.ts';
 import type {RuntimeConfig} from './runtime-config.ts';
+import {createProductionGraphRouter,drainProductionGraphWork} from './production-graph.ts';
+import {createReviewRouter,createSharedReviewRouter} from './review-routes.ts';
+import {PublishingService} from './publishing.ts';
+import {StudioMcpService} from './studio-mcp.ts';
+import {drainDeliveryWork} from './delivery-package.ts';
 
-export interface StudioRuntimeOptions {dataDir:string;settings:RuntimeConfig;credentials?:CredentialSource;routerPort?:RouterPort;workflowPort?:WorkflowPort;startWorkers?:boolean;}
-export interface StudioRuntime {store:Store;media:LocalFileStorage;explore:ExploreService;router:Router;worker:GenerationWorker;workflowWorker:WorkflowWorker;displayWorker:DisplayPreparationWorker;credentials:CredentialSource;start():void;close():Promise<void>;}
+export interface StudioRuntimeOptions {dataDir:string;settings:RuntimeConfig;credentials?:CredentialSource;routerPort?:RouterPort;workflowPort?:WorkflowPort;startWorkers?:boolean;workspaceId?:string;workspaceExpiresAt?:string;publishingAvailable?:()=>boolean;}
+export interface StudioRuntime {store:Store;media:LocalFileStorage;explore:ExploreService;router:Router;worker:GenerationWorker;workflowWorker:WorkflowWorker;displayWorker:DisplayPreparationWorker;credentials:CredentialSource;publishing:PublishingService;mcp:StudioMcpService;sharedReview:Router;start():void;close():Promise<void>;}
 /** Every route and background worker captures one immutable workspace repository.
  * A reviewer request can never fall through to the owner's repository. */
 export function createStudioRuntime(options:StudioRuntimeOptions):StudioRuntime {
@@ -35,6 +40,9 @@ export function createStudioRuntime(options:StudioRuntimeOptions):StudioRuntime 
   const worker=new GenerationWorker(store,media,remote,{keyConfigured:()=>credentials.available(),credentialSource:credentials});
   const workflowWorker=new WorkflowWorker(store,media,native,()=>credentials.available(),credentials);
   const explore=new ExploreService(store,media),displayWorker=new DisplayPreparationWorker(store,media),router=Router();
+  const workspaceId=options.workspaceId??'owner';
+  const publishing=new PublishingService(store,media,{available:options.publishingAvailable,workspaceExpiresAt:options.workspaceExpiresAt}),mcp=new StudioMcpService(store,media,{workspaceId,workspaceExpiresAt:options.workspaceExpiresAt});
+  const sharedReview=createSharedReviewRouter(store,media,{workspaceId,workspaceExpiresAt:options.workspaceExpiresAt,secureCookies:options.settings.mode==='hosted'});
   router.use(express.json({limit:'2mb'}));
   router.use((req,_res,next)=>{try{if(req.body&&credentials.available()&&JSON.stringify(req.body).includes(credentials.resolve().apiKey))throw Object.assign(new Error('Do not include an API key in creative content or settings. Use Connect Comfy.'),{status:400});next();}catch(error){next(error);}});
   router.use('/api',(_req,res,next)=>{res.setHeader('Cache-Control','no-store');next();});
@@ -51,12 +59,16 @@ export function createStudioRuntime(options:StudioRuntimeOptions):StudioRuntime 
   router.use('/api',createPlayableRouter(store,media));
   router.use('/api',createSceneRouter(store,media));
   router.use('/api',createFilmRouter(store,media));
+  router.use('/api',createProductionGraphRouter(store,media));
+  router.use('/api',createReviewRouter(store,media,{workspaceId,workspaceExpiresAt:options.workspaceExpiresAt,secureCookies:options.settings.mode==='hosted'}));
+  router.use('/api',publishing.managementRouter());
+  router.use('/api',mcp.managementRouter());
   router.use('/api',createProjectRouter(store,media));
   router.use('/api',(_req,res)=>res.status(404).json({error:'API route not found.'}));
   let started=false,closed=false;
-  const runtime:StudioRuntime={store,media,explore,router,worker,workflowWorker,displayWorker,credentials,
-    start(){if(started)return;started=true;worker.start();workflowWorker.start();displayWorker.start();},
-    async close(){if(closed)return;closed=true;const [a,b]=await Promise.all([worker.drain(24000),workflowWorker.drain(24000),displayWorker.stop()]);if(a&&b)store.close();},
+  const runtime:StudioRuntime={store,media,explore,router,worker,workflowWorker,displayWorker,credentials,publishing,mcp,sharedReview,
+    start(){if(started)return;started=true;worker.start();workflowWorker.start();displayWorker.start();publishing.start();},
+    async close(){if(closed)return;closed=true;const [a,b]=await Promise.all([worker.drain(24000),workflowWorker.drain(24000),displayWorker.stop(),publishing.stop(),drainProductionGraphWork(store),mcp.drain()]);await drainDeliveryWork(store);if(a&&b)store.close();},
   };
   if(options.startWorkers)runtime.start();return runtime;
 }

@@ -143,7 +143,7 @@ export async function copyReviewerExampleDisplays(owner:StudioRuntime,target:Stu
    const temporary=path.join(targetDirectory,'index-copy-'+randomUUID()+'.json');await writeFile(temporary,JSON.stringify(next));await rename(temporary,path.join(targetDirectory,'index.json'));result.copied++;result.files+=mediaFiles.size;
   }catch(error){if((error as NodeJS.ErrnoException).code==='ENOENT')result.skipped++;else result.failed++;}
  }
- if(result.copied){const revision=target.explore.displays.revisionFile;await mkdir(path.dirname(revision),{recursive:true});const temporary=revision+'.copy-'+randomUUID();await writeFile(temporary,JSON.stringify({version:DISPLAY_VERSION,revision:randomUUID()}));await rename(temporary,revision);}
+ if(result.copied){await mkdir(path.dirname(target.explore.displays.revisionFile),{recursive:true});await target.explore.displays.publishRevision();}
  return result;
 }
 export interface ReviewerRemixResult {projectId:string;sourceProjectId:string;idMap:Record<string,string>;}

@@ -26,7 +26,7 @@ export function securityBoundary(settings:RuntimeConfig):RequestHandler{return(r
   if(origin&&!allowed.includes(origin)){res.status(403).json({error:'Cross-origin access is not allowed.'});return;}
   if(settings.mode==='hosted'&&!health){
     if(!req.secure){res.status(400).json({error:'HTTPS is required.'});return;}
-    if(!['GET','HEAD','OPTIONS'].includes(req.method)&&(!origin||!allowed.includes(origin))){res.status(403).json({error:'A same-origin request is required.'});return;}
+    if(!['GET','HEAD','OPTIONS'].includes(req.method)&&(!origin||!allowed.includes(origin))&&!(req.method==='POST'&&!origin&&/^\/api\/mcp\/[A-Za-z0-9_-]{1,128}\/[A-Za-z0-9_-]{1,128}$/.test(req.path)&&/^Bearer [A-Za-z0-9._~-]{16,512}$/.test(String(req.headers.authorization??'')))){res.status(403).json({error:'A same-origin request is required.'});return;}
     res.setHeader('Strict-Transport-Security','max-age=31536000');
     res.setHeader('Content-Security-Policy',"object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
     setRequestOrigin(req,{origin:effectiveOrigin!,proxied,clientIp,ipSource:proxied?'vercel-verified':'render-hop'});

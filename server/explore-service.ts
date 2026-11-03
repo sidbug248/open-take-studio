@@ -38,7 +38,7 @@ export class ExploreService {
     // Neither query reads historical job/input JSON. A worker publishes the display
     // marker only after its descriptor is atomically ready on disk.
     const database=this.store.db.prepare('PRAGMA data_version').get(),local=this.store.db.prepare('SELECT total_changes() AS changes').get();
-    const display=await readFile(this.displays.revisionFile,'utf8').catch(()=>'');
+    const display=this.displays.readRevision();
     return hash({database,local,curation,display});
   }
   async bootstrap():Promise<ExploreBootstrap>{

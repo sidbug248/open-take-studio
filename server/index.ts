@@ -11,6 +11,7 @@ import {securityBoundary} from './runtime-security.ts';
 import {WorkspaceBackupService,createRuntimeBackupRouter} from './runtime-backup.ts';
 import {ReviewerCredentials} from './reviewer-credentials.ts';
 import {createReviewerSystem} from './reviewer-system.ts';
+import {createStudioPublicRouter} from './studio-public.ts';
 
 const owner=createStudioRuntime({dataDir:config.dataDir,settings:config});
 const backupService=new WorkspaceBackupService(owner.store),sessions=new AuthSessions(owner.store,config);
@@ -23,6 +24,7 @@ app.use((_req,res,next)=>{if(shuttingDown){res.status(503).setHeader('Retry-Afte
 app.use(securityBoundary(config));
 app.get('/api/health',(_req,res)=>res.json(config.mode==='hosted'?{ok:true,version:'0.1.0'}:{ok:true,keyConfigured:config.keyConfigured,version:'0.1.0',storagePath:config.dataDir,sdkVersion:'0.5.0'}));
 app.use(sessions.identify());
+app.use(createStudioPublicRouter({owner,reviewerRuntime:id=>reviewers?.getRuntime(id)}));
 if(reviewers){app.use(reviewers.identify);app.use(reviewers.arrive);app.use(reviewers.router);}
 app.use(createAuthRouter(sessions,{reviewerEnabled:!!reviewers}));
 if(reviewers)app.use(reviewers.dispatch);

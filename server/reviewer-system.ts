@@ -10,6 +10,7 @@ import {listReviewerExamples,remixReviewerExampleWithMapping,resolveReviewerExam
 import {ReviewerDiscovery} from './reviewer-discovery.ts';
 import {MODEL_REGISTRY} from './model-registry.ts';
 import {clientAddress} from './request-origin.ts';
+import {hasPendingPublications} from './publishing.ts';
 import type {RuntimeConfig} from './runtime-config.ts';
 
 const cookieName='__Host-ots_reviewer',cookieOptions={secure:true,httpOnly:true,sameSite:'lax' as const,path:'/'};
@@ -19,7 +20,7 @@ export function createReviewerSystem(options:{vault:ReviewerCredentials;owner:St
   const discovery=new ReviewerDiscovery(owner);
   const publicDelivery=options.distDir?createProductionDelivery(options.distDir,discovery):undefined;
   const factory=options.runtimeFactory??createStudioRuntime,attempts=new Map<string,{count:number;until:number}>(),connectAttempts=new Map<string,{count:number;until:number}>();let activeWrites=0;
-  function getRuntime(id:string){vault.status(id);let runtime=runtimes.get(id);if(!runtime){runtime=factory({dataDir:path.join(settings.dataDir,'reviewers',id),settings:{...settings,maxActiveJobs:3,maxGenerationPerHour:20,maxConcurrentWrites:1},credentials:vault.source(id),startWorkers:true});runtimes.set(id,runtime);}return runtime;}
+  function getRuntime(id:string){vault.status(id);let runtime=runtimes.get(id);if(!runtime){runtime=factory({dataDir:path.join(settings.dataDir,'reviewers',id),settings:{...settings,maxActiveJobs:3,maxGenerationPerHour:20,maxConcurrentWrites:1},credentials:vault.source(id),workspaceId:id,workspaceExpiresAt:vault.status(id).expiresAt,publishingAvailable:()=>{try{vault.status(id);return true;}catch{return false;}},startWorkers:true});runtimes.set(id,runtime);}return runtime;}
   const identify:RequestHandler=(req,_res,next)=>{if(!accessFor(req)){const session=vault.identify(cookieToken(req.headers.cookie));if(session)setAccess(req,{kind:'reviewer',subjectId:session.id,workspaceId:session.id,permissions:['read','write','generate','share']});}next();};
   const reviewer:RequestHandler=(req,res,next)=>{if(accessFor(req)?.kind!=='reviewer'){res.status(401).json({error:'Enter a reviewer session first.'});return;}res.setHeader('Cache-Control','no-store');next();};
   function status(id:string){const state=vault.status(id);return{ok:true,version:'0.1.0',sdkVersion:'0.5.0',mode:'hosted',accessMode:'reviewer',workspaceId:id,keyConfigured:state.connected,sessionExpiresAt:state.expiresAt,credential:{state:state.connected?(state.verification==='insufficient_credits'?'insufficient_credits':'connected'):state.state==='expired'?'expired':state.lastErrorCode==='invalid_credentials'?'invalid':state.lastErrorCode==='permission_denied'?'permission_denied':'missing',connected:state.connected,expiresAt:state.credentialExpiresAt,message:state.connected?'Generation uses your connected Comfy workspace credits.':'Connect your own Comfy API key to generate. Saved media remains available.'}};}
@@ -77,7 +78,7 @@ export function createReviewerSystem(options:{vault:ReviewerCredentials;owner:St
       runtime.router(req,res,error=>{if(error){next(error);return;}if(options.distDir){let delivery=deliveries.get(id);if(!delivery){delivery=createProductionDelivery(options.distDir,discovery);deliveries.set(id,delivery);}delivery(req,res,error=>{if(error)next(error);else res.status(404).json({error:'Page not found.'});});}else res.status(404).json({error:'Page not found.'});});
     }catch(error){next(error);}};
   // Recover accepted requests immediately after restart, even before the browser returns.
-  for(const session of vault.listSessions())if(vault.status(session.id).connected)getRuntime(session.id);
+  for(const session of vault.listSessions())if(vault.status(session.id).connected||hasPendingPublications(path.join(settings.dataDir,'reviewers',session.id)))getRuntime(session.id);
   const expiry=setInterval(()=>vault.expire(),60000);expiry.unref();
   return{router,identify,arrive,dispatch,getRuntime,async close(){clearInterval(expiry);await Promise.all([...runtimes.values()].map(runtime=>runtime.close()));}};
 }
