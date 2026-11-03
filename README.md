@@ -1,5 +1,13 @@
 # Open Take Studio
 
+[🚀 Open the live app](https://open-take-studio.onrender.com)
+
+**Post-submission deployment — November 3, 2026.** The full hosted authoring studio is available behind **owner-password sign-in**. This is a private, single-owner workspace: there is no public signup or self-service Comfy-key setup. The workspace owner configures the Comfy credential on the server; no password or API key is published here.
+
+**The event credit allocation has ended, so new AI generation is currently blocked by `insufficient_credits`.** After sign-in, the restored project library, saved and imported media, local editing tools, downloads, and project exports remain available. Hosted sign-in, restored projects, saved-media playback and editing, upload/download, project export/import, and persistence through a server restart were verified on November 3. Imported examples are not presented as fresh hosted generations.
+
+This deployment follows the submission. The original reviewer demo and immutable `v0.1.0-submission` release below remain unchanged; the local setup instructions still apply to that source snapshot.
+
 **A local creative studio for branching films, directed 3D scenes, editable sound-driven motion, and source-preserving iteration.**
 
 Open Take combines a React/TypeScript interface, Express, SQLite, managed local media, Comfy Router, and a separate native Comfy Cloud workflow client. AI inference uses hosted Comfy/provider routes. Scene rendering, media editing, sound mixing, and portable exports run locally.
