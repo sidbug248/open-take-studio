@@ -1,0 +1,150 @@
+{
+  "startedAt": "2026-11-03T22:07:02.149Z",
+  "scope": "Fresh isolated reviewer workspaces, synthetic local PNG, local MCP only",
+  "hosts": [
+    {
+      "origin": "https://open-take-studio.onrender.com",
+      "checks": {
+        "catalogue": {
+          "total": 66,
+          "implemented": 60,
+          "planned": 6,
+          "plannedIds": [
+            "video-extension",
+            "dubbing",
+            "music-compose",
+            "audio-cleanup",
+            "document-film",
+            "mesh-image"
+          ]
+        },
+        "preservation": {
+          "approvedProjects": 19,
+          "originalProjectIdsMatch": true,
+          "demonstratedCapabilities": 55,
+          "demonstrations": 167,
+          "demonstrationIdsDigest": "9109d0ac4beaf92ecaa2eb89e86d83de158646679f0862639a38e8df3f67ea9f",
+          "publicAssetsWithHashMetadata": 234,
+          "publicAssetMetadataDigest": "371d3bddce5fd280802a62a073c93ef31563c350939c8c01271bb35b59509a19",
+          "originalAssetsFromPriorReceipt": 462,
+          "priorLocalByteHashProofAt": "2026-11-03T20:24:27.543Z",
+          "hostedByteHashesRecomputed": false
+        },
+        "freshPrivateWorkspace": true,
+        "source": {
+          "bytes": 226,
+          "sha256": "07f9ab3986f08d6efca967bdde391b30e2170ca8ed70c5f5e6bdd6281182a110",
+          "storedAndDownloadedMatch": true
+        },
+        "mcp": {
+          "protocol": "SDK Streamable HTTP",
+          "scopedProject": true,
+          "effectiveOriginPreserved": true,
+          "tools": [
+            "get_project",
+            "list_assets",
+            "get_asset",
+            "read_asset",
+            "list_recipes",
+            "inspect_graph",
+            "resize_image",
+            "build_delivery_package",
+            "run_local_graph"
+          ]
+        },
+        "mcpSourceHashMatches": true,
+        "output": {
+          "bytes": 346,
+          "sha256": "2b480e2101735d1b72fecc8251143a3f42c6efbcb47cd9c198e8ad8eccfe6e98",
+          "width": 96,
+          "height": 72,
+          "storedAndDownloadedMatch": true,
+          "retryReusedOutput": true,
+          "jobsCreated": 0
+        },
+        "revokedTokenRejected": true,
+        "sessionSignedOut": true,
+        "tokenRevoked": true
+      },
+      "startedAt": "2026-11-03T22:07:02.150Z",
+      "success": true,
+      "remainingQAData": "One isolated private QA project with at most two tiny PNG assets; reviewer workspace expires automatically.",
+      "completedAt": "2026-11-03T22:07:04.787Z"
+    },
+    {
+      "origin": "https://open-take-studio-review.vercel.app",
+      "checks": {
+        "catalogue": {
+          "total": 66,
+          "implemented": 60,
+          "planned": 6,
+          "plannedIds": [
+            "video-extension",
+            "dubbing",
+            "music-compose",
+            "audio-cleanup",
+            "document-film",
+            "mesh-image"
+          ]
+        },
+        "preservation": {
+          "approvedProjects": 19,
+          "originalProjectIdsMatch": true,
+          "demonstratedCapabilities": 55,
+          "demonstrations": 167,
+          "demonstrationIdsDigest": "9109d0ac4beaf92ecaa2eb89e86d83de158646679f0862639a38e8df3f67ea9f",
+          "publicAssetsWithHashMetadata": 234,
+          "publicAssetMetadataDigest": "371d3bddce5fd280802a62a073c93ef31563c350939c8c01271bb35b59509a19",
+          "originalAssetsFromPriorReceipt": 462,
+          "priorLocalByteHashProofAt": "2026-11-03T20:24:27.543Z",
+          "hostedByteHashesRecomputed": false
+        },
+        "freshPrivateWorkspace": true,
+        "source": {
+          "bytes": 226,
+          "sha256": "07f9ab3986f08d6efca967bdde391b30e2170ca8ed70c5f5e6bdd6281182a110",
+          "storedAndDownloadedMatch": true
+        },
+        "mcp": {
+          "protocol": "SDK Streamable HTTP",
+          "scopedProject": true,
+          "effectiveOriginPreserved": true,
+          "tools": [
+            "get_project",
+            "list_assets",
+            "get_asset",
+            "read_asset",
+            "list_recipes",
+            "inspect_graph",
+            "resize_image",
+            "build_delivery_package",
+            "run_local_graph"
+          ]
+        },
+        "mcpSourceHashMatches": true,
+        "output": {
+          "bytes": 346,
+          "sha256": "2b480e2101735d1b72fecc8251143a3f42c6efbcb47cd9c198e8ad8eccfe6e98",
+          "width": 96,
+          "height": 72,
+          "storedAndDownloadedMatch": true,
+          "retryReusedOutput": true,
+          "jobsCreated": 0
+        },
+        "revokedTokenRejected": true,
+        "sessionSignedOut": true,
+        "tokenRevoked": true
+      },
+      "startedAt": "2026-11-03T22:07:04.787Z",
+      "success": true,
+      "remainingQAData": "One isolated private QA project with at most two tiny PNG assets; reviewer workspace expires automatically.",
+      "completedAt": "2026-11-03T22:07:07.788Z"
+    }
+  ],
+  "publicMetadataParity": {
+    "demonstrationIdsMatch": true,
+    "assetHashMetadataMatches": true
+  },
+  "completedAt": "2026-11-03T22:07:07.788Z",
+  "success": true
+}
