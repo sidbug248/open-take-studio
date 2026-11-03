@@ -11,6 +11,6 @@ export const config = {
 };
 export function safeMessage(value: unknown): string {
   let message = value instanceof Error ? value.message : String(value);
-  for(const secret of [process.env.COMFY_API_KEY,process.env.OTS_OWNER_PASSWORD_HASH,process.env.OTS_CREDENTIAL_ENCRYPTION_KEY])if(secret)message=message.split(secret).join('[redacted]');
+  for(const secret of [process.env.COMFY_API_KEY,process.env.OTS_OWNER_PASSWORD_HASH,process.env.OTS_CREDENTIAL_ENCRYPTION_KEY,process.env.OTS_VERCEL_PROXY_SECRET])if(secret)message=message.split(secret).join('[redacted]');
   return message.replace(/comfyui-[A-Za-z0-9_-]+/g, '[redacted]').slice(0, 1500);
 }

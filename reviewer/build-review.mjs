@@ -10,6 +10,11 @@ const releaseUrl = 'https://github.com/sidbug248/open-take-studio/releases/downl
 const expectedArchiveSha256 = '95f13e58d66e165712b6b440961897f8c4bda5f5fbadd0f83061c0534044b76e';
 const root = path.dirname(fileURLToPath(import.meta.url));
 const output = path.join(root, 'public');
+// Routing transforms resolve this private environment variable on Vercel.
+// Never substitute it into static files, print it, or expose it as a response header.
+if (process.env.VERCEL === '1' && !/^[A-Za-z0-9_-]{43}$/.test(process.env.OTS_VERCEL_PROXY_SECRET ?? '')) {
+  throw new Error('Configure the private proxy credential before deploying this routing build.');
+}
 const archiveFlag = process.argv.find(value => value.startsWith('--archive='));
 let zip;
 if (archiveFlag) zip = await fs.readFile(path.resolve(archiveFlag.slice('--archive='.length)));
@@ -54,10 +59,16 @@ for (let i = 0; i < count; i++) {
   const compressed = zip.subarray(start, start + compressedSize);
   const bytes = method === 0 ? compressed : method === 8 ? zlib.inflateRawSync(compressed, { maxOutputLength: size }) : null;
   if (!bytes || bytes.length !== size) throw new Error('Unsupported or invalid ZIP entry.');
-  await fs.mkdir(path.dirname(destination), { recursive: true });
-  await fs.writeFile(destination, bytes);
+  // The live studio now owns /. Keep every historical media/support URL.
+  if (name !== 'index.html') {
+    await fs.mkdir(path.dirname(destination), { recursive: true });
+    await fs.writeFile(destination, bytes);
+  }
   entries.push({ file: name, bytes: size, sha256: crypto.createHash('sha256').update(bytes).digest('hex') });
 }
-await fs.copyFile(path.join(root, 'index.html'), path.join(output, 'index.html'));
+await fs.mkdir(path.join(output, 'competition'), { recursive: true });
+await fs.copyFile(path.join(root, 'index.html'), path.join(output, 'competition', 'index.html'));
+// Remove only the old generated landing file. A stale index would shadow the app.
+await fs.rm(path.join(output, 'index.html'), { force: true });
 await fs.writeFile(path.join(output, 'Open-Take-Studio-Review-Demo.zip'), zip);
 console.log(JSON.stringify({ output, archiveSha256: actualSha256, archiveEntries: entries.length, source: releaseUrl, files: entries }, null, 2));

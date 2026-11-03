@@ -4,5 +4,39 @@
   "framework": null,
   "buildCommand": "node build-review.mjs",
   "installCommand": "",
-  "outputDirectory": "public"
+  "outputDirectory": "public",
+  "routes": [
+    { "src": "^/competition$", "status": 307, "headers": { "Location": "/competition/" } },
+    { "src": "^/competition/(?:index\\.html)?$", "dest": "/competition/index.html", "methods": ["GET", "HEAD"] },
+    { "src": "^/competition/film$", "status": 307, "headers": { "Location": "/competition/film/" } },
+    { "src": "^/competition/film/$", "dest": "/film/index.html", "methods": ["GET", "HEAD"] },
+    { "src": "^/competition/(film/.*|downloads/.*|walkthrough\\.mp4|directed-object\\.mp4|motion-film\\.mp4|Open-Take-Studio-Review-Demo\\.zip|README\\.md|APP-LICENSE\\.txt)$", "dest": "/$1", "methods": ["GET", "HEAD"] },
+    { "src": "^/competition/.*$", "status": 404 },
+    { "src": "^/film$", "status": 307, "headers": { "Location": "/film/" } },
+    { "src": "^/film/$", "dest": "/film/index.html", "methods": ["GET", "HEAD"] },
+    { "src": "^/(film/.*|downloads/.*|walkthrough\\.mp4|directed-object\\.mp4|motion-film\\.mp4|Open-Take-Studio-Review-Demo\\.zip|README\\.md|APP-LICENSE\\.txt)$", "dest": "/$1", "methods": ["GET", "HEAD"] },
+    {
+      "src": "^/(.*)$",
+      "dest": "https://open-take-studio.onrender.com/$1",
+      "headers": {
+        "x-vercel-enable-rewrite-caching": "0",
+        "CDN-Cache-Control": "no-store",
+        "Vercel-CDN-Cache-Control": "no-store"
+      },
+      "transforms": [
+        {
+          "type": "request.headers",
+          "op": "set",
+          "target": { "key": "x-ots-proxy-secret" },
+          "args": "$OTS_VERCEL_PROXY_SECRET",
+          "env": ["OTS_VERCEL_PROXY_SECRET"]
+        },
+        {
+          "type": "response.headers",
+          "op": "delete",
+          "target": { "key": "x-ots-proxy-secret" }
+        }
+      ]
+    }
+  ]
 }

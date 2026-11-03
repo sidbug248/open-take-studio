@@ -2,6 +2,8 @@ import {config,rootDir,safeMessage} from './config.ts';
 import express from 'express';
 import {createServer} from 'node:http';
 import path from 'node:path';
+import {createHash} from 'node:crypto';
+import {requestOrigin} from './request-origin.ts';
 import {createStudioRuntime} from './studio-runtime.ts';
 import {createProductionDelivery} from './http-delivery.ts';
 import {AuthSessions,createAuthRouter} from './auth-session.ts';
@@ -25,6 +27,8 @@ if(reviewers){app.use(reviewers.identify);app.use(reviewers.arrive);app.use(revi
 app.use(createAuthRouter(sessions,{reviewerEnabled:!!reviewers}));
 if(reviewers)app.use(reviewers.dispatch);
 app.use(sessions.gate());
+// Owner-only deployment diagnostic: never returns raw IP, cookies or proxy proof.
+app.get('/api/runtime/request-context',(req,res)=>{const context=requestOrigin(req);res.json(context?{origin:context.origin,proxied:context.proxied,ipSource:context.ipSource,clientIpHash:createHash('sha256').update(context.clientIp).digest('hex')}:{origin:'local',proxied:false});});
 app.get('/api/studio/status',(_req,res)=>{res.setHeader('Cache-Control','no-store');res.json({ok:true,version:'0.1.0',keyConfigured:config.keyConfigured,mode:config.mode,sdkVersion:'0.5.0',accessMode:'owner',workspaceId:'owner'});});
 app.use('/api',express.json({limit:'2mb'}),createRuntimeBackupRouter(owner.store,backupService));
 app.use(owner.router);

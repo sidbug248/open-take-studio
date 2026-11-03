@@ -1,19 +1,35 @@
 import type {RequestHandler} from 'express';
 import {statfs} from 'node:fs/promises';
-import {createHash} from 'node:crypto';
+import {createHash,timingSafeEqual} from 'node:crypto';
+import {isIP} from 'node:net';
 import type {RuntimeConfig} from './runtime-config.ts';
 import type {Store} from './store.ts';
+import {setRequestOrigin} from './request-origin.ts';
 export function securityBoundary(settings:RuntimeConfig):RequestHandler{return(req,res,next)=>{
   const expected=settings.mode==='hosted'?new URL(settings.publicOrigin!).host:undefined,host=(req.headers.host??'').toLowerCase();
   const localHosts=[`127.0.0.1:${settings.port}`,`localhost:${settings.port}`],health=req.path==='/api/health'&&['GET','HEAD'].includes(req.method);
-  if(settings.mode==='hosted'?(host!==expected&&!(health&&localHosts.includes(host))):!localHosts.includes(host)){res.status(403).json({error:'This host is not allowed.'});return;}
-  const origin=req.headers.origin,allowed=settings.mode==='hosted'?[settings.publicOrigin!]:localHosts.map(host=>'http://'+host);
+  const proof=req.headers['x-ots-proxy-secret'];let proxied=false,effectiveOrigin=settings.publicOrigin,clientIp=req.ip??req.socket.remoteAddress??'unknown';
+  if(settings.mode==='hosted'){
+    // Never allow private application responses into an intermediary shared cache.
+    if(!req.path.startsWith('/assets/')){res.setHeader('Cache-Control','private, no-store');res.setHeader('CDN-Cache-Control','private, no-store');res.setHeader('Vercel-CDN-Cache-Control','no-store');res.vary('Cookie');res.vary('Origin');}
+    if(proof!==undefined){
+      const secret=settings.vercelProxySecret;
+      if(typeof proof!=='string'||!secret||! /^[A-Za-z0-9_-]{43,128}$/.test(proof)||proof.length!==secret.length||!timingSafeEqual(Buffer.from(proof),Buffer.from(secret))){res.status(403).json({error:'Untrusted proxy request.'});return;}
+      const forwarded=req.headers['x-vercel-forwarded-for'];
+      if(!settings.vercelProxyOrigin||typeof forwarded!=='string'||!isIP(forwarded.trim())){res.status(403).json({error:'The trusted proxy did not supply a valid client address.'});return;}
+      proxied=true;effectiveOrigin=settings.vercelProxyOrigin;clientIp=forwarded.trim();
+    }
+    delete req.headers['x-ots-proxy-secret'];
+  }
+  if(settings.mode==='hosted'?(host!==expected&&!(proxied&&host===new URL(effectiveOrigin!).host)&&!(health&&localHosts.includes(host))):!localHosts.includes(host)){res.status(403).json({error:'This host is not allowed.'});return;}
+  const origin=req.headers.origin,allowed=settings.mode==='hosted'?[effectiveOrigin!]:localHosts.map(host=>'http://'+host);
   if(origin&&!allowed.includes(origin)){res.status(403).json({error:'Cross-origin access is not allowed.'});return;}
   if(settings.mode==='hosted'&&!health){
     if(!req.secure){res.status(400).json({error:'HTTPS is required.'});return;}
     if(!['GET','HEAD','OPTIONS'].includes(req.method)&&(!origin||!allowed.includes(origin))){res.status(403).json({error:'A same-origin request is required.'});return;}
     res.setHeader('Strict-Transport-Security','max-age=31536000');
     res.setHeader('Content-Security-Policy',"object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
+    setRequestOrigin(req,{origin:effectiveOrigin!,proxied,clientIp,ipSource:proxied?'vercel-verified':'render-hop'});
   }
   res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('X-Frame-Options','DENY');
   if(/^\/(?:\.env(?:[./]|$)|\.git(?:\/|$)|data(?:\/|$)|imports(?:\/|$)|artifacts(?:\/|$)|server(?:\/|$)|scripts(?:\/|$)|node_modules(?:\/|$))/i.test(req.path)){res.status(403).type('text/plain').send('Private workspace files are not served.');return;}

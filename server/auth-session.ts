@@ -5,6 +5,7 @@ import express from 'express';
 import type {Store} from './store.ts';
 import type {RuntimeConfig} from './runtime-config.ts';
 import {setAccess,accessFor,requireOwner} from './auth-access.ts';
+import {clientAddress} from './request-origin.ts';
 const scrypt=promisify(scryptCallback),cookieName='__Host-ots_session';
 const digest=(value:string)=>createHash('sha256').update(value).digest('hex');
 const permissions=['read','write','generate','share'] as const;
@@ -23,7 +24,7 @@ const loginPage=(error='',reviewerEnabled=false)=>`<!doctype html><html lang="en
 export function createAuthRouter(sessions:AuthSessions,options:{reviewerEnabled?:boolean}={}){const router=Router(),attempts=new Map<string,{count:number;until:number}>();let active=0;
   router.get('/login',(req,res)=>{if(sessions.settings.mode==='local'||['local-owner','workspace-owner'].includes(accessFor(req)?.kind??'')){res.redirect(303,'/');return;}res.setHeader('Cache-Control','no-store');res.type('html').send(loginPage('',options.reviewerEnabled));});
   router.post('/auth/login',express.json({limit:'4kb'}),express.urlencoded({extended:false,limit:'4kb'}),async(req,res)=>{
-    if(sessions.settings.mode==='local'){res.redirect(303,'/');return;}const key=req.ip??req.socket.remoteAddress??'unknown',now=Date.now();for(const[k,value]of attempts)if(value.until<=now)attempts.delete(k);const bucket=attempts.get(key)??{count:0,until:now+15*60_000};attempts.set(key,bucket);
+    if(sessions.settings.mode==='local'){res.redirect(303,'/');return;}const key=clientAddress(req),now=Date.now();for(const[k,value]of attempts)if(value.until<=now)attempts.delete(k);const bucket=attempts.get(key)??{count:0,until:now+15*60_000};attempts.set(key,bucket);
     if(bucket.count>=8||active>=2||attempts.size>5000){res.setHeader('Retry-After','900');res.status(429).json({error:'Too many sign-in attempts. Try again later.'});return;}bucket.count++;active++;
     let valid=false;try{valid=typeof req.body?.password==='string'&&await verifyOwnerPassword(req.body.password,sessions.settings.ownerPasswordHash!);}finally{active--;}
     if(!valid){res.setHeader('Cache-Control','no-store');if(req.is('application/json'))res.status(401).json({error:'Unable to sign in with those credentials.'});else res.status(401).type('html').send(loginPage('Unable to sign in with those credentials.',options.reviewerEnabled));return;}
