@@ -15,7 +15,7 @@ export function securityBoundary(settings:RuntimeConfig):RequestHandler{return(r
     res.setHeader('Strict-Transport-Security','max-age=31536000');
     res.setHeader('Content-Security-Policy',"object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
   }
-  res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('X-Frame-Options','DENY');
+  res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('X-Frame-Options','DENY');
   if(/^\/(?:\.env(?:[./]|$)|\.git(?:\/|$)|data(?:\/|$)|imports(?:\/|$)|artifacts(?:\/|$)|server(?:\/|$)|scripts(?:\/|$)|node_modules(?:\/|$))/i.test(req.path)){res.status(403).type('text/plain').send('Private workspace files are not served.');return;}
   next();
 };}
