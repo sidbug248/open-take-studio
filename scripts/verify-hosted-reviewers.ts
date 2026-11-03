@@ -4,6 +4,7 @@ import path from 'node:path';
 import {createHash} from 'node:crypto';
 import AdmZip from 'adm-zip';
 import {parse} from 'dotenv';
+import sharp from 'sharp';
 import type {Asset,Project,ProjectDetail,Take} from '../shared/types.ts';
 
 const base=new URL(process.env.OTS_REVIEWER_VERIFY_ORIGIN||'https://open-take-studio.onrender.com').origin;
@@ -16,7 +17,9 @@ await mkdir(directory,{recursive:true});await mkdir(privateDirectory,{recursive:
 type Reviewer={label:string;cookie:string;projectId?:string;assetId?:string;takeId?:string;sha256?:string};
 const invalidKey='ots-invalid-reviewer-verification-key-no-real-credential';
 let probeKey='';
-const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jx1sAAAAASUVORK5CYII=','base64');
+// A decoded/renderable PNG, not merely a magic-byte upload fixture. Resuming a
+// prior run checks its recorded SHA and leaves that run's original bytes alone.
+const png=await sharp({create:{width:96,height:64,channels:3,background:'#c5a3ff'}}).png().toBuffer();
 const sha=(bytes:Buffer)=>createHash('sha256').update(bytes).digest('hex');
 let reviewers:Reviewer[]=resume?JSON.parse(await readFile(privatePath,'utf8')):[];
 let receipt:any=resume?JSON.parse(await readFile(receiptPath,'utf8')):{startedAt:new Date().toISOString(),origin:base,scope:'Two isolated reviewer workspaces; invalid-key verification; missing-key admission rejection; imported fixture save, download, export and reopen. No funded generation.',events:[]};
@@ -45,8 +48,9 @@ try{
   check(reviewers.length===2&&reviewers.every(r=>r.projectId&&r.assetId&&r.takeId),'Two complete saved reviewer fixtures are required');
   for(const reviewer of reviewers){
     const peer=reviewers.find(value=>value!==reviewer)!;
-    const bootstrap=await json<{projects:Array<{id:string}>}>(reviewer,'/api/explore/bootstrap');check(bootstrap.projects.length===1&&bootstrap.projects[0].id===reviewer.projectId,'Explore API crossed reviewer storage boundaries');
-    const page=await request(reviewer,'/'),html=await page.text(),embedded=/<script type="application\/json" id="ots-explore-bootstrap">([\s\S]*?)<\/script>/.exec(html);check(page.ok&&embedded,'Reviewer HTML bootstrap is missing');const injected=JSON.parse(embedded[1]) as {projects:Array<{id:string}>};check(injected.projects.length===1&&injected.projects[0].id===reviewer.projectId,'HTML bootstrap exposed another workspace');
+    const allowedPublic=new Set(['showcase:456f5fdb-e79b-4946-9122-dc17e7a291e3','showcase:1bec0508-6565-4cf8-9666-f07d224351a1','showcase:1659408b-f807-418b-8a67-3c2404e0d12e']),scoped=(projects:Array<{id:string}>)=>projects.some(p=>p.id===reviewer.projectId)&&projects.every(p=>p.id===reviewer.projectId||allowedPublic.has(p.id));
+    const bootstrap=await json<{projects:Array<{id:string}>}>(reviewer,'/api/explore/bootstrap');check(scoped(bootstrap.projects),'Explore API crossed reviewer storage boundaries');
+    const page=await request(reviewer,'/'),html=await page.text(),embedded=/<script type="application\/json" id="ots-explore-bootstrap">([\s\S]*?)<\/script>/.exec(html);check(page.ok&&embedded,'Reviewer HTML bootstrap is missing');const injected=JSON.parse(embedded[1]) as {projects:Array<{id:string}>};check(scoped(injected.projects),'HTML bootstrap exposed another workspace');
     const detail=await json<ProjectDetail>(reviewer,`/api/projects/${reviewer.projectId}`);check(detail.project.selectedTakeId===reviewer.takeId,'Saved take selection was lost');check(detail.takes.find(t=>t.id===reviewer.takeId)?.favorite,'Favorite edit was lost');check(detail.jobs.length===0,'Missing-key attempt unexpectedly created an executable job');
     const asset=detail.assets.find(a=>a.id===reviewer.assetId);check(asset?.provenance==='imported','Fixture provenance was lost');const media=await request(reviewer,asset.url+'?download=1');check(media.ok,'Reviewer cannot download its own media');check(sha(Buffer.from(await media.arrayBuffer()))===reviewer.sha256,'Downloaded media differs');
     for(const route of[`/api/projects/${peer.projectId}`,`/api/projects/${peer.projectId}/export`,`/api/assets/${peer.assetId}/file`,`/api/display/${peer.assetId}/poster`,`/api/projects/1bec0508-6565-4cf8-9666-f07d224351a1`,`/api/projects/1bec0508-6565-4cf8-9666-f07d224351a1/export`,`/api/assets/e5ebae2e-4573-49e8-96af-61b7c472fa2c/file`,`/api/runtime/backup`])await denial(reviewer,route);

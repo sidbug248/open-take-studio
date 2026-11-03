@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Check, ChevronDown, CircleHelp, GitBranch, Layers3, LoaderCircle, Play, RotateCcw } from 'lucide-react';
 import type { GenerationRequest, Job, Json, ProjectDetail, Shot, Take } from '../shared/types';
 import type { ModelDescriptor } from '../shared/model-types';
-import { api, json } from './api';
+import { api, json, isGenerationConnectionRequiredError } from './api';
 
 type BatchItem = {
   shotId: string;
@@ -66,6 +66,10 @@ export function ShotBatch({ detail, models, draft, onRefresh, report }: { detail
         item.state = 'submitted'; item.takeId = result.take.id; delete item.error; persist(next);
         await api(`/api/shots/${item.shotId}`, { method: 'PATCH', body: json({ selectedTakeId: result.take.id }) });
       } catch (error) {
+        if (isGenerationConnectionRequiredError(error)) {
+          // Connection never admitted this request. Keep the frozen intent for an explicit resume.
+          item.state = 'ready'; delete item.error; persist(next); break;
+        }
         if (item.state !== 'submitted') { item.state = 'error'; item.error = error instanceof Error ? error.message : String(error); persist(next); }
         report(error); break;
       }

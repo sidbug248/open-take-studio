@@ -21,7 +21,7 @@ app.use((_req,res,next)=>{if(shuttingDown){res.status(503).setHeader('Retry-Afte
 app.use(securityBoundary(config));
 app.get('/api/health',(_req,res)=>res.json(config.mode==='hosted'?{ok:true,version:'0.1.0'}:{ok:true,keyConfigured:config.keyConfigured,version:'0.1.0',storagePath:config.dataDir,sdkVersion:'0.5.0'}));
 app.use(sessions.identify());
-if(reviewers){app.use(reviewers.identify);app.use(reviewers.router);}
+if(reviewers){app.use(reviewers.identify);app.use(reviewers.arrive);app.use(reviewers.router);}
 app.use(createAuthRouter(sessions,{reviewerEnabled:!!reviewers}));
 if(reviewers)app.use(reviewers.dispatch);
 app.use(sessions.gate());

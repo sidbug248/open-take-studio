@@ -18,7 +18,7 @@ const statusCopy:Record<ReviewerCredentialState,{label:string;description:string
 };
 export function reviewerConnectionLabel(status:StudioStatus){const state=status.credential?.state||'missing';return state==='connected'?'Comfy connected':state==='insufficient_credits'?'Check Comfy credits':'Connect Comfy';}
 
-export function ReviewerConnect({status,onStatus,onRemix,onStart,onClose,dialog=false}:{status:StudioStatus;onStatus:(status:StudioStatus)=>void;onRemix:(projectId:string)=>Promise<void>|void;onStart:()=>void;onClose?:()=>void;dialog?:boolean}){
+export function ReviewerConnect({status,onStatus,onRemix,onStart,onClose,dialog=false,connectionError}:{status:StudioStatus;onStatus:(status:StudioStatus)=>void;onRemix:(projectId:string)=>Promise<void>|void;onStart:()=>void;onClose?:()=>void;dialog?:boolean;connectionError?:string}){
  const identity=useId(),titleId=identity+'-title',keyId=identity+'-key',privacyId=identity+'-privacy';
  const keyInput=useRef<HTMLInputElement>(null),panel=useRef<HTMLElement>(null),abort=useRef<AbortController|null>(null),mounted=useRef(true);
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[examples,setExamples]=useState<ReviewerExample[]>([]),[examplesLoading,setExamplesLoading]=useState(!dialog),[remixing,setRemixing]=useState(''),[newSessionConfirm,setNewSessionConfirm]=useState(false);
@@ -43,6 +43,7 @@ export function ReviewerConnect({status,onStatus,onRemix,onStart,onClose,dialog=
  const content=<section ref={panel} className={`reviewer-connect ${dialog?'reviewer-connect-dialog':''}`} {...(dialog?{role:'dialog','aria-modal':true as const,'aria-labelledby':titleId}:{'aria-labelledby':titleId})}>
   <header><div><span className="eyebrow">YOUR WORKSPACE. YOUR DIRECTION.</span><h1 id={titleId}>{dialog?'Your Comfy connection.':'Make something of your own.'}</h1></div>{onClose&&<button className="icon-button" disabled={busy} onClick={onClose} aria-label="Close Comfy connection"><X size={20}/></button>}</header>
   {!dialog&&<p className="reviewer-intro">Explore the saved work, remix a starting point, or open a blank canvas. Your changes stay in your reviewer workspace.</p>}
+  {connectionError&&<p className="reviewer-feedback is-error" role="alert">{connectionError}</p>}
   <div className={`reviewer-connect-card state-${state}`}>
    <div className="reviewer-connection-status"><span className="reviewer-key-icon">{connected?<ShieldCheck size={25}/>:<KeyRound size={25}/>}</span><div><h2>{copy.label}</h2><p>{copy.description}</p></div>{state==='connected'&&<Check className="reviewer-check" size={21}/>}</div>
    {!connected&&<form className="reviewer-key-form" onSubmit={connect} autoComplete="off"><label htmlFor={keyId}>Comfy API key</label><div><input id={keyId} ref={keyInput} type="password" autoComplete="off" spellCheck={false} autoCapitalize="none" placeholder="Paste your key here" maxLength={8192} required disabled={busy} aria-describedby={privacyId}/><button className="btn primary" disabled={busy} type="submit">{busy?<LoaderCircle className="spin" size={17}/>:<KeyRound size={17}/>}Connect</button></div></form>}

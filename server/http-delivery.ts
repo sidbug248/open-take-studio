@@ -7,7 +7,7 @@ import type {ExploreService} from './explore-service.ts';
 const br=promisify(brotliCompress),gz=promisify(gzip);
 const attribute=(value:string)=>value.replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;');
 /** Immutable build assets, and small injected Explore data available before React starts. */
-export function createProductionDelivery(directory:string,explore:ExploreService){
+export function createProductionDelivery(directory:string,explore:Pick<ExploreService,'bootstrap'>){
   const router=Router();let cache:{key:string;html:Buffer;br:Buffer;gzip:Buffer}|undefined;
   router.get('/assets/:file',async(req,res,next)=>{const file=String(req.params.file);if(!/^[\w.-]+$/.test(file)||!/-[A-Za-z0-9_-]{6,}\.(?:js|css)$/.test(file)){next();return;}const source=path.join(directory,'assets',file),encoding=req.acceptsEncodings('br','gzip','identity');if(encoding===false){res.sendStatus(406);return;}const compressed=encoding==='br'?source+'.br':encoding==='gzip'?source+'.gz':source;try{await stat(compressed);}catch{next();return;}res.vary('Accept-Encoding');res.setHeader('Cache-Control','public, max-age=31536000, immutable');res.type(file.endsWith('.js')?'application/javascript':'text/css');if(encoding!=='identity')res.setHeader('Content-Encoding',encoding);res.sendFile(compressed);});
   router.use(serveStatic(directory,{index:false,setHeaders(res,file){res.setHeader('Cache-Control',/[/\\]assets[/\\]/.test(file)?'public, max-age=31536000, immutable':'no-cache');}}));
