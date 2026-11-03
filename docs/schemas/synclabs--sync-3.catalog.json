@@ -1,0 +1,9 @@
+{
+  "billing": {
+    "charges_on_policy_rejection": "no"
+  },
+  "id": "synclabs/sync-3",
+  "model": "sync-3",
+  "provider": "synclabs",
+  "schema_etag": "\"c2fa21aa4f12e11c7e2c1d204d86e5d6308b05cdfb5a26679861120ac788966b\""
+}

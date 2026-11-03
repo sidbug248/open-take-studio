@@ -1,0 +1,16 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import path from 'node:path';
+import {createHash} from 'node:crypto';
+import sharp from 'sharp';
+import {mediaToolPaths,runMediaTool} from '../server/film-media.ts';
+const dir=path.resolve('artifacts/next-build/prismatic-film'),receipt=JSON.parse(await readFile(path.join(dir,'receipt.json'),'utf8'));
+const detail=await(await fetch('http://127.0.0.1:4310/api/projects/'+receipt.projectId)).json();
+const frame=detail.assets.find((a:any)=>a.id===receipt.frameAssetId),source=detail.assets.find((a:any)=>a.id===frame.metadata.sourceAssetId);
+if(!frame||!source)throw new Error('Missing original frame relationship');
+const download=async(asset:any,file:string)=>{const r=await fetch('http://127.0.0.1:4310'+asset.url);if(!r.ok)throw new Error('Missing media');const bytes=Buffer.from(await r.arrayBuffer());if(createHash('sha256').update(bytes).digest('hex')!==asset.sha256)throw new Error('Stored media hash mismatch');await writeFile(path.join(dir,file),bytes);return bytes;};
+await download(source,'source-opening.mp4');const frameBytes=await download(frame,'branch-frame.png');
+await runMediaTool(mediaToolPaths().ffmpeg,['-nostdin','-v','error','-y','-i',path.join(dir,'source-opening.mp4'),'-vf',`select=eq(n\\,${frame.metadata.frameIndex})`,'-fps_mode','vfr','-frames:v','1',path.join(dir,'independent-frame.png')]);
+const a=await sharp(frameBytes).removeAlpha().raw().toBuffer({resolveWithObject:true}),b=await sharp(path.join(dir,'independent-frame.png')).removeAlpha().raw().toBuffer({resolveWithObject:true});
+if(!a.data.equals(b.data)||a.info.width!==b.info.width||a.info.height!==b.info.height)throw new Error('Selected frame does not equal independently decoded source frame');
+const output={verifiedAt:new Date().toISOString(),sourceAssetId:source.id,sourceSha256:source.sha256,frameAssetId:frame.id,frameSha256:frame.sha256,frameIndex:frame.metadata.frameIndex,requestedSeconds:frame.metadata.requestedSeconds,actualSeconds:frame.metadata.actualSeconds,decodedPixelsMatch:true,width:a.info.width,height:a.info.height,parentTakeId:receipt.sourceTakeId,branchTakeIds:[receipt.outwardTakeId,receipt.inwardTakeId]};
+await writeFile(path.join(dir,'frame-verification.json'),JSON.stringify(output,null,2));console.log(JSON.stringify(output));

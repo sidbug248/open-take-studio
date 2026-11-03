@@ -1,0 +1,132 @@
+[
+  {
+    "nodeId": "insert:4607b7f88bc01638e0f466d2d4ffd823:root:node:114",
+    "classType": "LoadImage",
+    "models": {}
+  },
+  {
+    "nodeId": "insert:4607b7f88bc01638e0f466d2d4ffd823:root:node:115",
+    "classType": "ResolutionSelector",
+    "models": {}
+  },
+  {
+    "nodeId": "insert:4607b7f88bc01638e0f466d2d4ffd823:root:node:105:insert:4607b7f88bc01638e0f466d2d4ffd823:root/definition:%224c314f31-ecda-4b08-ae98-faaba1bf613f%22:node:11",
+    "classType": "VAELoader",
+    "models": {
+      "vae_name": "minimax_h3_video_vae_fp16.safetensors"
+    }
+  },
+  {
+    "nodeId": "insert:4607b7f88bc01638e0f466d2d4ffd823:root:node:105:insert:4607b7f88bc01638e0f466d2d4ffd823:root/definition:%224c314f31-ecda-4b08-ae98-faaba1bf613f%22:node:24",
+    "classType": "VAELoader",
+    "models": {
+      "vae_name": "minimax_h3_audio_vae_fp32.safetensors"
+    }
+  },
+  {
+    "nodeId": "insert:4607b7f88bc01638e0f466d2d4ffd823:root:node:105:insert:4607b7f88bc01638e0f466d2d4ffd823:root/definition:%224c314f31-ecda-4b08-ae98-faaba1bf613f%22:node:23",
+    "classType": "VAEDecodeAudio",
+    "models": {}
+  },
+  {
+    "nodeId": "insert:4607b7f88bc01638e0f466d2d4ffd823:root:node:105:insert:4607b7f88bc01638e0f466d2d4ffd823:root/definition:%224c314f31-ecda-4b08-ae98-faaba1bf613f%22:node:10",
+    "classType": "VAEDecode",
+    "models": {}
+  },
+  {
+    "nodeId": "insert:4607b7f88bc01638e0f466d2d4ffd823:root:node:105:insert:4607b7f88bc01638e0f466d2d4ffd823:root/definition:%224c314f31-ecda-4b08-ae98-faaba1bf613f%22:node:17",
+    "classType": "KSamplerSelect",
+    "models": {}
+  },
+  {
+    "nodeId": "insert:4607b7f88bc01638e0f466d2d4ffd823:root:node:105:insert:4607b7f88bc01638e0f466d2d4ffd823:root/definition:%224c314f31-ecda-4b08-ae98-faaba1bf613f%22:node:9",
+    "classType": "BasicScheduler",
+    "models": {}
+  },
+  {
+    "nodeId": "insert:4607b7f88bc01638e0f466d2d4ffd823:root:node:105:insert:4607b7f88bc01638e0f466d2d4ffd823:root/definition:%224c314f31-ecda-4b08-ae98-faaba1bf613f%22:node:14",
+    "classType": "SamplerCustomAdvanced",
+    "models": {}
+  },
+  {
+    "nodeId": "insert:4607b7f88bc01638e0f466d2d4ffd823:root:node:105:insert:4607b7f88bc01638e0f466d2d4ffd823:root/definition:%224c314f31-ecda-4b08-ae98-faaba1bf613f%22:node:16",
+    "classType": "BasicGuider",
+    "models": {}
+  },
+  {
+    "nodeId": "insert:4607b7f88bc01638e0f466d2d4ffd823:root:node:105:insert:4607b7f88bc01638e0f466d2d4ffd823:root/definition:%224c314f31-ecda-4b08-ae98-faaba1bf613f%22:node:6",
+    "classType": "UNETLoader",
+    "models": {
+      "unet_name": "minimax_h3_fl2va_pruned_int8_convrot.safetensors"
+    }
+  },
+  {
+    "nodeId": "insert:4607b7f88bc01638e0f466d2d4ffd823:root:node:105:insert:4607b7f88bc01638e0f466d2d4ffd823:root/definition:%224c314f31-ecda-4b08-ae98-faaba1bf613f%22:node:13",
+    "classType": "CLIPLoader",
+    "models": {
+      "clip_name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors"
+    }
+  },
+  {
+    "nodeId": "insert:4607b7f88bc01638e0f466d2d4ffd823:root:node:105:insert:4607b7f88bc01638e0f466d2d4ffd823:root/definition:%224c314f31-ecda-4b08-ae98-faaba1bf613f%22:node:15",
+    "classType": "RandomNoise",
+    "models": {}
+  },
+  {
+    "nodeId": "insert:4607b7f88bc01638e0f466d2d4ffd823:root:node:105:insert:4607b7f88bc01638e0f466d2d4ffd823:root/definition:%224c314f31-ecda-4b08-ae98-faaba1bf613f%22:node:91",
+    "classType": "CreateVideo",
+    "models": {}
+  },
+  {
+    "nodeId": "insert:4607b7f88bc01638e0f466d2d4ffd823:root:node:105:insert:4607b7f88bc01638e0f466d2d4ffd823:root/definition:%224c314f31-ecda-4b08-ae98-faaba1bf613f%22:node:104",
+    "classType": "MiniMaxH3ImageToVideo",
+    "models": {}
+  },
+  {
+    "nodeId": "insert:4607b7f88bc01638e0f466d2d4ffd823:root:node:105:insert:4607b7f88bc01638e0f466d2d4ffd823:root/definition:%224c314f31-ecda-4b08-ae98-faaba1bf613f%22:node:107",
+    "classType": "ComfyMathExpression",
+    "models": {}
+  },
+  {
+    "nodeId": "insert:4607b7f88bc01638e0f466d2d4ffd823:root:node:105:insert:4607b7f88bc01638e0f466d2d4ffd823:root/definition:%224c314f31-ecda-4b08-ae98-faaba1bf613f%22:node:111",
+    "classType": "PrimitiveFloat",
+    "models": {}
+  },
+  {
+    "nodeId": "insert:4607b7f88bc01638e0f466d2d4ffd823:root:node:105:insert:4607b7f88bc01638e0f466d2d4ffd823:root/definition:%224c314f31-ecda-4b08-ae98-faaba1bf613f%22:node:121",
+    "classType": "LoraLoaderModelOnly",
+    "models": {
+      "lora_name": "minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors"
+    }
+  },
+  {
+    "nodeId": "insert:4607b7f88bc01638e0f466d2d4ffd823:root:node:105:insert:4607b7f88bc01638e0f466d2d4ffd823:root/definition:%224c314f31-ecda-4b08-ae98-faaba1bf613f%22:node:122",
+    "classType": "ComfySwitchNode",
+    "models": {}
+  },
+  {
+    "nodeId": "insert:4607b7f88bc01638e0f466d2d4ffd823:root:node:105:insert:4607b7f88bc01638e0f466d2d4ffd823:root/definition:%224c314f31-ecda-4b08-ae98-faaba1bf613f%22:node:123",
+    "classType": "ComfySwitchNode",
+    "models": {}
+  },
+  {
+    "nodeId": "insert:4607b7f88bc01638e0f466d2d4ffd823:root:node:105:insert:4607b7f88bc01638e0f466d2d4ffd823:root/definition:%224c314f31-ecda-4b08-ae98-faaba1bf613f%22:node:124",
+    "classType": "PrimitiveInt",
+    "models": {}
+  },
+  {
+    "nodeId": "insert:4607b7f88bc01638e0f466d2d4ffd823:root:node:105:insert:4607b7f88bc01638e0f466d2d4ffd823:root/definition:%224c314f31-ecda-4b08-ae98-faaba1bf613f%22:node:125",
+    "classType": "PrimitiveInt",
+    "models": {}
+  },
+  {
+    "nodeId": "insert:4607b7f88bc01638e0f466d2d4ffd823:root:node:105:insert:4607b7f88bc01638e0f466d2d4ffd823:root/definition:%224c314f31-ecda-4b08-ae98-faaba1bf613f%22:node:126",
+    "classType": "PrimitiveBoolean",
+    "models": {}
+  },
+  {
+    "nodeId": "insert:4607b7f88bc01638e0f466d2d4ffd823:root:node:92",
+    "classType": "SaveVideo",
+    "models": {}
+  }
+]

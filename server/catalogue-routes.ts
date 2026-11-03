@@ -1,0 +1,182 @@
+import { Router } from 'express';
+import { readFileSync } from 'node:fs';
+import type { Store } from './store.ts';
+import { MODEL_REGISTRY } from './model-registry.ts';
+import { listModelDependencies } from './model-dependencies.ts';
+import { CAPABILITY_FAMILIES, type CapabilityRecord, type CapabilityFamilyId, type CapabilityReadiness, type CatalogueResponse, type DirectoryModel } from '../shared/capability-inventory.ts';
+import { CAPABILITY_MODALITIES, normalizeModalities } from '../shared/catalogue-modalities.ts';
+import { matchesGenerationCapability, validateDemonstration, expandDemonstration, saveDemonstration } from './catalogue-demonstrations.ts';
+
+const date = '2026-11-03';
+const catalogSource = 'https://docs.comfy.org/development/comfy-router/models';
+const snapshot = JSON.parse(readFileSync(new URL('../docs/schemas/catalogue-snapshot.json', import.meta.url), 'utf8')) as { date: string; fetchedAt: string; source: string; models: { id: string; model: string; provider: string; inputModalities?: string[]; outputModalities?: string[]; schemaUrl: string; schemaVerifiedAt?: string; billing?: { charges_on_policy_rejection?: string } }[] };
+
+function route(id: string, name: string, family: CapabilityFamilyId, description: string, modelId: string, inputs: string[], outputs: string[], limits: string[] = [], toolView = 'tools'): CapabilityRecord {
+  const adapter = MODEL_REGISTRY.find(model => model.id === modelId)!;
+  return { id, name, family, description, readiness: 'experimental', inputs, outputs, modelIds: [modelId], route: { kind: 'router', modelId, toolView, endpoint: '/api/generate', ...(id === 'mesh-refine' ? { settings: { mode: 'refine' } } : id === 'mesh-draft' ? { settings: { mode: 'preview' } } : {}) }, requirements: ['Configured workspace key and sufficient Comfy credits', ...inputs.filter(input => !/prompt|direction|script/i.test(input)).map(input => `Provide ${input}`)], limitations: [...limits, 'Schema-reviewed adapter; readiness below reflects saved execution evidence, not a guarantee of output quality.', 'External service terms apply; the exact hosted weights are not attested.'], sources: [{ label: 'Router model documentation', url: adapter.documentation }, { label: 'Native input and output schema', url: `https://api.comfy.org/v2/models/${modelId}/openapi.json` }], lastVerified: { at: adapter.verifiedAt, kind: 'schema' }, inputModalities: CAPABILITY_MODALITIES[id]?.[0] ?? [], outputModalities: CAPABILITY_MODALITIES[id]?.[1] ?? [], demonstrations: [], examples: [], tags: adapter.capabilities };
+}
+function local(id: string, name: string, family: CapabilityFamilyId, description: string, inputs: string[], outputs: string[], toolView: string, endpoint: string, limits: string[] = [], readiness: CapabilityReadiness = 'ready'): CapabilityRecord {
+  const localModels: Record<string, string[]> = { 'audio-mix': ['local/audio-mix'], 'mesh-inspect': ['local/spatial-scene', 'local/threejs-guide'], 'mesh-render-sequence': ['local/threejs-render'], 'motion-design': ['local/motion-render'], 'playable-game': ['local/signal-run'], 'story-pages': ['local/storyboard-page'], 'video-trim': ['local/film-selected-path'] };
+  return { id, name, family, description, readiness, inputs, outputs, modelIds: localModels[id] ?? [], route: { kind: 'local', toolView, endpoint }, requirements: inputs.map(input => `Provide ${input}`), limitations: limits, sources: [{ label: 'Local application API', url: endpoint }], lastVerified: { at: date, kind: 'local-validation' }, inputModalities: CAPABILITY_MODALITIES[id]?.[0] ?? [], outputModalities: CAPABILITY_MODALITIES[id]?.[1] ?? [], demonstrations: [], examples: [], tags: [family, 'local'] };
+}
+function planned(id: string, name: string, family: CapabilityFamilyId, description: string, dependency: string, candidates: string[] = []): CapabilityRecord {
+  return { id, name, family, description, readiness: 'planned', inputs: [], outputs: [], modelIds: candidates, route: { kind: 'planned' }, requirements: [dependency], limitations: ['Not executable in the studio. Catalog presence alone is not an implemented adapter.'], sources: [{ label: 'Dated Router catalog', url: catalogSource }], inputModalities: CAPABILITY_MODALITIES[id]?.[0] ?? [], outputModalities: CAPABILITY_MODALITIES[id]?.[1] ?? [], demonstrations: [], examples: [], tags: [family, 'planned'] };
+}
+
+/** Explicit outcome inventory. A model discovery is deliberately separate from
+ * an executable adapter, and an adapter from a successful saved generation. */
+export const CAPABILITY_INVENTORY: CapabilityRecord[] = [
+  route('image-generate', 'Generate an image', 'images-design', 'Compose a new image from an original written direction.', 'bfl/flux-3-image', ['Image prompt'], ['Image take'], [], 'studio'),
+  route('image-reference-edit', 'Edit with references', 'images-design', 'Direct edits and composites using up to ten saved references.', 'bfl/flux-3-image', ['Image direction', 'Reference images'], ['Edited image take'], ['Conditioning can change identity, product details or composition.']),
+  route('image-inpaint', 'Masked image editing', 'images-design', 'Replace white mask regions while preserving black regions.', 'bfl/flux-pro-1.0-fill', ['Source image', 'Matching black and white mask', 'Edit direction'], ['Edited image'], ['An explicit same-size mask is required. No freehand mask editor is claimed.']),
+  route('image-background', 'Remove a background', 'images-design', 'Isolate a subject with transparent pixels.', 'bria/image-edit-remove-background', ['Source image'], ['Transparent image']),
+  route('image-enhance', 'Enhance image resolution', 'images-design', 'Upscale a saved image two or four times.', 'bria/image-edit-increase-resolution', ['Source image'], ['Enhanced image'], ['Maximum output dimension is 8192 × 8192.']),
+  route('image-outpaint', 'Outpaint a canvas', 'images-design', 'Extend a frame beyond its original borders using explicit pixel margins.', 'bfl/flux-pro-1.0-expand', ['Source image', 'Optional expansion direction'], ['Expanded image'], ['Up to 2048 pixels per side. At least one positive margin is required.']),
+  route('image-vector', 'Generate vector artwork', 'images-design', 'Create an editable vector drawing with a safe PNG preview and downloadable SVG.', 'recraft/recraftv4_1_vector', ['Artwork prompt'], ['PNG preview', 'Editable SVG document'], ['Active SVG elements, external links, CSS rules and unsupported drawing constructs are rejected. The vector source is downloaded as an attachment.']),
+  local('reference-library', 'Reference and asset library', 'cast-continuity', 'Upload, inspect and reuse approved source media across takes.', ['Project and media'], ['Reusable assets'], 'assets', '/api/projects', ['Reference conditioning does not prove permanent character identity.']),
+  route('reference-sheet', 'Reference sheet variations', 'cast-continuity', 'Generate wardrobe, location and prop studies from existing reference images.', 'bfl/flux-3-image', ['Reference images', 'Study direction'], ['Reference study takes'], ['Prompt-guided study; no guaranteed identity lock or automatic character training.']),
+  local('source-continuity', 'Reuse unchanged stages', 'cast-continuity', 'Branch a later stage while retaining its source assets and earlier completed takes.', ['Completed take'], ['Related branch and recorded changes'], 'scene', '/api/projects', ['Only edited or downstream dependent stages are resubmitted; each new generation may vary.']),
+  route('video-image', 'Animate a selected image', 'cinema-video', 'Direct a saved image into a video with native audio.', 'minimax/minimax-h3', ['First-frame image', 'Motion and sound direction'], ['Video take with audio'], ['Four to fifteen seconds; first-frame aspect ratio controls output.'], 'studio'),
+  route('video-text', 'Text to video', 'cinema-video', 'Compose a shot and native audio directly from text.', 'minimax/minimax-h3', ['Shot direction'], ['Video with audio'], ['Text-only mode is separate from the previously tested first-frame mode.']),
+  route('video-fast', 'LTX fast video', 'cinema-video', 'Create short text-led motion with an optional native sound track.', 'ltx/ltx-2-5-fast', ['Shot direction'], ['Video'], ['No image input on this Router route. Duration, resolution and frame-rate combinations remain subject to provider validation.']),
+  route('video-kling', 'Kling directed video', 'cinema-video', 'Generate a text-led shot with optional native audio and documented camera movement fields.', 'kling/kling-v2-6', ['Shot direction'], ['Video'], ['Native camera_control fields are distinct from prompt-guided presets. Exact movement remains model-dependent.']),
+  route('video-keyframes', 'Bridge first and last frames', 'cinema-video', 'Guide a shot with start and end image anchors.', 'minimax/minimax-h3', ['First frame', 'Last frame', 'Motion direction'], ['Bridging video'], ['Keyframes cannot be combined with reference-media inputs.']),
+  route('video-references', 'Reference-led video', 'cinema-video', 'Use image, video and audio references to guide a shot.', 'minimax/minimax-h3', ['Reference media', 'Shot direction'], ['Video with audio'], ['Reference conditioning is not proven identity consistency.']),
+  { ...local('video-regenerate', 'Regenerate H3 video at 2K', 'cinema-video', 'Run the native MiniMax H3 regeneration partner node with an unchanged 768P source and its original prompt.', ['Validated MinimaxHailuo03RegenerateNode workflow', 'Original H3 768P source', 'Original prompt'], ['Regenerated 2K video'], 'workflow', '/api/workflows/:assetId/run', ['Proven through the separately labelled native Comfy Cloud partner-node route. The Router base_video attempt failed invalid_input and remains disabled.', 'This resolution regeneration is not arbitrary restyling or clip extension. Provider service terms apply; no open-weight execution is attested.'], 'experimental'), route: { kind: 'comfy-workflow', toolView: 'workflow', endpoint: '/api/workflows/:assetId/run' } },
+  route('video-edit', 'Restyle and edit a clip', 'cinema-video', 'Direct changes to the appearance of a saved video.', 'bfl/video-edit-v1', ['Source video', 'Edit direction'], ['Edited video'], ['Motion and identities can change; prompt instructions are not a deterministic edit list.']),
+  route('video-enhance', 'Enhance a video', 'cinema-video', 'Increase the resolution and refine detail in an existing clip.', 'bfl/video-upscale-v1', ['Source video'], ['Enhanced video'], ['Creative detail can alter faces and product markings.']),
+  local('camera-presets', 'Cinematic direction presets', 'cinema-video', 'Use editable shot, camera and lighting language as a starting direction.', ['Shot prompt'], ['Prompt-guided shot direction'], 'studio', '/api/models', ['These are prompt suggestions, not model-enforced camera or lens controls.']),
+  local('video-trim', 'Trim and assemble clips', 'cinema-video', 'Use exact clip in/out points and export selected sequences locally.', ['Saved clips'], ['Rendered film clip'], 'films', '/api/projects', ['Local media processing uses source assets; it is not AI extension.']),
+  route('video-extension', 'Extend a Kling video', 'cinema-video', 'Continue a completed same-project Kling video using its verified native video ID.', 'kling/videos-video-extend', ['Completed Kling video', 'Continuation direction'], ['Extended video'], ['Uploaded files and non-Kling videos cannot be extended by this route. The studio conservatively offers predecessors up to 170 seconds; the provider caps total duration at three minutes.']),
+  route('speech-captions', 'Speech with timed captions', 'performance-dialogue', 'Produce spoken dialogue plus provider-timed VTT captions.', 'byteplus/seed-audio-1.0-multilingual', ['Spoken script'], ['Audio', 'VTT captions'], ['Captions time this generated speech. The separate transcription route produces plain text without automatic timing.']),
+  route('speech-voice', 'Directed provider voice', 'performance-dialogue', 'Speak a script using an available provider voice ID.', 'elevenlabs/eleven_v3', ['Spoken script', 'Accessible provider voice ID'], ['Audio'], ['Synchronous binary Router response. No voice cloning or likeness guarantees.']),
+  route('lip-sync', 'Lip sync a performance', 'performance-dialogue', 'Match a selected performance video to supplied dialogue.', 'synclabs/sync-3', ['Performance video', 'Speech audio'], ['Lip-synced video'], ['Uses temporary Comfy asset hosting. Completed integration does not certify face alignment quality.']),
+  route('motion-transfer', 'Transfer a performance', 'performance-dialogue', 'Recast a saved performance using reference images.', 'higgsfield/higgsfield-genjutsu-motion-transfer-v1.0', ['Performance video', 'Cast or style references'], ['Recast performance video'], ['Optional Higgsfield route through Router. At least four seconds; over thirty seconds is trimmed by the provider.']),
+  planned('dubbing', 'Translate and dub dialogue', 'performance-dialogue', 'Produce translated speech aligned to a source performance.', 'Needs a documented translation + voice + timing pipeline, explicit language controls and per-stage validation. The sync adapter intentionally sends supplied audio only.', ['synclabs/sync-3']),
+  route('transcribe', 'Transcribe audio to text', 'performance-dialogue', 'Turn saved speech into a plain-text transcript for inspection and download.', 'vertexai/gemini-3.1-flash-lite', ['Speech recording', 'Optional transcription direction'], ['Plain-text transcript'], ['This multimodal-model transcript requires review against the original. Automatic word alignment and timed captions are not implemented by this route.']),
+  route('sound-effects', 'Sound effects and ambience', 'music-motion', 'Generate original effects, ambience and optional loops.', 'elevenlabs/eleven_sfx_v2', ['Sound direction'], ['Audio asset'], ['Synchronous binary Router response; up to thirty seconds. This is not a full music composition route.']),
+  local('motion-design', 'Audio-reactive motion design', 'music-motion', 'Compose typography and visual motion around saved audio.', ['Audio and written titles'], ['Motion composition'], 'motion', '/api/projects', ['Rendered export and beat synchronization depend on the current local module; AI music generation is separate.'], 'experimental'),
+  planned('music-compose', 'Compose standalone music', 'music-motion', 'Generate a new music track with controlled structure.', 'Needs a documented standalone music Router route and output adapter; sound effects and native video audio are not represented as full music composition.'),
+  route('audio-cleanup', 'Clean speech audio', 'music-motion', 'Reduce background noise and normalize the loudness of a speech recording.', 'veed/clean-audio', ['Speech recording'], ['Cleaned audio'], ['Up to thirty minutes. This is speech cleanup, not music composition or a mixer.']),
+  local('audio-mix', 'Mix a sound track', 'music-motion', 'Arrange saved voices and effects on tracks, trim and balance them, then render a persistent WAV master.', ['Saved audio tracks', 'Track timing, gain and fades'], ['WAV master', 'Editable arrangement'], 'audio-mix', '/api/projects', ['Local audio processing reuses actual saved sound. It does not synthesize new music or align arbitrary speech automatically.']),
+  local('shot-board', 'Shot planning and storyboards', 'stories-comics', 'Organize shots, select takes and retain production order.', ['Project and shot directions'], ['Shot board'], 'shots', '/api/projects'),
+  local('story-pages', 'Comic and storyboard pages', 'stories-comics', 'Place saved panels, titles and captions into a rendered page.', ['Panel assets and text'], ['Saved page image'], 'shots', '/api/projects', ['Uses existing assets and editable local composition; no hidden image generation.']),
+  local('scene-plans', 'Scene revisions and dependency plans', 'stories-comics', 'Preview affected takes before applying direction or reference changes.', ['Existing scene', 'Revised direction or references'], ['Revision plan and dependent branches'], 'scene', '/api/projects', ['A structured scene workflow, not a general-purpose node canvas.']),
+  local('film-branches', 'Branching film structure', 'stories-comics', 'Connect story nodes and explicit viewer choices.', ['Saved video takes'], ['Playable film graph'], 'films', '/api/projects'),
+  planned('document-film', 'Document to finished story', 'stories-comics', 'Convert a long source document into an edited audiovisual story.', 'Needs document ingestion, editable beat planning and an explicitly confirmed multi-stage generation recipe. No autonomous inferred script pipeline is active.'),
+  route('product-imagery', 'Product scene variations', 'products-campaigns', 'Create original product scenes using a reusable reference kit.', 'bfl/flux-3-image', ['Product reference image', 'Campaign direction'], ['Product image variations'], ['Product labels and geometry may change and require visual review.']),
+  local('campaign-recipes', 'Campaign recipes and formats', 'products-campaigns', 'Reuse prompts, supported settings and named media slots for a campaign.', ['Approved references and recipe'], ['Repeatable requests and takes'], 'recipes', '/api/projects', ['Recorded requests do not guarantee identical pixels or exact logos.']),
+  planned('campaign-review', 'Client review and social delivery', 'products-campaigns', 'Collect external approvals and prepare publication destinations.', 'Needs authenticated review links, comment storage, delivery formats and explicit publishing authorization. No social account integration is active.'),
+  route('mesh-draft', 'Generate a 3D draft', '3d-spatial', 'Create a Meshy 7.1 geometry preview and retain its provider task.', 'meshy/meshy-7.1', ['Object or character prompt'], ['GLB geometry'], ['This text-to-3D route does not accept image-to-3D or image retexture modes.'], 'spatial'),
+  route('mesh-refine', 'Texture a 3D draft', '3d-spatial', 'Refine a completed preview with material direction and optional texture reference.', 'meshy/meshy-7.1', ['Completed same-project Meshy 7.1 preview', 'Optional texture direction'], ['Textured GLB'], ['Requires mode refine and the native preview task ID. Sculpture previews cannot enable PBR.'], 'spatial'),
+  route('mesh-rig', 'Rig a humanoid character', '3d-spatial', 'Fit a skeleton to a completed textured humanoid and save basic motion clips.', 'meshy/rigging', ['Completed same-project textured humanoid'], ['Rigged GLB', 'Basic animation GLBs when returned'], ['Biped humanoids only; topology compatibility is evaluated by the provider.'], 'spatial'),
+  route('mesh-animate', 'Animate a rigged character', '3d-spatial', 'Apply one selected library action to a completed rig.', 'meshy/animations', ['Completed same-project rig', 'Provider animation action ID'], ['Animated GLB'], ['The action ID is a library choice, not natural-language motion. FBX/USDZ post-processing is not exposed.'], 'spatial'),
+  local('mesh-inspect', 'Stage a real 3D scene', '3d-spatial', 'Import GLB geometry, arrange primitives and meshes, edit transforms/materials/lights/cameras, play embedded clips and save the scene.', ['GLB asset or local primitives'], ['Editable 3D scene', 'Rendered guide image'], 'spatial', '/api/projects', ['A rendered guide conditions a later AI request; it does not force identical geometry or camera motion in generated video.']),
+  planned('mesh-image', 'Image to 3D', '3d-spatial', 'Reconstruct a spatial asset from image references.', 'Meshy image-to-3D exists on provider/proxy surfaces but is not an exposed mode of the verified Router meshy/meshy-7.1 text-to-3D route. Needs a documented Router model adapter.'),
+  local('mesh-render-sequence', 'Render a 3D animation sequence', '3d-spatial', 'Capture actual WebGL frames of a staged scene and export H.264 video plus a PNG frame archive.', ['Saved spatial scene'], ['Rendered MP4', 'PNG sequence ZIP'], 'spatial', '/api/projects', ['Frames are rendered locally in the browser and encoded with FFmpeg. Local camera paths are controlled; generated AI motion is separate.']),
+  local('interactive-film', 'Interactive branching film', 'playables-interactive', 'Let a viewer choose a path through saved scenes.', ['Film nodes and saved clips'], ['Interactive browser film'], 'films', '/api/projects'),
+  local('offline-playable', 'Offline browser package', 'playables-interactive', 'Export the branching film with self-contained local media.', ['Completed film'], ['HTML and media ZIP'], 'films', '/api/projects', ['Portable branching video is not a general-purpose game engine.']),
+  local('playable-game', 'Signal Run · playable browser game', 'playables-interactive', 'Move with keyboard or touch, collect stars, avoid patrol lights and reach the win portal against the timer.', ['Optional original background art', 'Editable game settings'], ['Playable browser game', 'Offline HTML ZIP'], 'playable', '/api/projects', ['A concrete editable game template with local mechanics; it is not a general-purpose game engine or prompt-to-arbitrary-game generator.']),
+  local('object-room', 'Create a guided Object Room', 'playables-interactive', 'Build a portable interactive room around real 3D geometry, named viewpoints, annotations and optional sound or image cues.', ['Saved spatial scene', 'Owned GLB geometry', 'Viewpoint direction'], ['Interactive 3D room', 'Portable browser package'], 'object-room', '/api/assets/:id/object-room', ['Uses authored scene geometry and local interaction; not inferred scene reconstruction or a general game generator.', 'The independent player includes its geometry, media and runtime. Browser WebGL support is required.']),
+  local('named-recipes', 'Named reusable recipe slots', 'recipes-workflows', 'Save supported settings and swap role-labelled references for new production.', ['Completed take or recipe'], ['Editable recipe'], 'recipes', '/api/projects'),
+  local('batch-shots', 'Resume a shot batch', 'recipes-workflows', 'Submit up to six selected shots using stable identities and reuse completed work.', ['Shot prompts and references'], ['Recoverable generation batch'], 'shots', '/api/generate', ['Each new shot is billable. Exact same-intent requests reuse saved identities; changed inputs require a new identity.']),
+  local('compare', 'Compare takes', 'recipes-workflows', 'Inspect images side by side or play videos from a common start.', ['Two saved takes'], ['Comparison workspace'], 'compare', '/api/projects', ['Video comparison stops all clips when the shortest clip reaches its end.']),
+  local('workflow-references', 'Inspect imported workflow references', 'recipes-workflows', 'Keep prior ComfyUI graphs and outputs as reference artifacts.', ['Workflow export or example media'], ['Labelled imported references'], 'assets', '/api/projects', ['Graphs are not submitted to Router and imported examples are not integrated-generation evidence.']),
+  { ...local('native-workflows', 'Run native Comfy workflows', 'recipes-workflows', 'Import and version a real native graph, validate its nodes and models, bind owned media, run on Comfy Cloud and retain the executed graph and outputs.', ['Validated native workflow', 'Bound values and media'], ['Native execution outputs'], 'workflow', '/api/workflows/:assetId/run', ['This is a separately labelled native Comfy Cloud execution route authorized for workflow work. It does not submit graphs to Router.', 'A resize/sharpen workflow proves processing and transport, not generative editing. Each selected graph has its own model and node dependencies.'], 'experimental'), route: { kind: 'comfy-workflow', toolView: 'workflow', endpoint: '/api/workflows/:assetId/run' } },
+  planned('node-canvas', 'General production node canvas', 'recipes-workflows', 'Visually wire arbitrary reusable operations into a production graph.', 'Needs typed graph execution, ports, validation and a real canvas editor. Scene dependency plans and branching films cover narrower workflows.'),
+  local('project-library', 'Durable project library', 'projects-collaboration', 'Create and reopen projects with assets, shots, settings and jobs intact.', ['Project name'], ['Persistent workspace'], 'studio', '/api/projects'),
+  local('take-history', 'Take branches and favorites', 'projects-collaboration', 'Preserve parentage, recorded changes, favorites and selected takes.', ['Project takes'], ['Inspectable production history'], 'history', '/api/projects'),
+  local('package-handoff', 'Production package export and import', 'projects-collaboration', 'Reopen a self-contained archive of media, prompts, model IDs and relationships.', ['Saved project'], ['Portable production ZIP'], 'history', '/api/projects', ['Imported executions remain archived reference history and cannot resume another workspace’s remote request.']),
+  planned('shared-review', 'Shared review and team comments', 'projects-collaboration', 'Review together with attribution and permissions.', 'Needs hosted authentication, durable comments, share permissions and conflict handling. Local project packages provide handoff only.'),
+  local('recoverable-jobs', 'Recoverable Router jobs', 'automation-integrations', 'Track real queue states, resume after restart and collect actual outputs.', ['Supported model request'], ['Persisted job and media'], 'history', '/api/generate', ['Provider records expire after 24 hours. Binary sync models have different crash/retry limits; no fabricated percentages.']),
+  local('local-api', 'Local studio API', 'automation-integrations', 'Use the local application endpoints for projects, assets and controlled generation.', ['Local authenticated-by-origin browser context'], ['Local API operations'], 'history', '/api/models', ['This is a local development service, not a hosted multi-tenant public API.']),
+  planned('mcp-server', 'Studio MCP tools', 'automation-integrations', 'Expose explicit production operations to compatible assistants.', 'Needs a real MCP server, permissions and task contracts. No MCP integration is currently registered.'),
+  planned('scheduled-publishing', 'Scheduled publishing', 'automation-integrations', 'Deliver approved results to connected destinations on a schedule.', 'Needs authorized destination integration, scheduling, approval and delivery receipts. No publishing or scheduling service is active.'),
+];
+
+export interface CatalogueQuery { q?: string; family?: string; media?: string; provider?: string; readiness?: string; source?: string; }
+export function buildCatalogue(store: Store, query: CatalogueQuery = {}): CatalogueResponse {
+  const takes = store.listTakes();
+  let capabilities = CAPABILITY_INVENTORY.map(definition => {
+    const item = structuredClone(definition);
+    const disabled = item.route.modelId ? MODEL_REGISTRY.find(model => model.id === item.route.modelId && model.status === 'unavailable') : undefined;
+    if (disabled) { item.readiness = 'planned'; item.route = { kind: 'planned' }; item.requirements = [disabled.notes ?? 'Router serving must be enabled for this model.']; item.limitations.unshift('A published schema does not establish actual route availability.'); return item; }
+    if (item.route.kind === 'local' && item.modelIds.length) {
+      item.examples = takes.filter(take => take.status === 'LOCAL' && take.provenance === 'local-edit' && (item.modelIds.includes(take.modelId) || item.id === 'story-pages' && take.modelId === 'local/manual-edit' && take.settings.operation === 'storyboard-page')).flatMap(take => take.assetIds.flatMap(id => {
+        const asset = store.getAsset(id);
+        return asset && asset.projectId === take.projectId && asset.provenance === 'local-edit' && asset.metadata.operation !== 'asset-poster' ? [{ projectId: take.projectId, takeId: take.id, assetId: asset.id, name: take.name, kind: asset.kind, url: asset.url, provenance: asset.provenance }] : [];
+      })).slice(-4).reverse();
+      if (item.examples.length) { item.readiness = 'ready'; item.lastVerified = { at: store.getTake(item.examples[0]!.takeId)!.updatedAt, kind: 'local-validation' }; }
+      return item;
+    }
+    const evidence = takes.filter(take => take.status === 'COMPLETED' && take.provenance === 'generated' && matchesGenerationCapability(item, take)).flatMap(take => {
+      const job = take.jobId ? store.getJob(take.jobId) : undefined;
+      const executionId = job?.requestId ?? (typeof job?.resultMetadata?.requestId === 'string' ? job.resultMetadata.requestId : undefined);
+      if (!job || job.state !== 'COMPLETED' || store.isArchivedJob(job.id) || !executionId) return [];
+      return take.assetIds.flatMap(id => { const asset = store.getAsset(id); return asset && asset.projectId === take.projectId && asset.provenance === 'generated' && asset.metadata.operation !== 'asset-poster' ? [{ projectId: take.projectId, takeId: take.id, assetId: asset.id, name: take.name, kind: asset.kind, url: asset.url, requestId: executionId, provenance: asset.provenance }] : []; });
+    });
+    item.examples = evidence.slice(-4).reverse();
+    if (item.route.kind === 'router' && item.examples.length) {
+      const latest = item.examples[0]!;
+      item.readiness = item.requirements.length > 1 ? 'needs-input' : 'ready';
+      item.lastVerified = { at: store.getTake(latest.takeId)!.updatedAt, kind: 'live-generation', requestId: latest.requestId };
+      item.limitations = item.limitations.filter(limit => !limit.startsWith('Schema-reviewed adapter;'));
+    }
+    return item;
+  });
+  const curated = store.listProjects().flatMap(project => project.catalogueDemonstrations ?? []);
+  capabilities = capabilities.map(item => {
+    item.demonstrations = curated.filter(record => record.capabilityId === item.id).flatMap(record => {
+      try { return [expandDemonstration(store, validateDemonstration(store, record, item, record.projectId))]; }
+      catch { return []; } // Missing, archived or mismatched history cannot certify readiness.
+    }).sort((a, b) => (b.verifiedAt ?? b.createdAt).localeCompare(a.verifiedAt ?? a.createdAt));
+    const proven = item.demonstrations.filter(record => record.verificationKind !== 'concept');
+    if (proven.length && item.route.kind !== 'planned') {
+      item.readiness = item.route.kind === 'router' && item.requirements.length > 1 ? 'needs-input' : 'ready';
+      item.lastVerified = { at: proven[0]!.verifiedAt!, kind: proven[0]!.verificationKind === 'generation' ? 'live-generation' : 'local-validation', requestId: proven[0]!.requestId };
+      const explicitExamples = proven.flatMap(record => record.takeId ? record.outputAssets.map(asset => ({ projectId: record.projectId, takeId: record.takeId!, assetId: asset.id, name: record.title, kind: asset.kind, url: asset.url, requestId: record.requestId, provenance: asset.provenance })) : []);
+      item.examples = [...explicitExamples, ...item.examples.filter(example => !explicitExamples.some(explicit => explicit.assetId === example.assetId))].slice(0, 8);
+    }
+    return item;
+  });
+  let models: DirectoryModel[] = snapshot.models.map(row => {
+    const adapter = MODEL_REGISTRY.find(model => model.id === row.id);
+    const covered = capabilities.filter(capability => capability.modelIds.includes(row.id) && capability.route.kind === 'router');
+    return { id: row.id, name: adapter?.name ?? row.model, provider: row.provider, inputModalities: normalizeModalities(row.inputModalities ?? []), outputModalities: normalizeModalities(row.outputModalities ?? []), description: adapter?.status === 'unavailable' ? adapter.notes! : adapter?.description ?? `Discovered Router model. Native schema available; no studio adapter or saved execution is claimed.`, documentation: adapter?.documentation ?? row.schemaUrl, schemaUrl: row.schemaUrl, readiness: covered.some(item => item.lastVerified?.kind === 'live-generation') ? 'ready' : adapter && adapter.status !== 'unavailable' ? 'experimental' : 'planned', adapterAvailable: Boolean(adapter && adapter.status !== 'unavailable'), capabilityIds: covered.map(item => item.id), schemaVerifiedAt: row.schemaVerifiedAt, source: 'comfy-router', chargesOnPolicyRejection: row.billing?.charges_on_policy_rejection };
+  });
+  const search = query.q?.trim().toLocaleLowerCase();
+  if (search) { capabilities = capabilities.filter(item => JSON.stringify([item.name, item.description, item.tags, item.modelIds, item.inputs, item.outputs]).toLocaleLowerCase().includes(search)); models = models.filter(item => JSON.stringify([item.id, item.name, item.description, item.inputModalities, item.outputModalities]).toLocaleLowerCase().includes(search)); }
+  if (query.family) { capabilities = capabilities.filter(item => item.family === query.family); const ids = new Set(capabilities.flatMap(item => item.modelIds)); models = models.filter(item => ids.has(item.id)); }
+  if (query.media) { const modality = normalizeModalities([query.media])[0]; capabilities = capabilities.filter(item => modality && item.outputModalities.includes(modality)); models = models.filter(item => modality && item.outputModalities.includes(modality)); }
+  if (query.provider) { capabilities = capabilities.filter(item => item.modelIds.some(id => id.split('/')[0] === query.provider)); models = models.filter(item => item.provider === query.provider); }
+  if (query.readiness) { capabilities = capabilities.filter(item => item.readiness === query.readiness); models = models.filter(item => item.readiness === query.readiness); }
+  if (query.source) { capabilities = capabilities.filter(item => item.route.kind === query.source || query.source === 'comfy-router' && item.route.kind === 'router'); if (!['router', 'comfy-router'].includes(query.source)) models = []; }
+  return { snapshot: { date: snapshot.date, fetchedAt: snapshot.fetchedAt, modelCount: snapshot.models.length, source: snapshot.source }, families: CAPABILITY_FAMILIES, capabilities, models, counts: { capabilities: capabilities.length, models: models.length, ready: capabilities.filter(item => item.readiness === 'ready').length, needsInput: capabilities.filter(item => item.readiness === 'needs-input').length, experimental: capabilities.filter(item => item.readiness === 'experimental').length, planned: capabilities.filter(item => item.readiness === 'planned').length } };
+}
+
+export function createCatalogueRouter(store: Store) {
+  const api = Router();
+  api.post('/projects/:id/catalogue-demonstrations', (req, res, next) => {
+    try {
+      if (!store.getProject(req.params.id)) { res.status(404).json({ error: 'Project not found.' }); return; }
+      const capability = CAPABILITY_INVENTORY.find(item => item.id === req.body?.capabilityId);
+      if (!capability) { res.status(400).json({ error: 'Unknown catalogue capability.' }); return; }
+      const record = validateDemonstration(store, req.body, capability, req.params.id);
+      res.status(201).json(saveDemonstration(store, req.params.id, record));
+    } catch (error) { next(error); }
+  });
+  api.get('/projects/:id/catalogue-demonstrations', (req, res) => {
+    const project = store.getProject(req.params.id);
+    if (!project) { res.status(404).json({ error: 'Project not found.' }); return; }
+    res.json({ demonstrations: buildCatalogue(store).capabilities.flatMap(item => item.demonstrations).filter(record => record.projectId === project.id) });
+  });
+  api.get('/catalogue', (req, res) => {
+    const query = Object.fromEntries(['q', 'family', 'media', 'provider', 'readiness', 'source'].flatMap(key => typeof req.query[key] === 'string' ? [[key, String(req.query[key]).slice(0, 200)]] : []));
+    res.json(buildCatalogue(store, query));
+  });
+  api.get('/projects/:id/model-dependencies', (req, res) => {
+    if (!store.getProject(req.params.id)) { res.status(404).json({ error: 'Project not found.' }); return; }
+    res.json({ dependencies: listModelDependencies(store, req.params.id) });
+  });
+  return api;
+}

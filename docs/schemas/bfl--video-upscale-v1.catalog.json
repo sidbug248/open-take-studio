@@ -1,0 +1,9 @@
+{
+  "billing": {
+    "charges_on_policy_rejection": "no"
+  },
+  "id": "bfl/video-upscale-v1",
+  "model": "video-upscale-v1",
+  "provider": "bfl",
+  "schema_etag": "\"bfe93d55d0ce28aa29cc5a2539ac03d88128e98e026e0d9b8038b9845886688c\""
+}

@@ -1,0 +1,9 @@
+{
+  "billing": {
+    "charges_on_policy_rejection": "yes"
+  },
+  "id": "recraft/recraftv4_1_vector",
+  "model": "recraftv4_1_vector",
+  "provider": "recraft",
+  "schema_etag": "\"f3e3a41af4f00b684cf4ed2b3b29d425a35fcd5d6c1c3623a7864274a68f3f89\""
+}

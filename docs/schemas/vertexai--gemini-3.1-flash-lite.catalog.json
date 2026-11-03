@@ -1,0 +1,9 @@
+{
+  "billing": {
+    "charges_on_policy_rejection": "yes"
+  },
+  "id": "vertexai/gemini-3.1-flash-lite",
+  "model": "gemini-3.1-flash-lite",
+  "provider": "vertexai",
+  "schema_etag": "\"87ad8dc9d5e8be3d89c1d35e55a48b67ec3278566fb8f356d9805a9e4d0dd639\""
+}

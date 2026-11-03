@@ -1,0 +1,162 @@
+{
+  "9": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "OpenTakeStudio/native/prism_atelier",
+      "images": [
+        "65",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "OTS · Save take",
+      "cnr_id": "comfy-core",
+      "ver": "0.3.64"
+    }
+  },
+  "62": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen_3_4b.safetensors",
+      "type": "lumina2",
+      "device": "default"
+    },
+    "_meta": {
+      "title": "Load CLIP",
+      "cnr_id": "comfy-core",
+      "ver": "0.3.73"
+    }
+  },
+  "63": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "ae.safetensors"
+    },
+    "_meta": {
+      "title": "Load VAE",
+      "cnr_id": "comfy-core",
+      "ver": "0.3.73"
+    }
+  },
+  "65": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "70",
+        0
+      ],
+      "vae": [
+        "63",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "VAE Decode",
+      "cnr_id": "comfy-core",
+      "ver": "0.3.64"
+    }
+  },
+  "66": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "z_image_turbo_bf16.safetensors",
+      "weight_dtype": "default"
+    },
+    "_meta": {
+      "title": "OTS · Draft model (Z-Image Turbo)",
+      "cnr_id": "comfy-core",
+      "ver": "0.3.73"
+    }
+  },
+  "67": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "An exquisite architectural still life: a translucent violet glass perfume vessel floating within a circular brushed-aluminum sculpture, on a low black stone podium, a luminous apricot beam passing through the glass and casting intricate caustic reflections across a deep indigo gallery. One deliberate off-center composition, tactile surfaces, editorial product photography, no text, no logos, extraordinary material clarity.",
+      "clip": [
+        "62",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "OTS · Prompt (positive)",
+      "cnr_id": "comfy-core",
+      "ver": "0.3.73"
+    }
+  },
+  "68": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+    },
+    "_meta": {
+      "title": "OTS · Size & variations",
+      "cnr_id": "comfy-core",
+      "ver": "0.3.64"
+    }
+  },
+  "69": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+      "shift": 3,
+      "sampling": "flow",
+      "model": [
+        "66",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "ModelSamplingAuraFlow",
+      "cnr_id": "comfy-core",
+      "ver": "0.3.64"
+    }
+  },
+  "70": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": 320261103,
+      "steps": 8,
+      "cfg": 1,
+      "sampler_name": "res_multistep",
+      "scheduler": "simple",
+      "denoise": 1,
+      "model": [
+        "69",
+        0
+      ],
+      "positive": [
+        "67",
+        0
+      ],
+      "negative": [
+        "71",
+        0
+      ],
+      "latent_image": [
+        "68",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "OTS · Draft sampler (seed)",
+      "cnr_id": "comfy-core",
+      "ver": "0.3.64"
+    }
+  },
+  "71": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "low quality, bad anatomy, extra digits, missing digits, extra limbs, missing limbs",
+      "clip": [
+        "62",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "OTS · Negative prompt",
+      "cnr_id": "comfy-core",
+      "ver": "0.3.73"
+    }
+  }
+}

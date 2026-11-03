@@ -1,0 +1,9 @@
+{
+  "billing": {
+    "charges_on_policy_rejection": "yes"
+  },
+  "id": "heygen/starfish",
+  "model": "starfish",
+  "provider": "heygen",
+  "schema_etag": "\"717e594789b1ab23fc2439fa049796adfd6c7ef32210a11645cb8d7a07016efd\""
+}

@@ -1,0 +1,9 @@
+{
+  "billing": {
+    "charges_on_policy_rejection": "no"
+  },
+  "id": "higgsfield/higgsfield-genjutsu-motion-transfer-v1.0",
+  "model": "higgsfield-genjutsu-motion-transfer-v1.0",
+  "provider": "higgsfield",
+  "schema_etag": "\"6bfab9891cf17c13040a4cb5ed5c38260195a4babda0970e2ee689d5f9adf4c4\""
+}

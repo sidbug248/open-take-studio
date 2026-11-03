@@ -1,0 +1,9 @@
+{
+  "billing": {
+    "charges_on_policy_rejection": "no"
+  },
+  "id": "bria/image-edit-increase-resolution",
+  "model": "image-edit-increase-resolution",
+  "provider": "bria",
+  "schema_etag": "\"3f18f7624e34bbe96e059e33580b25240ab381b99cf2837881556d126abcfb0f\""
+}

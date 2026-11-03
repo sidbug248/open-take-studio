@@ -1,0 +1,13 @@
+# Project packages
+
+An `.opentake.zip` contains `manifest.json` and the original managed asset bytes under `media/`. Every asset has a SHA-256 digest. Import assigns new project, asset, take, job, shot, film, scene, and revision IDs and remaps local relationships. Provider execution IDs remain historical evidence. Imported jobs are archived and cannot resume or retry.
+
+Version 1 remains supported. Version 2 adds `inlineMedia`, an index of large inline media strings found in the manifest. Each indexed value is replaced by `null`. An index entry contains its path as an array of object keys or array indices, its SHA-256 digest, and its UTF-8 byte count. The exact original string is stored once at `inputs/<sha256>.txt`; repeated references share that file. Data-URI prefixes and plain base64 are preserved exactly. Import verifies every index, path, digest, byte count and placeholder, then restores the strings before validating records. This avoids repeating the same encoded reference image many times in JSON while retaining the original request history.
+
+Signed media URL query credentials are removed before packaging. The private application database retains the submitted request; package history points to the saved media and durable production relationships. No application credential or environment file belongs in a project package.
+
+Limits remain 300 MiB for the expanded archive and 32 MiB for the compact manifest. Hydrated input history is separately bounded to 300 MiB, including the compact manifest and index. Inputs are limited to 10,000 references, paths to 64 segments and segment names to 1,000 characters. Import rejects unexpected archive paths, missing or unreferenced files, duplicate entries, corrupt hashes, inconsistent production relationships and over-limit expansion before creating records.
+
+The original asset files remain byte-for-byte unchanged. The input-string files are execution evidence, not new gallery assets or executable content. Version 2 is implemented by `server/package-inline-media.ts`; tools inspecting a manifest should hydrate that index before comparing complete request inputs.
+
+HTTP project exports run in a separate worker thread. It opens SQLite read-only and reads one committed snapshot, then performs history parsing, inline-input packing, media integrity checks and ZIP compression away from the server's HTTP event loop. One export runs at a time to bound memory; simultaneous requests for the same project share the pending archive. The finished buffer is transferred back without cloning it. This changes scheduling, not the archive format or stored production records. The concurrent-health test also verifies exact media and input restoration, signed-URL redaction and archived history.

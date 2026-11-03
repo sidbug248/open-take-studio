@@ -1,0 +1,9 @@
+{
+  "billing": {
+    "charges_on_policy_rejection": "no"
+  },
+  "id": "meshy/meshy-6",
+  "model": "meshy-6",
+  "provider": "meshy",
+  "schema_etag": "\"0d7192197b1e9b26366f52fe5262085cf20b83b8db453b4781feef3fec951c8c\""
+}

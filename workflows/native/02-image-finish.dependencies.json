@@ -1,0 +1,22 @@
+[
+  {
+    "nodeId": "1",
+    "classType": "LoadImage",
+    "models": {}
+  },
+  {
+    "nodeId": "2",
+    "classType": "ImageScale",
+    "models": {}
+  },
+  {
+    "nodeId": "3",
+    "classType": "ImageSharpen",
+    "models": {}
+  },
+  {
+    "nodeId": "4",
+    "classType": "SaveImage",
+    "models": {}
+  }
+]

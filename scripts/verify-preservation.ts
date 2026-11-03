@@ -1,0 +1,7 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+const checkpoint=JSON.parse(await readFile('artifacts/next-build/checkpoint-2026-11-03/receipt.json','utf8'));
+const projects=await(await fetch('http://127.0.0.1:4310/api/projects')).json(),details=await Promise.all(projects.map(async(p:any)=>(await fetch('http://127.0.0.1:4310/api/projects/'+p.id)).json()));
+const assets=details.flatMap(d=>d.assets),verified=[];
+for(const original of checkpoint.assets){const current=assets.find((a:any)=>a.id===original.id);if(!current)throw new Error('Original asset missing: '+original.id);const r=await fetch('http://127.0.0.1:4310'+current.url);if(!r.ok)throw new Error('Original asset unavailable');const bytes=Buffer.from(await r.arrayBuffer()),hash=createHash('sha256').update(bytes).digest('hex');if(hash!==original.sha256||bytes.length!==original.bytes)throw new Error('Original media changed: '+original.id);verified.push({id:original.id,sha256:hash,bytes:bytes.length});}
+await writeFile('artifacts/next-build/preservation-verification.json',JSON.stringify({verifiedAt:new Date().toISOString(),checkpoint:checkpoint.createdAt,originalAssetsVerified:verified.length,actualMediaUnchanged:true,projects:details.map(d=>({id:d.project.id,name:d.project.name,assets:d.assets.length,takes:d.takes.length,jobs:d.jobs.length,recipes:d.recipes.length})),verified},null,2));console.log(JSON.stringify({originalMediaPreserved:verified.length,projects:projects.length}));

@@ -1,0 +1,9 @@
+{
+  "billing": {
+    "charges_on_policy_rejection": "no"
+  },
+  "id": "bfl/video-edit-v1",
+  "model": "video-edit-v1",
+  "provider": "bfl",
+  "schema_etag": "\"e3b8aef9e802a61aaf18a30219b4b594114443b1ad819fc12b406bf0385752b3\""
+}

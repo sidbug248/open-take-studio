@@ -1,0 +1,9 @@
+{
+  "billing": {
+    "charges_on_policy_rejection": "no"
+  },
+  "id": "meshy/rigging",
+  "model": "rigging",
+  "provider": "meshy",
+  "schema_etag": "\"7e97efdf9549858837718a6fbe9f1481115a183cad00e72d320337710c380f39\""
+}

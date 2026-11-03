@@ -1,0 +1,10 @@
+import { useEffect, useState } from 'react';
+import { Download, FileText, LoaderCircle } from 'lucide-react';
+import type { Asset } from '../shared/types';
+export function DocumentPreview({asset}:{asset:Asset}){
+ const [text,setText]=useState(''),[error,setError]=useState(''),[loading,setLoading]=useState(true);
+ const readable=/^(text\/|application\/(json|xml))/.test(asset.mimeType)||/\.(txt|vtt|srt|json|md|csv)$/i.test(asset.name);
+ useEffect(()=>{let active=true;setText('');setError('');setLoading(true);if(!readable){setLoading(false);return;}fetch(asset.url).then(async response=>{if(!response.ok)throw new Error('The saved document could not be loaded.');if(asset.size>2_000_000)throw new Error('This document is large. Download the original to inspect it in full.');return response.text();}).then(value=>{if(active)setText(value);}).catch(error=>{if(active)setError(error.message);}).finally(()=>{if(active)setLoading(false);});return()=>{active=false;};},[asset.id,asset.url,asset.size,readable]);
+ if(asset.mimeType==='image/svg+xml')return <div className="document-preview vector-preview"><img src={asset.url} alt={asset.name}/><a className="btn secondary" href={`${asset.url}?download=1`}><Download size={15}/>Download editable SVG</a></div>;
+ return <section className="document-preview"><header><FileText size={18}/><div><strong>{asset.name}</strong><small>{asset.mimeType} · saved source</small></div><a className="btn quiet" href={`${asset.url}?download=1`}><Download size={15}/>Download</a></header>{loading?<div className="document-loading"><LoaderCircle className="spin"/>Loading saved text…</div>:error?<p role="status">{error}</p>:readable?<pre tabIndex={0} aria-label={`Contents of ${asset.name}`}>{text}</pre>:<p>This format can be inspected in its original application. Download the saved file above.</p>}{/transcript/i.test(asset.name)&&<p className="document-note">Generated transcription. Review the wording against the source audio; aligned timestamps are not included.</p>}</section>;
+}

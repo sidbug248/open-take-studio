@@ -1,0 +1,9 @@
+{
+  "billing": {
+    "charges_on_policy_rejection": "no"
+  },
+  "id": "minimax/minimax-h3",
+  "model": "minimax-h3",
+  "provider": "minimax",
+  "schema_etag": "\"752fde4a864d1998687c15d2e07650de09212f118b9e890d6ff07a429b256dcf\""
+}

@@ -1,0 +1,58 @@
+[
+  {
+    "nodeId": "9",
+    "classType": "SaveImage",
+    "models": {}
+  },
+  {
+    "nodeId": "62",
+    "classType": "CLIPLoader",
+    "models": {
+      "clip_name": "qwen_3_4b.safetensors"
+    }
+  },
+  {
+    "nodeId": "63",
+    "classType": "VAELoader",
+    "models": {
+      "vae_name": "ae.safetensors"
+    }
+  },
+  {
+    "nodeId": "65",
+    "classType": "VAEDecode",
+    "models": {}
+  },
+  {
+    "nodeId": "66",
+    "classType": "UNETLoader",
+    "models": {
+      "unet_name": "z_image_turbo_bf16.safetensors"
+    }
+  },
+  {
+    "nodeId": "67",
+    "classType": "CLIPTextEncode",
+    "models": {}
+  },
+  {
+    "nodeId": "68",
+    "classType": "EmptySD3LatentImage",
+    "models": {}
+  },
+  {
+    "nodeId": "69",
+    "classType": "ModelSamplingAuraFlow",
+    "models": {}
+  },
+  {
+    "nodeId": "70",
+    "classType": "KSampler",
+    "models": {}
+  },
+  {
+    "nodeId": "71",
+    "classType": "CLIPTextEncode",
+    "models": {}
+  }
+]

@@ -1,0 +1,55 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "choose_input.png"
+    },
+    "_meta": {
+      "title": "01 · Upload or reuse a saved image"
+    }
+  },
+  "2": {
+    "class_type": "ImageScale",
+    "inputs": {
+      "image": [
+        "1",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "width": 768,
+      "height": 768,
+      "crop": "center"
+    },
+    "_meta": {
+      "title": "02 · Frame and resize"
+    }
+  },
+  "3": {
+    "class_type": "ImageSharpen",
+    "inputs": {
+      "image": [
+        "2",
+        0
+      ],
+      "sharpen_radius": 1,
+      "sigma": 1,
+      "alpha": 0.2
+    },
+    "_meta": {
+      "title": "03 · Gentle detail finish"
+    }
+  },
+  "4": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "3",
+        0
+      ],
+      "filename_prefix": "OpenTakeStudio/native/image_finish"
+    },
+    "_meta": {
+      "title": "04 · Save finished take"
+    }
+  }
+}

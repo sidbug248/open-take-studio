@@ -1,0 +1,9 @@
+{
+  "billing": {
+    "charges_on_policy_rejection": "no"
+  },
+  "id": "bfl/flux-pro-1.0-fill",
+  "model": "flux-pro-1.0-fill",
+  "provider": "bfl",
+  "schema_etag": "\"081338784a94c77a1bef477e540e5a9e67bee140ca666906ba55a2d201d9358a\""
+}

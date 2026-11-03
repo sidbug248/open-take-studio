@@ -1,0 +1,9 @@
+{
+  "billing": {
+    "charges_on_policy_rejection": "unknown"
+  },
+  "id": "elevenlabs/eleven_sfx_v2",
+  "model": "eleven_sfx_v2",
+  "provider": "elevenlabs",
+  "schema_etag": "\"318316a7db64b5f79d33433e677ce021605e110e1bffb4232087835389221383\""
+}

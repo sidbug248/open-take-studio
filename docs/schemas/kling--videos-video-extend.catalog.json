@@ -1,0 +1,9 @@
+{
+  "billing": {
+    "charges_on_policy_rejection": "no"
+  },
+  "id": "kling/videos-video-extend",
+  "model": "videos-video-extend",
+  "provider": "kling",
+  "schema_etag": "\"c8e56535bd1b879fbafbeaf3f80dceccc1548e9565fe39a8b2a93dc6b04022a5\""
+}

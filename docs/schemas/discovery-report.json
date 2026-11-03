@@ -1,0 +1,189 @@
+[
+  {
+    "id": "bfl/flux-3-image",
+    "status": 200,
+    "etag": "\"02fcae9188d8d4c561ac3de3039b95f73500a2cb32b38056aa19034e69dee0ba\"",
+    "fetchedAt": "2026-11-03T08:18:25.352Z",
+    "catalogStatus": 200
+  },
+  {
+    "id": "minimax/minimax-h3",
+    "status": 200,
+    "etag": "\"752fde4a864d1998687c15d2e07650de09212f118b9e890d6ff07a429b256dcf\"",
+    "fetchedAt": "2026-11-03T08:18:22.224Z",
+    "catalogStatus": 200
+  },
+  {
+    "id": "bfl/flux-pro-1.0-fill",
+    "status": 200,
+    "etag": "\"081338784a94c77a1bef477e540e5a9e67bee140ca666906ba55a2d201d9358a\"",
+    "fetchedAt": "2026-11-03T08:18:23.368Z",
+    "catalogStatus": 200
+  },
+  {
+    "id": "bria/image-edit-remove-background",
+    "status": 200,
+    "etag": "\"f97bf54fd98e007007bcf9435eb52e6acbece90c2d3fbb6ba4ceec87204a4057\"",
+    "fetchedAt": "2026-11-03T00:52:24.148Z",
+    "catalogStatus": 200
+  },
+  {
+    "id": "bria/image-edit-increase-resolution",
+    "status": 200,
+    "etag": "\"3f18f7624e34bbe96e059e33580b25240ab381b99cf2837881556d126abcfb0f\"",
+    "fetchedAt": "2026-11-03T00:52:25.372Z",
+    "catalogStatus": 200
+  },
+  {
+    "id": "bfl/video-edit-v1",
+    "status": 200,
+    "etag": "\"e3b8aef9e802a61aaf18a30219b4b594114443b1ad819fc12b406bf0385752b3\"",
+    "fetchedAt": "2026-11-03T00:52:26.352Z",
+    "catalogStatus": 200
+  },
+  {
+    "id": "bfl/video-upscale-v1",
+    "status": 200,
+    "etag": "\"bfe93d55d0ce28aa29cc5a2539ac03d88128e98e026e0d9b8038b9845886688c\"",
+    "fetchedAt": "2026-11-03T00:52:27.573Z",
+    "catalogStatus": 200
+  },
+  {
+    "id": "elevenlabs/eleven_sfx_v2",
+    "status": 200,
+    "etag": "\"318316a7db64b5f79d33433e677ce021605e110e1bffb4232087835389221383\"",
+    "fetchedAt": "2026-11-03T00:52:28.525Z",
+    "catalogStatus": 200
+  },
+  {
+    "id": "elevenlabs/eleven_v3",
+    "status": 200,
+    "etag": "\"5503638cce103d1cdeb0a7babc0e97faf6533be33296dac9bdcdd379b8892bc2\"",
+    "fetchedAt": "2026-11-03T08:18:24.286Z",
+    "catalogStatus": 200
+  },
+  {
+    "id": "meshy/meshy-6",
+    "status": 200,
+    "etag": "\"0d7192197b1e9b26366f52fe5262085cf20b83b8db453b4781feef3fec951c8c\"",
+    "fetchedAt": "2026-11-03T00:52:30.541Z",
+    "catalogStatus": 200
+  },
+  {
+    "id": "synclabs/sync-3",
+    "status": 200,
+    "etag": "\"c2fa21aa4f12e11c7e2c1d204d86e5d6308b05cdfb5a26679861120ac788966b\"",
+    "fetchedAt": "2026-11-03T00:52:31.584Z",
+    "catalogStatus": 200
+  },
+  {
+    "id": "kling/videos-video-extend",
+    "status": 200,
+    "etag": "\"c8e56535bd1b879fbafbeaf3f80dceccc1548e9565fe39a8b2a93dc6b04022a5\"",
+    "fetchedAt": "2026-11-03T08:30:58.745Z",
+    "catalogStatus": 200
+  },
+  {
+    "id": "higgsfield/higgsfield-genjutsu-motion-transfer-v1.0",
+    "status": 200,
+    "etag": "\"6bfab9891cf17c13040a4cb5ed5c38260195a4babda0970e2ee689d5f9adf4c4\"",
+    "fetchedAt": "2026-11-03T00:52:33.434Z",
+    "catalogStatus": 200
+  },
+  {
+    "id": "byteplus/seed-audio-1.0-multilingual",
+    "status": 200,
+    "etag": "\"1fbcebda2cfd71ff71d675ffddb664e898701d329e95f83161ce8cf12c122dd0\"",
+    "fetchedAt": "2026-11-03T01:00:10.008Z",
+    "catalogStatus": 200
+  },
+  {
+    "id": "heygen/starfish",
+    "status": 200,
+    "etag": "\"717e594789b1ab23fc2439fa049796adfd6c7ef32210a11645cb8d7a07016efd\"",
+    "fetchedAt": "2026-11-03T01:00:11.161Z",
+    "catalogStatus": 200
+  },
+  {
+    "id": "meshy/meshy-7.1",
+    "status": 200,
+    "etag": "\"0791644f48bd5e92de97a10c5d17f7f33ebf780a31cd310aa336c0544c52a807\"",
+    "fetchedAt": "2026-11-03T05:14:56.730Z",
+    "catalogStatus": 200
+  },
+  {
+    "id": "meshy/rigging",
+    "status": 200,
+    "etag": "\"7e97efdf9549858837718a6fbe9f1481115a183cad00e72d320337710c380f39\"",
+    "fetchedAt": "2026-11-03T05:14:57.911Z",
+    "catalogStatus": 200
+  },
+  {
+    "id": "meshy/animations",
+    "status": 200,
+    "etag": "\"7748c889881c9d5749f32587fc2572315203030c8035e6e32a52f684605d2dc6\"",
+    "fetchedAt": "2026-11-03T05:14:58.902Z",
+    "catalogStatus": 200
+  },
+  {
+    "id": "ltx/ltx-2-5-fast",
+    "status": 200,
+    "etag": "\"2fcef88fd397a1a8cccf24e571846189f1ed477b2016e930902e09c000d86e6d\"",
+    "fetchedAt": "2026-11-03T05:14:59.959Z",
+    "catalogStatus": 200
+  },
+  {
+    "id": "bfl/flux-pro-1.0-expand",
+    "status": 200,
+    "etag": "\"f85bfe66b8f1220adf6aefa126ff9a469fccddb007c23bc00acaa649585383fb\"",
+    "fetchedAt": "2026-11-03T05:25:57.461Z",
+    "catalogStatus": 200
+  },
+  {
+    "id": "veed/clean-audio",
+    "status": 200,
+    "etag": "\"690170138a67d3de13eae14b02fd1ff3bc256b16e66b174924710207cc8d06d6\"",
+    "fetchedAt": "2026-11-03T05:25:58.517Z",
+    "catalogStatus": 200
+  },
+  {
+    "id": "recraft/recraftv4_1_vector",
+    "status": 200,
+    "etag": "\"f3e3a41af4f00b684cf4ed2b3b29d425a35fcd5d6c1c3623a7864274a68f3f89\"",
+    "fetchedAt": "2026-11-03T05:25:59.593Z",
+    "catalogStatus": 200
+  },
+  {
+    "id": "kling/videos-text2video",
+    "status": 404,
+    "etag": null,
+    "fetchedAt": "2026-11-03T08:30:59.767Z"
+  },
+  {
+    "id": "kling/videos-image2video",
+    "status": 404,
+    "etag": null,
+    "fetchedAt": "2026-11-03T08:31:00.289Z"
+  },
+  {
+    "id": "kling/kling-v2-6",
+    "status": 200,
+    "etag": "\"590c82e1d7f452c97fdf03945cfd03c82b7579e8793b31eb4301a38253534a48\"",
+    "fetchedAt": "2026-11-03T08:31:43.384Z",
+    "catalogStatus": 200
+  },
+  {
+    "id": "kling/kling-v3",
+    "status": 200,
+    "etag": "\"95ddb4f9bec4445d6043ad94f5df75d547698602d7e8a359cbebd177fbe226cf\"",
+    "fetchedAt": "2026-11-03T08:31:44.408Z",
+    "catalogStatus": 200
+  },
+  {
+    "id": "vertexai/gemini-3.1-flash-lite",
+    "status": 200,
+    "etag": "\"87ad8dc9d5e8be3d89c1d35e55a48b67ec3278566fb8f356d9805a9e4d0dd639\"",
+    "fetchedAt": "2026-11-03T08:54:45.373Z",
+    "catalogStatus": 200
+  }
+]

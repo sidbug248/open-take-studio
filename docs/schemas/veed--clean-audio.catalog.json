@@ -1,0 +1,9 @@
+{
+  "billing": {
+    "charges_on_policy_rejection": "unknown"
+  },
+  "id": "veed/clean-audio",
+  "model": "clean-audio",
+  "provider": "veed",
+  "schema_etag": "\"690170138a67d3de13eae14b02fd1ff3bc256b16e66b174924710207cc8d06d6\""
+}

@@ -1,0 +1,9 @@
+{
+  "billing": {
+    "charges_on_policy_rejection": "yes"
+  },
+  "id": "byteplus/seed-audio-1.0-multilingual",
+  "model": "seed-audio-1.0-multilingual",
+  "provider": "byteplus",
+  "schema_etag": "\"1fbcebda2cfd71ff71d675ffddb664e898701d329e95f83161ce8cf12c122dd0\""
+}

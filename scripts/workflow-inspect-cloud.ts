@@ -1,0 +1,11 @@
+import '../server/config.ts';
+import { mkdir, writeFile, readFile } from 'node:fs/promises';
+const response = await fetch('https://cloud.comfy.org/api/object_info', {headers:{Authorization:`Bearer ${process.env.COMFY_API_KEY}`},signal:AbortSignal.timeout(60000)});
+if(!response.ok)throw new Error(`Cloud object information HTTP ${response.status}`);
+const nodes=await response.json() as Record<string,any>;
+await mkdir('artifacts/native-workflows',{recursive:true});
+await writeFile('artifacts/native-workflows/object-info.json',JSON.stringify(nodes));
+const graph=JSON.parse(await readFile('imports/comfy-cloud/workflows/Open Take Studio — 01 Image Draft.api.json','utf8'));
+const report=Object.entries(graph).map(([id,node]:[string,any])=>({id,classType:node.class_type,present:Boolean(nodes[node.class_type]),inputs:Object.keys(nodes[node.class_type]?.input?.required??{}),models:Object.entries(node.inputs).filter(([key])=>['clip_name','vae_name','unet_name'].includes(key)).map(([key,value])=>({key,value,listed:nodes[node.class_type]?.input?.required?.[key]?.[0]?.includes(value)}))}));
+await writeFile('artifacts/native-workflows/dependency-inspection.json',JSON.stringify({checkedAt:new Date().toISOString(),endpoint:'https://cloud.comfy.org/api/object_info',nodeCount:Object.keys(nodes).length,imageDraft:report},null,2));
+console.log(JSON.stringify({nodeCount:Object.keys(nodes).length,imageDraft:report},null,2));

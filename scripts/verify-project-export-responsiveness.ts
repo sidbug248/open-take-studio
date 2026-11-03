@@ -1,0 +1,13 @@
+import {mkdir,readFile,writeFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import AdmZip from 'adm-zip';
+import {unpackInlineMedia} from '../server/package-inline-media.ts';
+const base='http://127.0.0.1:4310/api',root=path.resolve('artifacts/inspection-build/package-verification'),directory=path.join(root,'responsiveness');await mkdir(directory,{recursive:true});
+const prior=JSON.parse(await readFile(path.join(root,'verification-receipt.json'),'utf8')),project=[...prior.projects].sort((a,b)=>b.packageBytes-a.packageBytes)[0];
+let complete=false;const begun=performance.now(),archive=fetch(`${base}/projects/${project.projectId}/export`,{signal:AbortSignal.timeout(180000)}).then(async response=>{if(!response.ok)throw new Error(await response.text());return Buffer.from(await response.arrayBuffer());}).finally(()=>{complete=true;});
+const health:{at:string;milliseconds:number}[]=[];while(!complete){const start=performance.now(),response=await fetch(`${base}/health`,{signal:AbortSignal.timeout(2000)});assert.equal(response.status,200);await response.json();health.push({at:new Date().toISOString(),milliseconds:Math.round(performance.now()-start)});await new Promise(resolve=>setTimeout(resolve,100));}
+const bytes=await archive,totalMs=Math.round(performance.now()-begun),original=new AdmZip(await readFile(path.join(root,project.file))),zip=new AdmZip(bytes),before=unpackInlineMedia(JSON.parse(original.readAsText('manifest.json')),original).manifest as any,after=unpackInlineMedia(JSON.parse(zip.readAsText('manifest.json')),zip).manifest as any;delete before.exportedAt;delete after.exportedAt;assert.deepEqual(after,before,'Export scheduling must not alter the finished project manifest');
+for(const asset of after.assets)assert.equal(createHash('sha256').update(zip.readFile(`media/${asset.fileName}`)!).digest('hex'),asset.sha256);
+const file='large-project-worker-export.opentake.zip';await writeFile(path.join(directory,file),bytes);const receipt={verifiedAt:new Date().toISOString(),projectId:project.projectId,projectName:project.name,packageBytes:bytes.length,packageSha256:createHash('sha256').update(bytes).digest('hex'),file,exportMs:totalMs,healthResponses:health.length,maxHealthMs:Math.max(...health.map(sample=>sample.milliseconds)),samples:health,exactManifestExceptExportTimestamp:true,allMediaHashesVerified:true,liveDatabaseMutations:false,scope:'One bounded local observation during the largest saved project export; not a load benchmark.'};await writeFile(path.join(directory,'receipt.json'),JSON.stringify(receipt,null,2));console.log(JSON.stringify({...receipt,samples:undefined},null,2));

@@ -1,0 +1,246 @@
+{
+  "id": "285883fc-da32-44dd-9d80-0bb9ccd6b1e2",
+  "revision": 0,
+  "last_node_id": 4,
+  "last_link_id": 3,
+  "version": 0.4,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "LoadImage",
+      "pos": [
+        0,
+        70
+      ],
+      "size": [
+        330,
+        390
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            1
+          ],
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [],
+          "slot_index": 1
+        }
+      ],
+      "title": "01 · Upload or reuse a saved image",
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "f4d211192d4b026207cdbdf036bf54dc734bb905fd10dbaec772a139f169fb5f.png",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "f4d211192d4b026207cdbdf036bf54dc734bb905fd10dbaec772a139f169fb5f.png",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 2,
+      "type": "ImageScale",
+      "pos": [
+        410,
+        70
+      ],
+      "size": [
+        320,
+        220
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            2
+          ],
+          "slot_index": 0
+        }
+      ],
+      "title": "02 · Frame and resize",
+      "properties": {
+        "Node name for S&R": "ImageScale"
+      },
+      "widgets_values": [
+        "lanczos",
+        768,
+        768,
+        "center"
+      ]
+    },
+    {
+      "id": 3,
+      "type": "ImageSharpen",
+      "pos": [
+        410,
+        360
+      ],
+      "size": [
+        320,
+        190
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 2
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            3
+          ],
+          "slot_index": 0
+        }
+      ],
+      "title": "03 · Gentle detail finish",
+      "properties": {
+        "Node name for S&R": "ImageSharpen"
+      },
+      "widgets_values": [
+        1,
+        1,
+        0.2
+      ]
+    },
+    {
+      "id": 4,
+      "type": "SaveImage",
+      "pos": [
+        820,
+        70
+      ],
+      "size": [
+        370,
+        480
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 3
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": []
+        }
+      ],
+      "title": "04 · Save finished take",
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "OpenTakeStudio/native/image_finish_cloud_v1"
+      ]
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      0,
+      2,
+      0,
+      "IMAGE"
+    ],
+    [
+      2,
+      2,
+      0,
+      3,
+      0,
+      "IMAGE"
+    ],
+    [
+      3,
+      3,
+      0,
+      4,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [
+    {
+      "title": "01 · Source / actual input upload",
+      "bounding": [
+        -30,
+        0,
+        380,
+        540
+      ],
+      "color": "#66507d",
+      "font_size": 22,
+      "flags": {}
+    },
+    {
+      "title": "02 · Finish / framing and detail",
+      "bounding": [
+        380,
+        0,
+        380,
+        580
+      ],
+      "color": "#3c6570",
+      "font_size": 22,
+      "flags": {}
+    },
+    {
+      "title": "03 · Output / production history",
+      "bounding": [
+        790,
+        0,
+        430,
+        580
+      ],
+      "color": "#526b54",
+      "font_size": 22,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.8,
+      "offset": [
+        80,
+        80
+      ]
+    }
+  }
+}

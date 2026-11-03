@@ -1,0 +1,17 @@
+[
+  {
+    "nodeId": "1",
+    "classType": "LoadVideo",
+    "models": {}
+  },
+  {
+    "nodeId": "2",
+    "classType": "MinimaxHailuo03RegenerateNode",
+    "models": {}
+  },
+  {
+    "nodeId": "3",
+    "classType": "SaveVideo",
+    "models": {}
+  }
+]

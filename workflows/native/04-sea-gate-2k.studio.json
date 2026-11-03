@@ -1,0 +1,306 @@
+{
+  "name": "Open Take Studio — Native 04 · Sea Gate 2K",
+  "description": "Regenerate an unmodified MiniMax H3 768P text-to-video output to 2K through the documented native partner node. Uses the exact original prompt and no references because the source was text-only. Source requirement: 24 fps, 107–362 frames on the H3 frame grid, at most 1,032,192 pixels. This is separate from the unsupported Router base_video path. This saved version alone is not proof of execution.",
+  "editorGraph": {
+    "id": "b9a6692e-06c1-48f9-bdae-d8357a71ebe6",
+    "revision": 0,
+    "last_node_id": 3,
+    "last_link_id": 2,
+    "version": 0.4,
+    "nodes": [
+      {
+        "id": 1,
+        "type": "LoadVideo",
+        "pos": [
+          0,
+          70
+        ],
+        "size": [
+          360,
+          350
+        ],
+        "flags": {},
+        "order": 0,
+        "mode": 0,
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "VIDEO",
+            "type": "VIDEO",
+            "links": [
+              1
+            ],
+            "slot_index": 0
+          }
+        ],
+        "title": "01 · Original 768P video / unchanged bytes",
+        "properties": {
+          "Node name for S&R": "LoadVideo"
+        },
+        "widgets_values": [
+          "choose_original_768p.mp4"
+        ],
+        "widgets_values_named": {
+          "file": "choose_original_768p.mp4"
+        }
+      },
+      {
+        "id": 2,
+        "type": "MinimaxHailuo03RegenerateNode",
+        "pos": [
+          450,
+          70
+        ],
+        "size": [
+          470,
+          550
+        ],
+        "flags": {},
+        "order": 1,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "video",
+            "type": "VIDEO",
+            "link": 1
+          },
+          {
+            "name": "first_frame",
+            "type": "IMAGE",
+            "link": null
+          },
+          {
+            "name": "last_frame",
+            "type": "IMAGE",
+            "link": null
+          }
+        ],
+        "outputs": [
+          {
+            "name": "VIDEO",
+            "type": "VIDEO",
+            "links": [
+              2
+            ],
+            "slot_index": 0
+          }
+        ],
+        "title": "02 · Native H3 regeneration / original prompt",
+        "properties": {
+          "Node name for S&R": "MinimaxHailuo03RegenerateNode"
+        },
+        "widgets_values": [
+          "MiniMax H3",
+          "A cinematic slow forward glide through a colossal circular gate rising out of a turquoise sea at peach dawn. Black basalt walls, luminous mist, delicate water droplets, immense elegant scale. The camera starts low over rippling water and approaches the opening. One coherent continuous shot, no people, no lettering. Audio: low ocean swell, airy wind, one resonant distant bell.",
+          "2K",
+          false
+        ],
+        "widgets_values_named": {
+          "model": "MiniMax H3",
+          "model.prompt": "A cinematic slow forward glide through a colossal circular gate rising out of a turquoise sea at peach dawn. Black basalt walls, luminous mist, delicate water droplets, immense elegant scale. The camera starts low over rippling water and approaches the opening. One coherent continuous shot, no people, no lettering. Audio: low ocean swell, airy wind, one resonant distant bell.",
+          "model.resolution": "2K",
+          "watermark": false
+        }
+      },
+      {
+        "id": 3,
+        "type": "SaveVideo",
+        "pos": [
+          1010,
+          70
+        ],
+        "size": [
+          400,
+          450
+        ],
+        "flags": {},
+        "order": 2,
+        "mode": 0,
+        "inputs": [
+          {
+            "name": "video",
+            "type": "VIDEO",
+            "link": 2
+          }
+        ],
+        "outputs": [
+          {
+            "name": "video",
+            "type": "VIDEO",
+            "links": []
+          }
+        ],
+        "title": "03 · Save new 2K take / preserve source",
+        "properties": {
+          "Node name for S&R": "SaveVideo"
+        },
+        "widgets_values": [
+          "OpenTakeStudio/native/sea_gate_regenerated_2k",
+          "auto",
+          "auto",
+          "auto"
+        ],
+        "widgets_values_named": {
+          "filename_prefix": "OpenTakeStudio/native/sea_gate_regenerated_2k",
+          "format": "auto",
+          "format.codec": "auto",
+          "codec": "auto"
+        }
+      }
+    ],
+    "links": [
+      [
+        1,
+        1,
+        0,
+        2,
+        0,
+        "VIDEO"
+      ],
+      [
+        2,
+        2,
+        0,
+        3,
+        0,
+        "VIDEO"
+      ]
+    ],
+    "groups": [
+      {
+        "title": "01 · Source / original H3 768P output",
+        "bounding": [
+          -30,
+          0,
+          420,
+          650
+        ],
+        "color": "#66507d",
+        "font_size": 22,
+        "flags": {}
+      },
+      {
+        "title": "02 · Regenerate / verified partner node",
+        "bounding": [
+          420,
+          0,
+          530,
+          650
+        ],
+        "color": "#3c6570",
+        "font_size": 22,
+        "flags": {}
+      },
+      {
+        "title": "03 · Delivery / new managed output",
+        "bounding": [
+          980,
+          0,
+          460,
+          650
+        ],
+        "color": "#526b54",
+        "font_size": 22,
+        "flags": {}
+      }
+    ],
+    "config": {},
+    "extra": {
+      "ds": {
+        "scale": 0.65,
+        "offset": [
+          80,
+          100
+        ]
+      }
+    }
+  },
+  "apiGraph": {
+    "1": {
+      "class_type": "LoadVideo",
+      "inputs": {
+        "file": "choose_original_768p.mp4"
+      },
+      "_meta": {
+        "title": "01 · Original 768P video / unchanged bytes"
+      }
+    },
+    "2": {
+      "class_type": "MinimaxHailuo03RegenerateNode",
+      "inputs": {
+        "model": "MiniMax H3",
+        "model.prompt": "A cinematic slow forward glide through a colossal circular gate rising out of a turquoise sea at peach dawn. Black basalt walls, luminous mist, delicate water droplets, immense elegant scale. The camera starts low over rippling water and approaches the opening. One coherent continuous shot, no people, no lettering. Audio: low ocean swell, airy wind, one resonant distant bell.",
+        "model.resolution": "2K",
+        "video": [
+          "1",
+          0
+        ],
+        "watermark": false
+      },
+      "_meta": {
+        "title": "02 · Native H3 regeneration / original prompt"
+      }
+    },
+    "3": {
+      "class_type": "SaveVideo",
+      "inputs": {
+        "video": [
+          "2",
+          0
+        ],
+        "filename_prefix": "OpenTakeStudio/native/sea_gate_regenerated_2k",
+        "format": "auto",
+        "format.codec": "auto",
+        "codec": "auto"
+      },
+      "_meta": {
+        "title": "03 · Save new 2K take / preserve source"
+      }
+    }
+  },
+  "bindings": [
+    {
+      "key": "video",
+      "label": "Original H3 768P video",
+      "nodeId": "1",
+      "inputName": "file",
+      "kind": "video",
+      "required": true
+    },
+    {
+      "key": "prompt",
+      "label": "Exact original prompt",
+      "nodeId": "2",
+      "inputName": "model.prompt",
+      "kind": "string",
+      "required": true,
+      "defaultValue": "A cinematic slow forward glide through a colossal circular gate rising out of a turquoise sea at peach dawn. Black basalt walls, luminous mist, delicate water droplets, immense elegant scale. The camera starts low over rippling water and approaches the opening. One coherent continuous shot, no people, no lettering. Audio: low ocean swell, airy wind, one resonant distant bell."
+    }
+  ],
+  "outputNodeIds": [
+    "3"
+  ],
+  "outputKind": "video",
+  "format": "open-take-comfy-workflow",
+  "version": 1,
+  "dependencies": [
+    {
+      "nodeId": "1",
+      "classType": "LoadVideo",
+      "models": {}
+    },
+    {
+      "nodeId": "2",
+      "classType": "MinimaxHailuo03RegenerateNode",
+      "models": {}
+    },
+    {
+      "nodeId": "3",
+      "classType": "SaveVideo",
+      "models": {}
+    }
+  ],
+  "graphSha256": "a603ae41a183bdf20564a5b654b9b9de03a271f39185f209b87ecf4ca819bcc5",
+  "target": "comfy-cloud",
+  "createdAt": "2026-11-03T08:51:45.680Z"
+}

@@ -1,0 +1,9 @@
+{
+  "billing": {
+    "charges_on_policy_rejection": "no"
+  },
+  "id": "ltx/ltx-2-5-fast",
+  "model": "ltx-2-5-fast",
+  "provider": "ltx",
+  "schema_etag": "\"2fcef88fd397a1a8cccf24e571846189f1ed477b2016e930902e09c000d86e6d\""
+}

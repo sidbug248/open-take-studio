@@ -1,0 +1,9 @@
+{
+  "billing": {
+    "charges_on_policy_rejection": "no"
+  },
+  "id": "bria/image-edit-remove-background",
+  "model": "image-edit-remove-background",
+  "provider": "bria",
+  "schema_etag": "\"f97bf54fd98e007007bcf9435eb52e6acbece90c2d3fbb6ba4ceec87204a4057\""
+}

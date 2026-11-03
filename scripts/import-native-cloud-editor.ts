@@ -1,0 +1,19 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+import {workflowGraphSchema} from '../server/workflow-schema.ts';
+const finish=process.argv.includes('--finish'),reopen=process.argv.includes('--reopen');
+const base='http://127.0.0.1:4310/api',projectId='1bec0508-6565-4cf8-9666-f07d224351a1',directory=`artifacts/native-workflows/${finish?'cloud-editor-finish':'cloud-editor'}${reopen?'-reopen':''}`;
+const request=async(route:string,body?:unknown,method='POST')=>{const response=await fetch(base+route,body===undefined?undefined:{method,headers:{'content-type':'application/json'},body:JSON.stringify(body)});if(!response.ok)throw new Error(`${route}: ${await response.text()}`);return response.json();};
+const receipt=JSON.parse(await readFile(`${directory}/recovery-receipt.json`,'utf8')),prior=JSON.parse(await readFile('artifacts/native-workflows/app-execution-receipt.json','utf8')),template=JSON.parse(await readFile(`workflows/native/${finish?'02-image-finish':'01-prism-atelier'}.studio.json`,'utf8'));
+const editorGraph=JSON.parse(await readFile(`${directory}/cloud-editor-execution.editor.json`,'utf8')),apiGraph=JSON.parse(await readFile(`${directory}/cloud-editor-execution.api.json`,'utf8'));
+const name=finish?'Image Finish · Cloud editor v1':'Prism Atelier · Cloud editor v1',sha=createHash('sha256').update(JSON.stringify(workflowGraphSchema.parse(apiGraph))).digest('hex'),versions=await request(`/projects/${projectId}/workflows`) as any[];
+const cloudReference={cloudEditorUrl:receipt.workflowUrl,cloudWorkspace:{id:receipt.workspaceId,name:'NYC Build Night'}};
+const version=versions.find(item=>item.workflow.name===name&&item.workflow.graphSha256===sha)??await request(`/projects/${projectId}/workflows`,{name,description:`Verified external Cloud editor run, imported as archived execution history. Original Cloud workflow: ${receipt.workflowName}. Exact editor and API graphs recovered from the output PNG.`,apiGraph,editorGraph,bindings:template.bindings,outputNodeIds:template.outputNodeIds,outputKind:'image',parentVersionAssetId:prior.versions[finish?1:0].assetId,...cloudReference});
+await request(`/workflows/${version.asset.id}/cloud-reference`,cloudReference,'PATCH');
+const source=finish?{inputAssetIds:{image:prior.outputs[0].assetId},sourceAssetId:prior.outputs[0].assetId,parentTakeId:prior.outputs[0].takeId}:{};
+const admitted=await request(`/workflows/${version.asset.id}/import-execution`,{requestId:receipt.jobId,name:`${finish?'Image Finish':'Prism Atelier'} · Cloud editor proof (imported)`,...source});let completed;
+for(let i=0;i<60;i++){const job=await request(`/workflow-jobs/${admitted.job.id}`);if(['COMPLETED','FAILED','BLOCKED','EXPIRED'].includes(job.state)){completed=job;break;}await new Promise(resolve=>setTimeout(resolve,1000));}
+if(completed?.state!=='COMPLETED'||completed?.archived!==true)throw new Error(`Cloud editor import is not complete: ${completed?.state}`);
+const detail=await request(`/projects/${projectId}`),take=detail.takes.find((value:any)=>value.id===completed.takeId),assets=take.assetIds.map((id:string)=>detail.assets.find((value:any)=>value.id===id));
+if(take.provenance!=='imported'||assets.some((asset:any)=>asset.provenance!=='imported'))throw new Error('Cloud editor import provenance was not preserved');
+const result={importedAt:new Date().toISOString(),projectId,workflowVersionAssetId:version.asset.id,takeId:take.id,jobId:completed.id,cloudJobId:receipt.jobId,...cloudReference,origin:completed.workflow.origin,archived:true,submissionAttempts:completed.attempts,inputAssetIds:take.inputAssetIds,parentTakeId:take.parentTakeId,sourceAssetId:take.sourceAssetId,assets:assets.map((asset:any)=>({id:asset.id,sha256:asset.sha256,bytes:asset.size,provenance:asset.provenance}))};await writeFile(`${directory}/application-import-receipt.json`,JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));

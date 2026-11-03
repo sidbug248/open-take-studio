@@ -1,0 +1,9 @@
+{
+  "billing": {
+    "charges_on_policy_rejection": "no"
+  },
+  "id": "kling/kling-v3",
+  "model": "kling-v3",
+  "provider": "kling",
+  "schema_etag": "\"95ddb4f9bec4445d6043ad94f5df75d547698602d7e8a359cbebd177fbe226cf\""
+}

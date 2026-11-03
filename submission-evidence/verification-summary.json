@@ -1,0 +1,187 @@
+{
+  "asOf": "2026-11-03T14:57:36.800Z",
+  "kind": "Submission snapshot; original application and media untouched",
+  "originValidationAt": "2026-11-03T14:23:23.846Z",
+  "connectedJourneys": [
+    {
+      "name": "Liquid daylight",
+      "assets": 63,
+      "takes": 48,
+      "jobs": 20,
+      "allMediaHashesVerified": true,
+      "allRelationshipsVerified": true,
+      "allJobsArchived": true,
+      "reopenedAfterDatabaseClose": true,
+      "submittedMediaEvidence": [
+        {
+          "jobId": "2763c96c-c9bd-44e6-9365-deac46c8eac5",
+          "requestId": "51c4e6fe-1afc-4d9e-a871-8cf4e10ea8af",
+          "assetId": "32f17d9e-909d-4ed5-b4a2-8c4348b204c5",
+          "sha256": "dbc458ce655e8a97586f5e4874152067fe07174c71bbfb68f3596bb25b3a53bc",
+          "exactInlineBytesMatched": true
+        }
+      ],
+      "audioEvidence": [],
+      "objectRoomEvidence": [
+        {
+          "sourceSceneAssetId": "c1618e6b-a31f-4cf0-aa79-734efecdd686",
+          "roomAssetId": "2e194aeb-16fb-4c3f-90e7-6eaac381371e",
+          "clonedRoomSceneAssetId": "0cebed8f-5667-40af-91ab-f454c8795866",
+          "openingCamera": {
+            "position": [
+              1.5343143760697024,
+              1.9712625395304948,
+              4.50704847970475
+            ],
+            "target": [
+              0,
+              1.3,
+              0
+            ],
+            "fov": 31
+          },
+          "exactObjectsLightsEnvironmentAndModelHashes": true
+        }
+      ]
+    },
+    {
+      "name": "Prismatic garden · next idea",
+      "assets": 75,
+      "takes": 29,
+      "jobs": 13,
+      "allMediaHashesVerified": true,
+      "allRelationshipsVerified": true,
+      "allJobsArchived": true,
+      "reopenedAfterDatabaseClose": true,
+      "submittedMediaEvidence": [
+        {
+          "jobId": "1dc27c6f-e0c3-46b7-a25d-51e77828ab45",
+          "requestId": "06fc5409-2198-4f4e-8694-11ad85797dee",
+          "assetId": "b7dbe227-21a3-4698-8235-68e28c9bac6e",
+          "sha256": "7fb582eea10b242c503a7842562536d6a3b639f7da7bf5da9f9bc8215d8c3d6f",
+          "exactInlineBytesMatched": true
+        }
+      ],
+      "audioEvidence": [],
+      "objectRoomEvidence": []
+    },
+    {
+      "name": "Voices of Elsewhere",
+      "assets": 62,
+      "takes": 33,
+      "jobs": 17,
+      "allMediaHashesVerified": true,
+      "allRelationshipsVerified": true,
+      "allJobsArchived": true,
+      "reopenedAfterDatabaseClose": true,
+      "submittedMediaEvidence": [],
+      "audioEvidence": [
+        {
+          "journeyId": "move-sound-actual-mix-edited-timing",
+          "originalRenderAssetId": "b3ec9884-8402-4e0d-80ab-d53aaef9658b",
+          "originalSoundtrackAssetId": "8a138b4c-b4a4-406f-bad8-97dd3fd59337",
+          "restoredRenderAssetId": "22788943-d038-4d78-82a2-47c1161185a3",
+          "restoredSoundtrackAssetId": "562d994b-27f5-49c7-a0d7-fb4311231f72",
+          "correlation": 0.9994293576874073,
+          "alignmentSamples": 0,
+          "sampleRate": 16000,
+          "offsetSeconds": 0,
+          "gain": 0.9,
+          "durationSeconds": 11,
+          "scope": "Correlation of actual decoded exported audio against the selected mix after saved offset/gain/padding, allowing AAC alignment; not a perceptual quality evaluation."
+        }
+      ],
+      "objectRoomEvidence": []
+    }
+  ],
+  "totalMediaBytesVerified": 170660913,
+  "preservedOriginalMedia": 443,
+  "validation": {
+    "testsPassed": 154,
+    "scope": "Builder host-suite receipt, not rerun by packaging. Final display-only build/typecheck and visual checks followed the suite.",
+    "portableFilm": "All three paths were recorded playing with studio stopped.",
+    "physicalPhone": "unverified",
+    "actualHiddenTab": "unverified",
+    "openWeightsOnly": "unverified"
+  },
+  "licensing": "Original app MIT; dependencies/services/models/generated outputs retain separate terms.",
+  "publication": {
+    "repository": "not yet committed or published from this source checkout",
+    "walkthrough": "staged; not yet uploaded",
+    "publicLiveApp": "not hosted; source runs locally"
+  },
+  "assets": [
+    {
+      "file": "Open-Take-Studio-Competition-Demo.mp4",
+      "bytes": 8374907,
+      "sha256": "91b1010568302eb97e7825342150cb58da3c634b067542aafc36ed25969474d9",
+      "description": "100.063-second competition demonstration: product, implementation, workflow innovation, actual UI and output clips; full FFmpeg decode verified"
+    },
+    {
+      "file": "Open-Take-Studio-First-Impression-Walkthrough.mp4",
+      "bytes": 8295910,
+      "sha256": "e161a2a92204720fd370405720e50aee6a83af480934c85aa804115551b2fbdb",
+      "description": "82.022-second actual-UI/output montage; not continuous screen recording"
+    },
+    {
+      "file": "Prismatic-Three-possible-skies.playable.zip",
+      "bytes": 16250785,
+      "sha256": "7c130b712f090a3a6045b3cc865576ce9a1f58b18655cfd297f312f68cc0d0c9",
+      "description": "Self-contained three-choice film; no API key needed"
+    },
+    {
+      "file": "Liquid-Directed-Object.opentake.zip",
+      "bytes": 58091347,
+      "sha256": "ec1b7bb102ef0962fedcb64f53bbb742325aa7f6373e30f39d02029fa2f1a2f9",
+      "description": "Editable Liquid project, scene, guided room and actual scene-to-video result"
+    },
+    {
+      "file": "Prismatic-Three-possible-skies.opentake.zip",
+      "bytes": 109204965,
+      "sha256": "4bd40ef03f684b8d7a7134a51b5a4ea7aa6b41c66f0a4c1f7764120a0bc5607d",
+      "description": "Editable Prismatic project and new third ending"
+    },
+    {
+      "file": "Voices-Mixed-Soundtrack.opentake.zip",
+      "bytes": 11388365,
+      "sha256": "5bb1f567400295086ec9ce5105cafc1149b7f9feea0fbe6df5c928127ddf43f1",
+      "description": "Editable Voices project with exact mixed soundtrack and new motion film"
+    },
+    {
+      "file": "Afterlight-directed-scene.spatial.zip",
+      "bytes": 3464763,
+      "sha256": "3421a245b95fb596fa79dc1570b80cad214dbe68b9d0ca66a8e92c38635c5ff9",
+      "description": "Directed scene export"
+    },
+    {
+      "file": "Prismatic-Selected-glass-koi-cut.mp4",
+      "bytes": 4951248,
+      "sha256": "9751f76f1dd1a3eb6f2990ac27c1ed113a7100335237feb9334c11c7084e7251",
+      "description": "Selected path film cut"
+    },
+    {
+      "file": "Liquid-Directed-Scene-H3.mp4",
+      "bytes": 630073,
+      "sha256": "94d36d8451e3f09182d65e04720e7f390e85f72c13d219cce75a6fe880d28078",
+      "description": "Model-interpreted motion from real scene PNG"
+    },
+    {
+      "file": "Voices-Mixed-Soundtrack-Motion.mp4",
+      "bytes": 1016603,
+      "sha256": "0fcfa4495872c4d8168e3c3027cbc9a5c4f46855bcd51902b02e9ff79befd73d",
+      "description": "11-second actual edited motion export with mixed master"
+    }
+  ],
+  "competitionDemo": {
+    "durationSeconds": 100.063,
+    "bytes": 8374907,
+    "sha256": "91b1010568302eb97e7825342150cb58da3c634b067542aafc36ed25969474d9",
+    "fullDecodePassed": true,
+    "codec": "H.264",
+    "resolution": "1920x1080",
+    "fps": 24,
+    "audio": "AAC 48kHz",
+    "visualCardsReviewed": true,
+    "sourceMontageUnchanged": true
+  }
+}
