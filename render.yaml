@@ -19,8 +19,6 @@ services:
         value: /var/data/studio
       - key: OTS_PERSISTENT_STORAGE_CONFIRMED
         value: "true"
-      - key: OTS_PUBLIC_ORIGIN
-        sync: false
       - key: OTS_OWNER_PASSWORD_HASH
         sync: false
       - key: COMFY_API_KEY
