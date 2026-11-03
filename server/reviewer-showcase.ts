@@ -22,9 +22,10 @@ const examples=[
 export interface ReviewerExampleDescriptor {id:string;name:string;description:string;kind:'image'|'video'|'audio'|'3d';posterUrl:string;previewUrl?:string;}
 const approved=(id:string)=>examples.some(example=>example.id===id);
 const publicMedia=(asset:Asset)=>asset.kind!=='document'&&(/^(image|video|audio)\//.test(asset.mimeType)||asset.mimeType==='model/gltf-binary');
+function approvedAsset(owner:StudioRuntime,id:string,assetId:string){if(!approved(id)||!owner.store.db.prepare('SELECT 1 FROM assets WHERE id=? AND project_id=?').get(assetId,id))return;return owner.store.getAsset(assetId);}
 /** Never authorizes an owner's document, archive, arbitrary path, or other project. */
 export function getReviewerExampleAsset(owner:StudioRuntime,id:string,assetId:string):Asset|undefined {
- if(!approved(id))return;const asset=owner.store.getAsset(assetId);return asset?.projectId===id&&publicMedia(asset)?asset:undefined;
+ const asset=approvedAsset(owner,id,assetId);return asset&&publicMedia(asset)?asset:undefined;
 }
 function featured(owner:StudioRuntime,id:string):Asset|undefined{
  const example=examples.find(item=>item.id===id);if(!example||!owner.store.getProject(id))return;
@@ -42,7 +43,7 @@ export async function listReviewerExamples(owner:StudioRuntime):Promise<Reviewer
 }
 export async function resolveReviewerExampleMedia(owner:StudioRuntime,id:string,assetId:string,variant:string='original'):Promise<{asset:Asset;path:string;mimeType:string}>{
  if(!['poster','preview','mesh','original'].includes(variant)&&!/^file:[a-f0-9]{64}\.(?:webp|jpg|mp4|glb)$/.test(variant))throw new ProjectError('Unknown example media variant.',404);
- const asset=approved(id)?owner.store.getAsset(assetId):undefined;if(!asset||asset.projectId!==id)throw new ProjectError('Curated example media not found.',404);
+ const asset=approvedAsset(owner,id,assetId);if(!asset)throw new ProjectError('Curated example media not found.',404);
  if(variant==='original'){if(!publicMedia(asset))throw new ProjectError('Curated production documents require a private remix.',404);return{asset,path:owner.media.path(asset),mimeType:asset.mimeType};}
  const display=await owner.explore.displays.describe(asset),rendition=variant==='poster'?display.poster:variant==='mesh'?display.mesh:display.preview;
  const permitted=[...(display.poster?.variants??[]),...(display.preview?[display.preview]:[]),...(display.mesh?[display.mesh]:[])];
