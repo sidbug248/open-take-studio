@@ -33,6 +33,20 @@ Open Take combines a React/TypeScript interface, Express, SQLite, managed local 
 
 The competition page preserves the submission's playable outputs and all original video, film, and download URLs. The [live authoring studio](https://open-take-studio.onrender.com) offers isolated reviewer workspaces and separate private owner sign-in. You can also run the source locally with your own authorized Comfy credentials.
 
+## Five new production tools
+
+The current authoring branch adds five upgrades that work without Comfy inference credits. Open a project and use the instrument selector (Ctrl/Cmd+K):
+
+- **Production canvas:** typed visual graphs, local image transforms, storyboards, delivery packages and resumable runs.
+- **Shared review and team comments:** version-pinned invitations, viewer/commenter/approver roles, timecoded discussion and decisions.
+- **Client review and social delivery:** original, square, portrait and landscape packages with actual media, captions and integrity manifests.
+- **Studio MCP:** real Streamable HTTP tools with expiring project-scoped read or local-write tokens.
+- **Scheduled publishing:** explicitly approved posts to connected Mastodon accounts; other services use manual delivery packages.
+
+No paid generation or real social posting was performed to validate these upgrades. New generation still needs an authorized funded Comfy key. Review invitations and MCP tokens are bounded by workspace expiry. Local scheduling requires the app to remain running.
+
+Read the [usage guide and tested scope](docs/five-production-upgrades.md) and [Comfy test budget](docs/comfy-testing-budget-2026-11-03.md). These are post-submission additions; the original competition tag and release are unchanged.
+
 ## Try the three connected journeys
 
 - **Change the ending:** select an actual video frame, generate a new continuation, preserve the earlier film version, and export either a selected cut or a portable branching player.
@@ -103,11 +117,11 @@ Comfy Router and native Comfy Cloud execution remain explicit separate routes in
 
 ## What is implemented and what remains
 
-The catalogue describes 66 creative outcomes: 55 marked executable (some require source inputs), and 11 explicitly planned/unavailable. The 253-entry model directory is broader than the 21 implemented adapters and must not be interpreted as 253 runnable integrations.
+The current authoring catalogue describes 66 creative outcomes: 60 implemented (some require source inputs or an external account), and six explicitly planned/unavailable. The immutable competition snapshot originally contained 55 implemented and 11 planned/unavailable outcomes. The 253-entry model directory is broader than the 21 implemented adapters and must not be interpreted as 253 runnable integrations.
 
 The current three-journey validation includes two fresh H3 videos, actual scene-render input-byte matching, a mixed-soundtrack motion export, saved/reopened edits, project package restoration and standalone branching-film playback. A 154-test host run passed before final display-only changes; the final build/typecheck and visual checks followed those display changes. See `submission-evidence/verification-summary.json` and `docs/first-impression-validation.md` for scope.
 
-Physical-phone and actual hidden-tab browser behavior remain unverified in the submission evidence. The immutable submission source is a local studio. The post-submission hosted app adds separate reviewer SQLite/media storage, credential-bound jobs, scoped recovery and bounded admission; the owner's workspace stays private. Reviewer access is an anonymous browser session, not an account system with cross-device recovery or team collaboration.
+Physical-phone and actual hidden-tab browser behavior remain unverified in the submission evidence. The immutable submission source is a local studio. The post-submission hosted app adds separate reviewer SQLite/media storage, credential-bound jobs, scoped recovery and bounded admission; the owner's workspace stays private. Reviewer workspace access is an anonymous browser session without cross-device account recovery. The current authoring branch adds scoped review invitations, comments and approvals without granting access to the private workspace.
 
 ## Developer checks
 
