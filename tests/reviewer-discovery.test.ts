@@ -10,6 +10,10 @@ import {createStudioRuntime,type StudioRuntimeOptions} from '../server/studio-ru
 import {createReviewerSystem} from '../server/reviewer-system.ts';
 import {ReviewerCredentials} from '../server/reviewer-credentials.ts';
 import {REVIEWER_EXAMPLE_IDS} from '../server/reviewer-showcase.ts';
+import {CAPABILITY_INVENTORY} from '../server/catalogue-routes.ts';
+import {validateDemonstration,saveDemonstration} from '../server/catalogue-demonstrations.ts';
+import type {CatalogueDemonstration} from '../shared/catalogue-types.ts';
+import type {CatalogueResponse} from '../shared/capability-inventory.ts';
 import {AuthSessions,createAuthRouter,hashOwnerPassword} from '../server/auth-session.ts';
 import {securityBoundary} from '../server/runtime-security.ts';
 import {readRuntimeConfig} from '../server/runtime-config.ts';
@@ -97,4 +101,59 @@ test('per-IP creation limit applies only to explicit intent, preserves reuse, an
   const reused=await f.request('/api/reviewer/session',firstCookie,'POST',{});assert.equal(reused.status,200);const existing=await reused.json();assert.equal(existing.accessMode,'reviewer');assert.equal(f.runtimeCount(),1);assert.equal(f.vault.listSessions().length,8);
   const compatible=await f.request('/auth/reviewer',firstCookie,'POST');assert.equal(compatible.status,303);assert.equal(compatible.headers.get('location'),'/');assert.equal(f.vault.listSessions().length,8);
   const noDiscard=await f.request('/api/reviewer/session/new',firstCookie,'POST',{});assert.equal(noDiscard.status,429);assert.ok(f.vault.identify(firstCookie.split('=')[1]));assert.equal((await f.request('/api/studio/status',firstCookie)).status,200);
+});
+
+test('the original collections retain public media and synchronous/native catalogue proof without credits or private job bodies',async t=>{
+  const f=await fixture(t),projectId='97d0268d-35f7-43f2-8ebc-539fef34485c',timestamp=new Date().toISOString();
+  assert.ok(REVIEWER_EXAMPLE_IDS.includes(projectId),'The original Coastal Light collection must remain explicitly approved');
+  f.owner.store.upsertProject({...f.owner.store.getProject(projectId)!,name:'Coastal Light'});
+  const put=async(name:string,mimeType:string,bytes:Buffer,metadata:Record<string,unknown>={})=>{
+    const asset=await f.owner.media.put({projectId,name,mimeType,bytes,metadata,provenance:'generated'});
+    f.owner.store.upsertAsset(asset);return asset;
+  };
+  const png=await sharp({create:{width:96,height:64,channels:3,background:'#e7a641'}}).png().toBuffer();
+  const image=await put('Coastal portrait','image/png',png);
+  const version=await put('Saved native workflow','application/json',Buffer.from('{}'),{operation:'comfy-workflow-version'});
+  const executed=await put('Private execution graph','application/json',Buffer.from(JSON.stringify({private:privateCanary})),{operation:'comfy-workflow-execution'});
+  const savedProofs:CatalogueDemonstration[]=[];
+  for(const native of[false,true]){
+    const name=native?'native':'synchronous',jobId='coastal-'+name+'-job',takeId='coastal-'+name+'-take';
+    const take:Take={id:takeId,projectId,name:'Coastal Light '+name,kind:'image',assetIds:[image.id],inputAssetIds:{},modelId:'bfl/flux-3-image',provider:'bfl',prompt:'A coastal portrait in warm light',settings:{},status:'COMPLETED',provenance:'generated',favorite:false,createdAt:timestamp,updatedAt:timestamp,changes:[],jobId,...(native?{workflowVersionAssetId:version.id}:{})};
+    const job:Job={id:jobId,projectId,takeId,modelId:take.modelId,provider:take.provider,idempotencyKey:'coastal-'+name+'-private-intention',inputs:{private:privateCanary,apiKey:'comfyui-private-canary'},state:'COMPLETED',attempts:1,createdAt:timestamp,updatedAt:timestamp,
+      ...(native?{requestId:'coastal-native-private-request',executionRoute:'comfy-workflow',workflow:{versionAssetId:version.id,graphSha256:'a'.repeat(64),target:'comfy-cloud',values:{private:privateCanary},executedGraphAssetId:executed.id}}:{resultMetadata:{requestId:'coastal-sync-private-request',private:privateCanary}})};
+    f.owner.store.upsertTake(take);f.owner.store.upsertJob(job);
+    const capability=CAPABILITY_INVENTORY.find(item=>item.id===(native?'native-workflows':'image-generate'))!;
+    const draft:CatalogueDemonstration={id:'coastal-'+name+'-demo',projectId,capabilityId:capability.id,operationId:native?'workflow.execute':'image.generate.text',title:'Saved coastal '+name+' result',previewKind:'image',previewAssetId:image.id,inputAssetIds:[],outputAssetIds:[image.id],takeId,verificationKind:'generation',attribution:{creator:'Regression fixture',source:'studio-original'},createdAt:timestamp,...(native?{workflowReference:{kind:'native-workflow',toolView:'workflow',nativeWorkflowId:version.id}}:{})};
+    const proof=validateDemonstration(f.owner.store,draft,capability,projectId);
+    saveDemonstration(f.owner.store,projectId,proof);savedProofs.push(proof);
+  }
+  await f.owner.explore.displays.prepare(image);
+  const before=JSON.stringify(f.owner.store.projectDetail(projectId)),originalJobs=f.owner.store.listJobs,originalGetJob=f.owner.store.getJob;
+  f.owner.store.listJobs=()=>{throw new Error('Public collection discovery read full owner jobs');};
+  f.owner.store.getJob=()=>{throw new Error('Public catalogue proof read a private job body');};
+  try{
+    const bootstrap=await(await f.request('/api/explore/bootstrap')).json() as ExploreBootstrap;
+    assert.ok(bootstrap.projects.some(project=>project.id==='showcase:'+projectId&&project.name==='Coastal Light'));
+    assert.equal(bootstrap.journeys.length,3,'Restoring collections preserves the original connected journeys');
+    const cards=await(await f.request('/api/explore/cards?section=image')).json() as ExploreBootstrap['firstPage'];
+    const card=cards.items.find(item=>item.id===image.id);
+    assert.ok(card,'A saved portrait outside the three hero projects must appear in the public gallery');
+    assert.equal(card.project.id,'showcase:'+projectId);assert.equal(card.project.name,'Coastal Light');
+    const original=await f.request(card.media.original.url);assert.equal(original.status,200);
+    assert.deepEqual(Buffer.from(await original.arrayBuffer()),png,'Saved bytes are served without regeneration');
+    assert.ok(card.media.poster);assert.equal((await f.request(card.media.poster.url)).status,200);
+    const catalogue=await(await f.request('/api/catalogue')).json() as CatalogueResponse;
+    for(const expected of savedProofs){
+      const demo=catalogue.capabilities.find(item=>item.id===expected.capabilityId)?.demonstrations.find(item=>item.id===expected.id);
+      assert.ok(demo,'Saved '+expected.capabilityId+' proof must survive the compact job projection');
+      assert.equal(demo.projectId,'showcase:'+projectId);assert.equal(demo.previewAsset?.id,image.id);
+      assert.ok(demo.previewUrl);assert.ok(demo.previewUrl.startsWith('/api/reviewer/examples/'));
+      const response=await f.request(demo.previewUrl);assert.equal(response.status,200);await response.body?.cancel();
+    }
+    assert.doesNotMatch(JSON.stringify({bootstrap,cards,catalogue}),/CONFIDENTIAL_OWNER_HISTORY|comfyui-private-canary|coastal-(?:sync|native)-private-request|private-intention|hidden-owner-project|"(?:jobId|requestId|idempotencyKey|submittedInputs)"|coastal-(?:native|synchronous)-job/);
+    for(const route of['/api/projects/hidden-owner-project','/api/assets/'+f.privateAsset.id+'/file','/api/reviewer/examples/hidden-owner-project/media/'+f.privateAsset.id,'/api/reviewer/examples/'+projectId+'/media/'+executed.id+'?variant=original'])assert.ok([401,403,404].includes((await f.request(route)).status),route);
+    const status=await(await f.request('/api/studio/status')).json();assert.equal(status.keyConfigured,false);
+    assert.equal(f.vault.listSessions().length,0);assert.equal(f.runtimeCount(),1);
+  }finally{f.owner.store.listJobs=originalJobs;f.owner.store.getJob=originalGetJob;}
+  assert.equal(JSON.stringify(f.owner.store.projectDetail(projectId)),before,'Browsing preserves original records and execution proof');
 });

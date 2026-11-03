@@ -4,11 +4,11 @@ The authoring app is hosted at https://open-take-studio.onrender.com. The immuta
 
 ## Access and credits
 
-Choose **Try the studio with your own Comfy key**. No owner password is needed. This creates an isolated workspace identified by a Secure, HttpOnly, SameSite cookie, valid for seven days. Return in the same browser to reopen it. Export your projects before signing out, clearing cookies, or starting a separate workspace: anonymous access has no email/password recovery.
+Open the full studio at https://open-take-studio-review.vercel.app/ or https://open-take-studio.onrender.com/. The cinematic homepage, original showcase collection and saved catalogue demonstrations can be browsed without a password or Comfy key. Browsing does not allocate a reviewer workspace. Editing or remixing explicitly creates an isolated workspace identified by a Secure, HttpOnly, SameSite cookie, valid for seven days. Return using the same hostname and browser to reopen it. Export your projects before signing out, clearing cookies, or starting a separate workspace: anonymous access has no email/password recovery.
 
 Use **Connect Comfy**, paste a key into the masked field, then Connect. Obtain a workspace API key at https://platform.comfy.org/profile/api-keys. Connection checks authorization without generating media. AI generation uses that key's Comfy workspace credits and model permissions. There is no Comfy OAuth integration. The original event workspace has no remaining credits; reviewers need their own funded workspace for new inference.
 
-The three curated examples are read-only source material. Remix makes a private copy with saved media, recipes, scene/film relationships and local editing state. Original execution payloads, signed URLs and private jobs are omitted from reviewer copies; owner originals retain their full history. New reviewer executions record their own provenance.
+The 19 original showcase projects are read-only source material. Their saved images, videos, audio, 3D assets and catalogue demonstrations remain available when generation credits run out. Public access uses an explicit collection allowlist; unrelated owner and reviewer projects remain private. Remix makes a private copy with saved media, recipes, scene/film relationships and local editing state. Original execution payloads, signed URLs and private jobs are omitted from reviewer copies; owner originals retain their full history. New reviewer executions record their own provenance.
 
 ## Credential boundaries and recovery
 

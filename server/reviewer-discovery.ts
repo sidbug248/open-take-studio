@@ -81,7 +81,20 @@ export class ReviewerDiscovery {
   /** Reuse normal readiness validation with a restricted repository and compact
    * job projection. Only its final, redacted presentation leaves this method. */
   async catalogue(query:CatalogueQuery={}):Promise<CatalogueResponse>{
-    const source=this.source(),jobs=new Map<string,Job>();for(const projectId of source.projects.keys())for(const job of this.owner.store.listJobSummaries(projectId))jobs.set(job.id,job);
+    const source=this.source(),jobs=new Map<string,Job>();
+    // Read only the two execution-proof scalars omitted by the status projection.
+    // Never load private inputs/results or relax demonstration validation.
+    const proofFields=this.owner.store.db.prepare("SELECT json_extract(data,'$.resultMetadata.requestId') AS syncRequestId,json_extract(data,'$.workflow.executedGraphAssetId') AS executedGraphAssetId FROM jobs WHERE id=? AND project_id=?");
+    for(const projectId of source.projects.keys())for(const job of this.owner.store.listJobSummaries(projectId)){
+      let evidence:Job=job;
+      if(job.state==='COMPLETED'&&(!job.requestId||job.executionRoute==='comfy-workflow'&&!job.workflow?.executedGraphAssetId)){
+        const proof=proofFields.get(job.id,projectId) as {syncRequestId:unknown;executedGraphAssetId:unknown}|undefined;
+        evidence={...job};
+        if(typeof proof?.syncRequestId==='string')evidence.resultMetadata={requestId:proof.syncRequestId};
+        if(evidence.workflow&&typeof proof?.executedGraphAssetId==='string')evidence.workflow={...evidence.workflow,executedGraphAssetId:proof.executedGraphAssetId};
+      }
+      jobs.set(job.id,evidence);
+    }
     const restricted={listTakes:()=>[...source.takes.values()],listProjects:()=>[...source.projects.values()],getProject:(id:string)=>source.projects.get(id),getAsset:(id:string)=>source.assets.get(id),getTake:(id:string)=>source.takes.get(id),getRecipe:(id:string)=>source.recipes.get(id),getJob:(id:string)=>jobs.get(id),isArchivedJob:(id:string)=>!jobs.has(id)||this.owner.store.isArchivedJob(id)} as Store;
     const result=buildCatalogue(restricted,query);
     for(const capability of result.capabilities){capability.examples=capability.examples.filter(example=>source.assets.has(example.assetId)&&publicMedia(source.assets.get(example.assetId)!)).map(example=>clean({...example,projectId:publicId(example.projectId),url:reviewerMediaUrl(example.projectId,example.assetId)}));

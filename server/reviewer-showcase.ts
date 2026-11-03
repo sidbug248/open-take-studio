@@ -9,15 +9,49 @@ import {MAX_MEDIA_BYTES} from './media.ts';
 import {DISPLAY_VERSION} from './display-media.ts';
 import type {AssetPresentation} from '../shared/presentation-contract.ts';
 
+// The original submission collections are explicitly approved for public discovery.
+// Keep future owner projects private unless they are deliberately added here.
 export const REVIEWER_EXAMPLE_IDS=Object.freeze([
  '456f5fdb-e79b-4946-9122-dc17e7a291e3',
  '1bec0508-6565-4cf8-9666-f07d224351a1',
  '1659408b-f807-418b-8a67-3c2404e0d12e',
+ '97d0268d-35f7-43f2-8ebc-539fef34485c',
+ '8836985f-6d32-4686-bf0b-d5d7bcfe4118',
+ 'fceaf455-9ba2-4763-a3fa-d0eabf4e3b4a',
+ 'eaa51979-8b29-4544-9867-bee3800c28d2',
+ '8fa4b332-af41-4dd8-8027-45d2ced245af',
+ 'b9c044a3-62a8-44c7-ad12-d9c3916b3ed3',
+ '43ffec75-0816-4c5e-9320-e05dd720178f',
+ '4c24e243-ee13-4dc5-9e81-fbe36debbfb6',
+ 'dd0fe498-de28-4667-a758-628f81822a1f',
+ '7c4498c2-0ad9-4b79-ad49-6c0fc1b7bc18',
+ 'eb4de8b6-7160-46f5-b68e-5fb19998b3f6',
+ '8af0cb23-c715-483d-89d9-44f56716499e',
+ 'd4e99c40-db8f-47a9-a4a9-8a6a103cf114',
+ '94db17ce-def1-4abd-8f48-b08c8cb62928',
+ 'c9526232-ca45-4877-8f45-ceba3fe6264c',
+ 'f03f4e1f-d214-464a-9743-77fd14575fa8',
 ] as const);
 const examples=[
  {id:REVIEWER_EXAMPLE_IDS[0],name:'Prismatic bloom',description:'A glass garden, an exact source frame, and three different endings. Remix the saved story and choose your next direction.',preferred:['962f7fe4-2bff-41f3-9cbd-421528807401','4c9e5333-4256-4b2f-9e12-84014b3bf3c6']},
  {id:REVIEWER_EXAMPLE_IDS[1],name:'Liquid daylight',description:'A real sculptural object, saved camera views, and cinematic interpretations. Make the materials, lighting, and story your own.',preferred:['1519ad03-9178-4983-90fc-ddee63d8d355','c3cb0964-31ff-42e7-a1aa-63f3e00ef796']},
  {id:REVIEWER_EXAMPLE_IDS[2],name:'Voices elsewhere',description:'A mixed soundtrack and editable motion compositions. Reframe the words, adjust the timing, and export your own film.',preferred:['b3ec9884-8402-4e0d-80ab-d53aaef9658b','8a138b4c-b4a4-406f-bad8-97dd3fd59337']},
+ {id:REVIEWER_EXAMPLE_IDS[3],name:'Coastal Light',description:'Explore the original Coastal Light collection and make a private remix.',preferred:[]},
+ {id:REVIEWER_EXAMPLE_IDS[4],name:'Mara · The last light',description:'Explore the original Mara · The last light collection and make a private remix.',preferred:[]},
+ {id:REVIEWER_EXAMPLE_IDS[5],name:'Midnight on wheels',description:'Explore the original Midnight on wheels collection and make a private remix.',preferred:[]},
+ {id:REVIEWER_EXAMPLE_IDS[6],name:'Afterglow · Editorial',description:'Explore the original Afterglow · Editorial collection and make a private remix.',preferred:[]},
+ {id:REVIEWER_EXAMPLE_IDS[7],name:'Electric bodies',description:'Explore the original Electric bodies collection and make a private remix.',preferred:[]},
+ {id:REVIEWER_EXAMPLE_IDS[8],name:'Neon courier',description:'Explore the original Neon courier collection and make a private remix.',preferred:[]},
+ {id:REVIEWER_EXAMPLE_IDS[9],name:'Signal / Noise',description:'Explore the original Signal / Noise collection and make a private remix.',preferred:[]},
+ {id:REVIEWER_EXAMPLE_IDS[10],name:'Saffron Circuit',description:'Explore the original Saffron Circuit collection and make a private remix.',preferred:[]},
+ {id:REVIEWER_EXAMPLE_IDS[11],name:'Cerulean Couture',description:'Explore the original Cerulean Couture collection and make a private remix.',preferred:[]},
+ {id:REVIEWER_EXAMPLE_IDS[12],name:'Botanical Machines',description:'Explore the original Botanical Machines collection and make a private remix.',preferred:[]},
+ {id:REVIEWER_EXAMPLE_IDS[13],name:'Quiet Monument',description:'Explore the original Quiet Monument collection and make a private remix.',preferred:[]},
+ {id:REVIEWER_EXAMPLE_IDS[14],name:'Paper Signals',description:'Explore the original Paper Signals collection and make a private remix.',preferred:[]},
+ {id:REVIEWER_EXAMPLE_IDS[15],name:'Chrome Reef',description:'Explore the original Chrome Reef collection and make a private remix.',preferred:[]},
+ {id:REVIEWER_EXAMPLE_IDS[16],name:'Tidal Cinema',description:'Explore the original Tidal Cinema collection and make a private remix.',preferred:[]},
+ {id:REVIEWER_EXAMPLE_IDS[17],name:'Pocket Mythologies',description:'Explore the original Pocket Mythologies collection and make a private remix.',preferred:[]},
+ {id:REVIEWER_EXAMPLE_IDS[18],name:'The Velvet Observatory',description:'Explore the original The Velvet Observatory collection and make a private remix.',preferred:[]},
 ];
 export interface ReviewerExampleDescriptor {id:string;name:string;description:string;kind:'image'|'video'|'audio'|'3d';posterUrl:string;previewUrl?:string;}
 const approved=(id:string)=>examples.some(example=>example.id===id);
