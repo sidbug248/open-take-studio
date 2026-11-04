@@ -8,6 +8,7 @@ export interface CapabilityRecord {
   inputModalities: MediaModality[]; outputModalities: MediaModality[];
   route: { kind: 'router' | 'local' | 'comfy-workflow' | 'reference' | 'planned'; modelId?: string; toolView?: string; endpoint?: string; settings?: Record<string, string | number | boolean> };
   requirements: string[]; limitations: string[]; sources: { label: string; url: string }[];
+  alternatives?: { capabilityId: string; label: string; description: string }[];
   lastVerified?: { at: string; kind: 'live-generation' | 'local-validation' | 'schema'; requestId?: string };
   examples: CapabilityExample[]; demonstrations: CatalogueDemonstrationView[]; tags: string[];
 }

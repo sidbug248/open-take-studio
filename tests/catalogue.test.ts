@@ -192,7 +192,7 @@ test('LTX exact native response and error states are respected', () => {
   assert.throws(() => buildModelInput('ltx/ltx-2-5-fast', { prompt: 'Move', settings: {}, inputData: { image: 'data:image/png;base64,YQ==' } }), /not a supported input/);
 });
 
-test('Kling extension uses a successful same-project native video ID, never task or request IDs', () => {
+test('Kling provenance retains same-project native video identity without granting extension compatibility', () => {
   const f = fixture();
   try {
     const result = { code: 0, data: { task_id: 'task-123', task_status: 'succeed', task_result: { videos: [{ id: 'video-123', url: 'https://example.com/clip.mp4', duration: '5' }] } } };
@@ -273,4 +273,21 @@ test('VEED preflight measures actual WAV duration instead of trusting browser me
   await validateAssetConstraints('veed/clean-audio', { audio_url: asset }, async () => wav(2));
   await assert.rejects(validateAssetConstraints('veed/clean-audio', { audio_url: asset }, async () => wav(1801)), /thirty minutes/);
   await assert.rejects(audioDuration(Buffer.from('not an audio file')), /Media processing failed|no verifiable/);
+});
+
+test('retired Kling extension stays blocked while offering separately labelled usable continuation tools', () => {
+  const f = fixture();
+  try {
+    f.completed('kling/kling-v2-6', { code: 0, data: { task_status: 'succeed', task_result: { videos: [{ id: 'verified-v26-video', url: 'https://example.com/kling.mp4', duration: '5' }] } } });
+    const catalogue = buildCatalogue(f.store), extension = catalogue.capabilities.find(item => item.id === 'video-extension')!;
+    assert.equal(extension.readiness, 'planned');
+    assert.deepEqual(extension.route, { kind: 'planned' });
+    assert.equal(extension.examples.length, 0);
+    assert.match(extension.requirements.join(' '), /only retired Kling 1.x predecessors/);
+    assert.ok(extension.sources.some(source => source.url.endsWith('/f00bfd610cb001381603669e2cc01160ae37aaf3')));
+    assert.deepEqual(extension.alternatives?.map(item => item.capabilityId), ['video-image', 'video-trim']);
+    for (const alternative of extension.alternatives!) { const target = catalogue.capabilities.find(item => item.id === alternative.capabilityId); assert.ok(target); assert.notEqual(target.route.kind, 'planned'); }
+    assert.match(extension.alternatives![0]!.description, /separate clip/);
+    assert.throws(() => buildModelInput('kling/videos-video-extend', { prompt: 'Continue', settings: { video_id: 'verified-v26-video' }, inputData: {} }), /unavailable:.*retired Kling 1.x/);
+  } finally { f.close(); }
 });
