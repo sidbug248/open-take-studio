@@ -1,129 +1,125 @@
 # Inference upgrades and document stories — November 4, 2026
 
-> **Current execution status, November 4, 2026:** Funded native Sonilo music, Meshy image-to-3D, VEED dubbing and VEED cleanup runs completed and saved outputs. Pika Music returned `403 not_enabled` through Router and is unavailable; the native Sonilo starter is the working music route. See the [funded check and quality limits](funded-generation-check-2026-11-04.md). The preparation notes below describe the earlier contract-validation stage.
+## Current status
 
-This guide describes the new authoring release at source commit `c94f4a5`. Local, Render and Vercel serve the same verified application bundle, and CI passed. Browser checks confirmed Render story editing, assembly and portable export, plus Vercel native workflow preparation. See the [release verification record](release-verification-2026-11-04.md). The competition tag remains a separate, preserved snapshot.
+The five earlier production upgrades are implemented in the current studio. Of the next six outcomes, **five are implemented**: standalone music, image-to-3D, translation/dubbing, speech cleanup and document-to-story. **Kling extension remains blocked** by provider compatibility. Implementation and successful execution do not by themselves establish output quality.
 
-The five earlier production upgrades remain part of the current studio. This pass addresses the six remaining outcomes below. Local development, validation, editing and media assembly do not require Comfy inference credits. New hosted model executions do.
+Application commit [9e98c8f](https://github.com/sidbug248/open-take-studio/commit/9e98c8fa14d720ee9f0ada89c7b5f43b766b862a) was verified locally and through both cloud URLs. All three served the same application bundle, and the catalogue exposed the native Sonilo music route. [GitHub CI passed](https://github.com/sidbug248/open-take-studio/actions/runs/41787424288). The original competition tag is a separate, unchanged snapshot.
 
-## What this pass adds
+| Outcome | Current route | Verified | Still needed |
+| --- | --- | --- | --- |
+| Standalone music | Native **Sonilo Text to Music** → FLAC | A funded 10-second request completed and saved stereo audio. The starter is available in Native Workflows and from Compose standalone music in the Catalogue. | Listening and musical-quality review; funded hosted reviewer run. Pika Music returned `403 not_enabled` through Router and stays unavailable. |
+| Image to 3D | Native **Meshy 7.1**, saved image → geometry → GLB | A funded geometry-only run saved a structurally valid GLB with a nonempty mesh. | Visual resemblance/usability review; funded textured variant and hosted reviewer run. |
+| Translation and dubbing | Native **VEED Standard**, speech video → translated video | A funded English-to-Spanish run saved a playable MP4 with an audio track. | Listening, translation and voice-quality review; a suitable front-facing speech sample for lip-sync review; funded hosted reviewer run. |
+| Speech cleanup | Native **VEED Clean Audio**, saved speech → FLAC | A funded run saved a valid, non-silent 48 kHz mono FLAC. | Listening comparison against the source; funded hosted reviewer run. |
+| Document to finished story | Local text ingestion, editable scene plan, saved-media assembly, captions and portable player | Real MP4/ZIP creation, source preservation, project export/import and re-render were tested. The hosted document-story journey was checked at the earlier release. | Optional further creative examples. PDF/Word extraction and autonomous AI story production are outside this implementation. |
+| Kling extension | Existing `kling/videos-video-extend` adapter | Compatible-provider-video checks are present; the tested source was rejected. | A supported predecessor/dispatch contract and a successful saved continuation. Purchasing credits alone does not fix this. |
 
-| Outcome | Implemented route | Current evidence and remaining work |
-| --- | --- | --- |
-| Standalone music | **Pika Music** through Comfy Router, model `pika/pika-music`. Written direction, optional lyrics, duration and seed. The default is **10 seconds**. | Experimental. Current request/result contract and local fixtures are checked. A funded provider execution and audible result review remain unverified. |
-| Image to 3D | Native **Comfy Cloud Meshy 7.1** workflow: saved image → `MeshyImageToModelNode` → `SaveGLB`. | The image is connected to geometry generation. The native graph and node contract are checked. A funded run, downloadable real GLB and visual geometry review remain unverified. |
-| Translation and dubbing | Native **VEED Standard** workflow on Comfy Cloud: saved speech video → `VeedDubbingNode` → saved video. | Explicit source/target language controls and preserved source media. Funded execution, translation quality, speaker/voice quality and timing remain unverified. |
-| Speech cleanup | Native **VEED Clean Audio** workflow on Comfy Cloud: saved speech → `VeedCleanAudioNode` → saved FLAC. | This uses a separate native workflow from the previously unavailable Router cleanup adapter. Funded native execution and listening comparison remain unverified. |
-| Document to finished story | Local document ingestion, editable scene planning, selected saved media, real MP4 assembly, timed captions and portable player ZIP. | Implemented and tested with real saved-media fixtures, including project export/import and a second render from the restored plan. New generated story media is optional and uses explicit existing generation controls. |
-| Kling extension | Existing `kling/videos-video-extend` integration and compatible-provider-video checks. | Still blocked by unresolved provider compatibility/access evidence. No successful extension is claimed. Adding credits does not prove that this route accepts the available source video. |
-
-Schema verification, local fixtures and a successful hosted generation establish different things. Experimental model routes remain experimental until a funded request succeeds, outputs are saved, and their actual quality and project history are inspected. See the implementation in [audio generation adapters](https://github.com/sidbug248/open-take-studio/blob/codex/authoring-live/server/audio-generation-adapters.ts), [native audio workflows](https://github.com/sidbug248/open-take-studio/blob/codex/authoring-live/server/audio-native-workflows.ts), [image-to-3D workflows](https://github.com/sidbug248/open-take-studio/blob/codex/authoring-live/server/spatial-generation-adapters.ts), and [document stories](https://github.com/sidbug248/open-take-studio/blob/codex/authoring-live/server/document-story.ts).
+The [funded verification record](funded-generation-check-2026-11-04.md) contains actual output properties, hashes, observed costs and quality limitations. The successful paid runs went from the **local studio to Comfy Cloud**. A paid generation through a hosted reviewer browser session remains unverified.
 
 ## Connect your Comfy workspace
 
-New hosted generation requires an API key from the workspace whose credits and service access you intend to use. A subscription or credit purchase does not replace a key already configured in an application. Select the intended workspace in [Comfy?s API key settings](https://platform.comfy.org/profile/api-keys), then configure its key privately:
+Use a key from the workspace whose credits and service access you intend to use. Funding one workspace does not fund an existing key from another workspace.
 
-1. For local development, update `COMFY_API_KEY` in the project?s private `.env` file using a local editor. Restart the studio process so it reads the new setting.
-2. For an isolated cloud workspace, choose **Connect Comfy** and enter that workspace?s key in the connection dialog.
-3. A reviewer workspace is bound to its original key. To use a different workspace?s key, export any existing work and start a fresh reviewer workspace.
-4. Verify access and balance before an intentionally chosen model run. An accepted key alone is not proof of sufficient funds or model entitlement.
+1. Select the intended workspace in [Comfy API key settings](https://platform.comfy.org/profile/api-keys).
+2. **Local studio:** update `COMFY_API_KEY` in the private project `.env`, then restart the studio.
+3. **Cloud studio:** choose **Connect Comfy** and enter the key in the connection dialog. This connects that private reviewer session; it does not update a local installation.
+4. A reviewer workspace remains bound to its original key. To use a different workspace key, export existing work and start a fresh reviewer workspace.
+5. Review the model, duration and settings before explicitly choosing Generate or Run. Connecting a key never starts generation automatically.
 
-If generation reports insufficient credits, check that the configured key belongs to the workspace you funded and that its balance and model access are sufficient. Funding one workspace does not establish a usable balance for a key belonging to another workspace. A zero balance affects new hosted generation; saved media and local composition remain usable.
-
-Do not put a key in chat, a prompt, client code, a project package or Git. Connecting a key does not start generation. The cloud connection dialog configures that private reviewer session; it does not update a local installation’s `.env`.
-
-The exact read-only checks are already used by [the credential probe](https://github.com/sidbug248/open-take-studio/blob/codex/authoring-live/server/reviewer-credentials.ts):
+Read-only access and balance checks used by [the credential probe](https://github.com/sidbug248/open-take-studio/blob/codex/authoring-live/server/reviewer-credentials.ts):
 
 - `GET https://api.comfy.org/v2/models?limit=1`
 - `GET https://cloud.comfy.org/api/billing/usage/timeseries?months=1&group_by=product&granularity=month`
 
-## Use the new tools
+An accepted key does not guarantee sufficient funds or model entitlement. A zero balance affects new hosted generation; saved media and local composition remain usable. Do not put API keys in chat, prompts, client code, project packages or Git.
+
+## Use the tools
 
 ### Compose music
 
-Choose **Pika Music · original soundtrack**, enter the musical direction and optional lyrics, and review duration before choosing **Generate**. Start with the default 10-second sample when validating access and output collection.
+In a project, open **Native Workflows** and choose **Compose music**, or use **Compose standalone music** in the Catalogue. Save the Sonilo starter, edit the musical direction and duration, validate the workflow, then explicitly choose **Run**.
 
-The studio exposes text-to-music with optional lyrics. It does not silently submit a reference voice, song cover or provider prompt-rewriting operation. After a successful run, the saved track can be used in the audio mixer, motion compositions or document story scenes.
+The starter uses `SoniloTextToMusic` followed by `SaveAudioAdvanced` with FLAC output. It defaults to **10 seconds**, accepts durations of 1–360 whole seconds and directions of 1–1,000 characters, and does not submit a reference voice or song cover. Sonilo currently ignores the seed; it does not guarantee a reproducible composition.
 
-Generation is billable. The adapter’s presence does not provide an exact price or prove a funded run has completed.
+A completed track is saved as a new asset for the audio mixer, motion compositions or document-story scenes. Saving or editing a starter does not execute it.
+
+**Do not choose Pika Music for the current working route.** The Router adapter has a validated request contract but the funded request returned `403 not_enabled`. Sonilo is a separate native workflow, not a successful Pika execution.
 
 ### Create geometry from an image
 
-Choose the native **Image to 3D · Meshy 7.1** workflow and bind a saved image from the current project. Review geometry and texture settings, validate the workflow, and explicitly choose **Run** when ready to spend credits.
+Choose **Image to 3D**, bind a saved image from the current project, review geometry/texture options, validate the workflow and explicitly choose **Run** when ready to spend credits.
 
-The prepared defaults use textures at 2K, a 30,000-polygon target, triangle topology and the normal geometry pass. PBR and the ultra geometry pass are off by default. Editing or preparing the graph does not execute it.
+The starter defaults to textured Meshy 7.1 geometry at 2K, a 30,000-polygon target, triangle topology and the normal geometry pass. PBR and ultra mode are off. The funded check deliberately disabled textures; it does not validate the textured default.
 
-A successful execution should produce a saved GLB that can be downloaded and inspected in the spatial tools. This route sends the source image to the image-to-geometry node; it is separate from the existing Router text-to-3D preview/refine route. Availability and output quality still need a funded test.
+The image is connected to the geometry-generation node. This is separate from the existing Router text-to-3D preview/refine route. The resulting saved GLB can be downloaded and inspected with the spatial tools. Check shape, orientation and visual fidelity before treating it as a finished asset.
 
 ### Translate and dub a speech video
 
-Choose **Translate and dub a video** in native workflows. Bind a saved video containing speech, set the target language, and either specify the source language or use automatic detection. The preset uses **VEED Standard**.
+Choose **Translate and dub**, bind a saved video containing speech and set the source and target languages. The preset uses **VEED Standard**; the source can be detected automatically when desired.
 
-The initial source must include an audio track, with the studio’s duration limit set to 599 seconds. Use a short speech clip for the first paid validation. Review the translated words, pronunciation, speaker treatment and lip timing against the original after a successful run. The original source is preserved as its own asset.
+The source must contain an audio track and be no longer than 599 seconds. Begin with a short clip. After execution, compare translated words, pronunciation, voice treatment and timing with the original. Use a front-facing speaker when assessing visible lip synchronization.
+
+The funded check translated a short English clip into Spanish and saved an MP4. Its character faces away, so that sample cannot verify visible lip-sync quality. The original remains a separate asset.
 
 ### Clean a speech recording
 
-Choose **Clean a speech recording**, bind a saved audio file, and review strength and loudness settings. The native preset defaults to strength 0.874 and normalization at −19 LUFS, with a FLAC output.
+Choose **Clean speech**, bind a saved audio file and review strength/loudness controls. Defaults are strength 0.874 and normalization at −19 LUFS, with FLAC output. Sources may be up to 1,799 seconds.
 
-This is a speech isolation/cleanup operation. The native node contract describes 48 kHz mono speech and can remove music and effects as well as noise. Keep valuable originals and compare the result before replacing a soundtrack selection. The studio accepts a source up to 1,799 seconds for this preset.
+This native speech-isolation route can remove music and sound effects along with noise. Keep the source and listen to both before changing a soundtrack selection. The funded run saved 48 kHz mono speech; audio signal and decoding checks do not establish that it sounds better.
 
-The old Router cleanup route’s availability problem is not declared fixed by introducing this native alternative. Native provider execution remains separately unverified.
+The previous Router cleanup route is still distinct from this working native VEED alternative.
 
-### Make an editable story from text without new generation
+### Make an editable story from text
 
-Open **Document story** in a project containing your source media.
+Open **Document story** in a project containing source media.
 
-1. Paste text or import a `.txt`, `.md` or `.markdown` file, up to 60,000 characters.
-2. Choose **Plan scenes**. The initial draft groups paragraphs locally into 1–8 scenes. Review and rewrite it as needed; no AI script inference or summarization is claimed.
-3. Edit scene order, title, visual direction, on-screen caption and duration.
-4. Choose a saved image or video for each scene. Set a video in point when needed.
-5. Optionally select saved audio and its in point. Otherwise, a video keeps its existing audio and a still-image scene is silent.
-6. Choose **Save plan** to preserve an immutable editable version, then **Assemble film** to render a real 1280×720 MP4 and timed VTT captions.
-7. Download the **Portable player ZIP** for independent playback. Export the full project when you want native editable history and all sources restored into another installation.
+1. Paste text or import `.txt`, `.md` or `.markdown`, up to 60,000 characters.
+2. Choose **Plan scenes**. The app groups paragraphs locally into 1–8 editable scenes; this is not AI script inference or summarization.
+3. Edit scene order, titles, visual directions, captions and durations.
+4. Choose a saved image or video for every scene and set video in points when needed.
+5. Optionally choose saved audio and its in point. Without it, a video keeps its audio and a still-image scene is silent.
+6. Choose **Save plan**, then **Assemble film** for a real 1280×720 MP4 with timed VTT captions.
+7. Download the **Portable player ZIP** for independent playback. Export the full project to restore editable history and sources in another studio installation.
 
-Each scene can last 1–30 seconds; the full story is limited to three minutes. Video and audio selections must fit within their actual source durations. The renderer rejects missing media, cross-project references and invalid timing.
+Scenes may last 1–30 seconds, with a three-minute total. Media selections must fit their actual source durations. The renderer rejects missing or cross-project media and invalid timing.
 
-The player ZIP includes `index.html`, the MP4, captions, source text, scene plan and selected source media. Extract the complete ZIP before opening it. It needs no Comfy account for playback. The full project archive is the restore format for the studio’s editable project, while the player ZIP is a portable deliverable.
+The player ZIP includes `index.html`, the film, captions, source text, scene plan and selected media. Extract it fully before opening it; playback needs no Comfy account. The full project archive is the editable restore format.
 
-**Prepare new media** opens the normal creation controls with the scene direction. It does not start generation. Choose a model, review settings and explicitly generate when new visuals or sound are wanted, then select the completed saved result in the scene.
+**Prepare new media** opens the ordinary creation controls using the scene direction. It does not start generation. Select a model and settings, generate explicitly if needed, then use the saved result in the scene.
 
-PDF/Word extraction, automatic translation, inferred narration and autonomous multi-stage model submission are not implemented by this local planning tool.
+PDF/Word extraction, inferred narration, automatic translation and autonomous multi-stage generation are not implemented by this local planning tool.
 
-## Credits and the next paid checks
+## Credits and remaining checks
 
-**This implementation pass submitted no paid Comfy model generations, consumed zero inference credits and made no additional purchases.**
+The initial implementation stage used no paid inference. The later funded check completed four native runs and observed a balance decrease of **$1.762475**, approximately **372 credits** at 211 credits per dollar. About **3,829 credits remained at the recorded check time**; this is historical evidence, not a live balance or a guarantee for future work. Prices depend on provider, duration, geometry/textures, resolution, runtime and retries.
 
-For illustration, a 4,200-credit budget is not a promise that every one of the six outcomes can be completed within it. This example is not a verified account balance, checkout price or subscription entitlement. Cost depends on the chosen provider, duration, resolution, geometry/texture settings, workflow runtime, retries and quality iterations. Access problems can also remain after credits are added.
+The useful remaining work is:
 
-Use this sequence when your funded workspace key is configured:
+1. Listen to the saved music, cleaned speech and dubbing; compare cleanup and dubbing with the originals.
+2. Visually inspect the GLB. A nonempty valid file is not enough to judge asset quality.
+3. Exercise one short funded creation through the hosted reviewer flow, then save, reopen and export it. This tests the actual cloud session path.
+4. Test a textured Meshy output or an appropriate lip-sync sample only when that variant is needed and its cost is reviewed.
+5. Resolve Kling's provider compatibility before attempting another billable extension.
 
-1. Confirm the personal workspace’s access and balance with read-only checks.
-2. Confirm the actual model/workflow and its price before submitting the first test.
-3. Run one short music sample, one short dubbing sample, one short speech-cleanup sample and one normal-quality image-to-3D sample, inspecting each result before repeating it.
-4. Record request IDs, settings, consumed credits, saved output files and observed quality.
-5. Keep document assembly and other local feature testing on saved assets whenever that is sufficient.
-6. Leave Kling extension visibly blocked until the provider accepts a compatible source and returns a valid saved continuation.
+Automatic approval review blocked transferring the complete private audio clips for assistant listening. Local metadata/decoding checks continued; listening quality remains unreviewed. Do not turn those file checks into a quality claim.
 
-Do not treat a published price for another music model as Pika Music’s price. The earlier [testing budget](comfy-testing-budget-2026-11-03.md) is a dated, conditional set of assumptions, not a charge guarantee for these particular routes.
+Read the [funded execution report](funded-generation-check-2026-11-04.md) for exact observations. The earlier [testing budget](comfy-testing-budget-2026-11-03.md) remains a dated, conditional planning document.
 
-## Cloud links, Render and the local version
-
-The existing studio has two cloud entry points:
+## Cloud and local installation
 
 | Entry point | Role |
 | --- | --- |
-| [open-take-studio-review.vercel.app](https://open-take-studio-review.vercel.app/) | The submitted Vercel URL forwards the full application to Render while retaining the Vercel address. |
-| [open-take-studio.onrender.com](https://open-take-studio.onrender.com/) | Direct access to the same application server and persistent storage on Render. |
+| [Submitted Vercel URL](https://open-take-studio-review.vercel.app/) | Opens the full studio and forwards requests to Render while retaining the Vercel address |
+| [Direct Render URL](https://open-take-studio.onrender.com/) | Opens the same application server and persistent storage |
 
-**Render is still required for the current cloud deployment.** Vercel forwarding does not move the persistent application server, SQLite database or managed media off Render. Cancelling Render without migrating that backend would break the current cloud route.
+**Render is still required for the current cloud deployment.** Vercel forwarding does not move the persistent server, SQLite database or media storage away from Render.
 
-The hostnames use separate browser cookies and reviewer workspaces. Return through the same URL/browser, or transfer your work with an editable project export. The application code is shared; browser sessions are not automatically shared across these domains.
+The hostnames have separate browser cookies and reviewer workspaces. Return through the same URL/browser, or transfer your work through an editable project export.
 
-Local installation needs no Render or Vercel subscription. It runs the application, database, saved media and local rendering on your own computer. New AI generation still calls the configured Comfy/provider service. Previously downloaded media, local edits and portable exports do not disappear merely because inference credits run out.
+Local installation requires neither a Render nor Vercel subscription. The app, database, media and local rendering run on your computer; new AI generation uses the configured hosted Comfy/provider service. Saved media does not disappear when inference credits run out.
 
-### Quick local setup
-
-Use the current authoring branch rather than the immutable competition source snapshot:
+Install the current application branch:
 
 ```sh
 git clone --branch codex/authoring-live --single-branch https://github.com/sidbug248/open-take-studio.git
@@ -134,16 +130,14 @@ npm run build
 npm start
 ```
 
-Use Node.js 22.16 or newer; Node 24 is recommended. On Windows PowerShell, use `npm.cmd` if the shell blocks the `npm.ps1` wrapper. Open **http://127.0.0.1:4310**. For development, use `npm run dev` instead of the production start, with one server using a given database and port.
+Use Node.js 22.16 or newer; Node 24 is recommended. Windows PowerShell may require `npm.cmd` if the shell blocks its PowerShell wrapper. Open **http://127.0.0.1:4310**. For development use `npm run dev` instead, with only one server using a database and port.
 
-This source release is published on `codex/authoring-live` at [c94f4a5](https://github.com/sidbug248/open-take-studio/commit/c94f4a5b896ac636d299927fe4dbffc76705dec5). The same new bundle has been verified through local, Render and Vercel HTTP responses. Completed browser checks and the remaining provider-verification limits are recorded in the [release verification record](release-verification-2026-11-04.md).
+A fresh clone does not include private projects or the cloud showcase. Import your own editable project archive to move work between installations. Keep and back up the local `data` directory when upgrading. See the [README](../README.md#install-the-current-studio-locally).
 
-Leave `COMFY_API_KEY` empty for saved-media work, or set it privately for hosted generation. A fresh clone begins with an empty local workspace; it does not download the author’s private project library. Import your own editable project export to move work from cloud to local, and preserve/back up the local `data` directory when upgrading. Full requirements and installation details are in the [README](../README.md#install-the-current-studio-locally).
+## Evidence chronology
 
-## Validation record
-
-The focused document-story tests used actual local image, video and audio fixtures. They verified both scene images in the encoded film, audible audio in each scene, video dimensions/duration, timed captions, portable ZIP contents, idempotent retries, invalid timing rejection, project isolation, immutable source plans, and full project export → import → re-render. No model jobs were created by those tests.
-
-The document-story component does not read, log or persist Comfy credentials. Its source and captions are rendered through escaped React text, and its media assembly calls local application routes. The optional generation handoff prepares a draft; model execution remains an explicit action in the existing generator.
-
-The integrated production build passed and all **267 tests passed** at the release checkpoint. [GitHub Actions run 41778234753](https://github.com/sidbug248/open-take-studio/actions/runs/41778234753) passed at `c94f4a5`. Both cloud URLs and the local studio serve the same verified bundle. Render browser checks saved and revised an editable story, assembled the real MP4 and downloaded a CRC-verified portable ZIP. Vercel browser checks confirmed the cinematic homepage, varied gallery and editable image-to-3D workflow preparation without generation. See the [release verification record](release-verification-2026-11-04.md); funded provider generation and physical mobile-device behavior remain unverified. This guide does not substitute local fixture results for funded provider evidence.
+- The initial implementation checkpoint passed **267 tests** and the production build. Its no-paid-generation statement described that earlier stage.
+- Document-story tests used real image/video/audio fixtures and checked encoded scene content, audio signal, dimensions/timing, captions, ZIP contents, retries, project isolation and export → import → re-render.
+- The subsequent funded native runs saved four outputs; their metadata, hashes, costs and limitations are in the separate funded report.
+- The Sonilo starter change passed **34 focused tests**, the production build and full GitHub CI. Local, Render and Vercel returned the same new application bundle and native music catalogue route.
+- None of these observations changes the archived competition tag or establishes a funded hosted reviewer run that has not occurred.

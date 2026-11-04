@@ -99,6 +99,8 @@ No real social account was connected or post published during engineering valida
 
 The automated suite covers real image pixels/dimensions, MP4 encoding, ZIP contents, project import/export, workspace restart, invitations and role isolation, direct Render/trusted Vercel routing, real MCP SDK transport and calls, and approved publishing lifecycle without external posts.
 
-No Comfy inference call is required to validate these five upgrades. Paid recipe-node generation and funded reviewer generation remain separately unverified. The six remaining inference-dependent outcomes are still explicit in the Catalogue.
+All five production tools above are implemented and tested within their documented scope. No Comfy inference call is required for their local operations. Actual posting to a real Mastodon account and paid recipe-node generation remain separately unverified; automatic posting to Instagram, TikTok and X is not implemented.
+
+The next six outcomes are no longer an untouched backlog: native music, image-to-3D, dubbing, speech cleanup and document-to-story are implemented. Four native funded runs saved real outputs, and document-story was tested with saved media. Output quality and funded hosted reviewer generation still need validation. Kling extension remains blocked by provider compatibility. See the [current six-outcome status and usage guide](inference-upgrades-2026-11-04.md) and [funded execution record](funded-generation-check-2026-11-04.md).
 
 See [the testing budget](comfy-testing-budget-2026-11-03.md) for current credit conversion, Router top-ups versus Cloud plans, conditional test costs and unresolved route availability. Buying credits does not by itself repair incompatible inputs or an unavailable provider entitlement.
