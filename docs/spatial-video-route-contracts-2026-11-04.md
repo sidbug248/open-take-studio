@@ -1,6 +1,6 @@
 # Image-to-3D and Kling extension contracts
 
-Checked on **2026-11-04**. This engineering pass made read-only schema requests and ran local tests. It did not upload media or start paid generation.
+Initial contract check on **2026-11-04** used read-only schema requests and local tests. Later funded geometry-only and textured 2K Meshy runs completed and saved valid GLBs. The textured variant has embedded texture and a basic visual review. See the [execution report](funded-generation-check-2026-11-04.md) for current evidence. The contract checks below are distinct from those later paid runs.
 
 ## Image-to-3D: native Comfy workflow
 
@@ -30,7 +30,9 @@ The compact snapshot is [native-meshy-nodes.json](schemas/native-meshy-nodes.jso
 
 Seven targeted tests passed. They check native geometry wiring against the recorded Cloud node contract, version/export round trips, geometry-only settings, provider bounds, independent drafts and Kling result handling.
 
-**Funded image-to-3D execution remains unverified.** Schema availability is not evidence that a paid provider call completed. A successful test must save the returned GLB, reopen it in the studio's 3D viewer, retain its source image and execution record, and export/reopen the project.
+**Funded geometry-only image-to-3D completed** and saved a 942,684-byte GLB with one nonempty mesh, 24,484 vertices and 26,357 triangles.
+
+**A separate textured 2K run also completed**, producing a 4,295,260-byte GLB with 29,189 vertices, 25,269 triangles, UVs, one embedded 2048×2048 JPEG and an opaque material. PBR was off. Four rendered views showed a recognizable bottle, cap and pedestal, amber color and an approximate silhouette; the pedestal color differs from the source. This establishes textured execution and a basic visual check, not advanced PBR or physically transparent glass fidelity. The observed debit was $1.716; hosted reviewer Meshy execution remains unverified. See the [execution receipt and limitations](funded-generation-check-2026-11-04.md).
 
 ### Observed node price, not a fixed quote
 
@@ -49,7 +51,7 @@ These are the node badge's observed estimates on the date above. Native Cloud co
 
 Read-only `GET https://api.comfy.org/v2/models/kling/videos-video-extend/openapi.json` returned HTTP 200, schema version `3f28bd18909a`. It still requires `video_id`, supports predecessors described as text-to-video, image-to-video or prior extension, and limits the final video to three minutes. It does not establish which predecessor model/version and shared-provider dispatch combination will resolve the earlier real Kling 2.6 rejection.
 
-The earlier same-project request `becd74ed-a6a6-4d2b-bb8d-0d70f6259b4a` returned `invalid_input`. The route therefore remains **unavailable**. Credits alone do not resolve that failure. Native Cloud's current node inventory contains no Kling video-extension node, so there is no verified native fallback in this pass. A guessed task ID, Router request ID or uploaded video URL must not replace the provider's native video ID.
+The earlier same-project request `becd74ed-a6a6-4d2b-bb8d-0d70f6259b4a` returned `invalid_input`. The route remains **unavailable**. The [official Comfy retirement commit](https://github.com/Comfy-Org/ComfyUI/commit/f00bfd610cb001381603669e2cc01160ae37aaf3) explains that native Video Extend only accepted retired Kling 1.x predecessors. Router's published schema does not establish modern predecessor compatibility. Do not retry with the verified Kling 2.6 source, a task/request ID or an uploaded URL. The existing [saved-frame H3 continuation and clip assembly](kling-continuation-status-2026-11-04.md) are separately labeled alternatives.
 
 ### Completed-output parser correction
 

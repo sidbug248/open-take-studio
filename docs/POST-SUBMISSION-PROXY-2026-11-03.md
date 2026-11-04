@@ -1,5 +1,7 @@
 # Post-submission studio routing — November 3, 2026
 
+> **Historical rollout record.** Deployment IDs, counts and unfunded-generation statements below describe this November 3 release. A later November 4 hosted reviewer API check verified paid Router generation through the Vercel URL, local graph completion, save/reopen, export and local restore. See the [current execution record and separate browser scope](funded-generation-check-2026-11-04.md).
+
 **Status: live and verified.** The full source suite passed **192 tests**, and the production build passed. Separate live HTTP and rendered-browser checks verified the submitted URL, session boundaries, existing-media authoring, downloads, and competition preservation. A fresh funded reviewer generation remains unverified.
 
 - Application and Vercel routing source: `9af30dc9e25a03ec972a710042d2a92a20b17d8f`.

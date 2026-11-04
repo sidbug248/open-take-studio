@@ -26,6 +26,10 @@ The catalogue's unavailable extension now links to two existing instruments with
 
 Frame extraction, draft editing, existing clip assembly and export are local operations requiring no Comfy generation credits. A newly generated H3 continuation is a separately billed inference request. This repair submits none.
 
+## Saved-frame browser verification — November 4
+
+A browser check through the Vercel studio saved the actual frame at **2.00 seconds** from a video in a private remix. It retained the parent clip and source relationship, selected **MiniMax H3**, preselected the exact saved image as **First frame**, and preserved the user's continuation direction. **No generation was submitted.** This verifies the existing frame-to-draft interaction; it does not claim native Kling extension success or a newly generated continuation.
+
 ## Focused acceptance check with saved media — zero paid calls
 
 - In Catalogue, inspect **Extend a Kling video**. It remains unavailable and has no extension launch control; the official retirement reference is present.

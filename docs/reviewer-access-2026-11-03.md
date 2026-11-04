@@ -1,5 +1,7 @@
 # Reviewer access — post-submission update, November 3, 2026
 
+> **Historical deployment record.** The validation and unfunded-key statements below describe November 3. A later November 4 hosted reviewer API check completed a paid FLUX 3 canvas handoff, downstream local processing, save/reopen, export and hash-identical local restore. Browser dialog/draft checks are separate from paid browser-click admission. See the [current funded execution record](funded-generation-check-2026-11-04.md).
+
 The authoring app is hosted at https://open-take-studio.onrender.com. The immutable `v0.1.0-submission` release remains the competition checkpoint. This implementation continues on `codex/authoring-live`.
 
 ## Access and credits
