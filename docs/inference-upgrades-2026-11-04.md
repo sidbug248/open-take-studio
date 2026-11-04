@@ -1,5 +1,7 @@
 # Inference upgrades and document stories — November 4, 2026
 
+> **Current execution status, November 4, 2026:** Funded native Sonilo music, Meshy image-to-3D, VEED dubbing and VEED cleanup runs completed and saved outputs. Pika Music returned `403 not_enabled` through Router and is unavailable; the native Sonilo starter is the working music route. See the [funded check and quality limits](funded-generation-check-2026-11-04.md). The preparation notes below describe the earlier contract-validation stage.
+
 This guide describes the new authoring release at source commit `c94f4a5`. Local, Render and Vercel serve the same verified application bundle, and CI passed. Browser checks confirmed Render story editing, assembly and portable export, plus Vercel native workflow preparation. See the [release verification record](release-verification-2026-11-04.md). The competition tag remains a separate, preserved snapshot.
 
 The five earlier production upgrades remain part of the current studio. This pass addresses the six remaining outcomes below. Local development, validation, editing and media assembly do not require Comfy inference credits. New hosted model executions do.

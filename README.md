@@ -35,11 +35,13 @@ The competition page preserves the submission's playable outputs and all origina
 
 ## Generation and story upgrades
 
-**Release status:** source commit [c94f4a5](https://github.com/sidbug248/open-take-studio/commit/c94f4a5b896ac636d299927fe4dbffc76705dec5) is published on `codex/authoring-live`. Local, Render and Vercel serve the same verified application bundle, and CI passed. Browser checks confirmed hosted document-story editing/rendering/export on Render and native workflow preparation through Vercel. Read the [release verification record](docs/release-verification-2026-11-04.md); funded provider execution remains unverified.
+The current authoring branch offers **Sonilo music**, editable native Comfy Cloud starters for **image-to-3D**, **translation/dubbing**, and **speech cleanup**, plus a **document-to-story** editor that assembles saved media into a real film and portable player. The music starter defaults to a short 10-second take. Saving a workflow starter or planning a story does not submit generation.
 
-The current authoring branch now adds **Pika Music**, editable native Comfy Cloud starters for **image-to-3D**, **translation/dubbing**, and **speech cleanup**, plus a **document-to-story** editor that assembles saved media into a real film and portable player. Music defaults to a short 10-second take. Saving a workflow starter or planning a story does not submit generation.
+**Funded local verification — November 4, 2026:** Sonilo music, Meshy image-to-3D, VEED dubbing and VEED cleanup completed through the studio and saved real output files. The observed total balance change was about **$1.76 / 372 credits**. Audio/video decoding and GLB structure were checked; listening quality, translation accuracy and visual 3D fidelity remain unreviewed. A funded end-to-end hosted reviewer run remains unverified. Read the [funded execution results and precise limits](docs/funded-generation-check-2026-11-04.md).
 
-The four provider paths have validated contracts and local tests; **funded execution remains unverified** until a key from a funded workspace is connected. Kling extension still awaits a compatible provider predecessor contract and stays unavailable. Existing media remains usable without inference credits. Read the [upgrade guide, setup, costs and verification limits](docs/inference-upgrades-2026-11-04.md).
+**Pika Music is unavailable through the tested Comfy Router route** (`403 not_enabled`), even with a funded workspace. Use the native Sonilo music starter instead. Kling extension still awaits a compatible provider predecessor contract and stays unavailable. Existing media remains usable without inference credits.
+
+The [upgrade guide](docs/inference-upgrades-2026-11-04.md) explains the workflow and story tools. Current application source is on `codex/authoring-live`; the local installation commands below select that branch.
 
 ## Five new production tools
 

@@ -1,5 +1,7 @@
 # Audio upgrade contracts and verification
 
+> **Current execution status, November 4, 2026:** Funded native Sonilo music, Meshy image-to-3D, VEED dubbing and VEED cleanup runs completed and saved outputs. Pika Music returned `403 not_enabled` through Router and is unavailable; the native Sonilo starter is the working music route. See the [funded check and quality limits](funded-generation-check-2026-11-04.md). The preparation notes below describe the earlier contract-validation stage.
+
 Checked on 2026-11-04. This record distinguishes implemented request handling from a successful paid provider execution.
 
 ## Current state
