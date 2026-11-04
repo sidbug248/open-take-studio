@@ -34,7 +34,7 @@ export const IMAGE_TO_3D_PRESET_INFO = {
   description: 'Turn a saved reference image into editable 3D geometry and a downloadable GLB.',
   documentation: 'https://comfy.org/hub/workflows/meshy-7-1-image-to-3d-da6947213b75/',
   schemaCheckedAt: '2026-11-04',
-  verification: 'Cloud node schemas checked; funded generation has not been verified.',
+  verification: 'Funded geometry-only and standard 2K textured runs completed. Saved GLBs and four-view previews reviewed; resemblance is approximate, and transparent-glass/PBR fidelity is not established.',
   requiredInput: 'image',
 } as const;
 
@@ -118,7 +118,7 @@ export function buildImageTo3dWorkflow(raw: ImageTo3dOptions = {}): SpatialWorkf
   };
   return workflowCreateSchema.parse({
     name: settings.textured ? 'Image to 3D · Meshy 7.1' : 'Image to 3D · Meshy 7.1 geometry',
-    description: 'Reconstruct a saved source image as real 3D geometry. The native Meshy 7.1 node feeds its GLB output into SaveGLB, preserving a downloadable, editable model. A Comfy Cloud plan and credits are needed only when you run it. The seed triggers a new variation; Meshy results are not deterministic. Schema checked 2026-11-04; paid generation remains unverified.',
+    description: 'Reconstruct a saved source image as real 3D geometry. The native Meshy 7.1 node feeds its GLB output into SaveGLB, preserving a downloadable, editable model. A Comfy Cloud plan and credits are needed only when you run it. The seed triggers a new variation; Meshy results are not deterministic. Geometry-only and standard 2K textured generation verified 2026-11-04. Shape and color are approximate; glass transparency and PBR materials are not established by these tests.',
     editorGraph, apiGraph, bindings, outputNodeIds: ['3'], outputKind: '3d',
   });
 }
