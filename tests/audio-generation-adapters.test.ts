@@ -18,7 +18,7 @@ const compose = (settings: Record<string, unknown> = {}, prompt = 'A gentle pian
 
 test('music uses a bounded explicit composition without hidden reference or rewriting calls', () => {
   assert.deepEqual(compose(), { prompt: 'A gentle piano theme', duration: 10, seed: -1, mode: 'text_to_music', rewrite_prompt: false });
-  assert.equal(PIKA_MUSIC_MODEL.status, 'experimental');
+  assert.equal(PIKA_MUSIC_MODEL.status, 'unavailable');
   assert.equal(PIKA_MUSIC_MODEL.delivery, 'queue');
   assert.equal(PIKA_MUSIC_MODEL.inputs.length, 0);
   const inputSchema = musicSchema.paths['/v2/models/pika/pika-music'].post.requestBody.content['application/json'].schema;

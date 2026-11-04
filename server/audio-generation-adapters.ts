@@ -13,7 +13,7 @@ export const PIKA_MUSIC_MODEL: ModelDescriptor = {
   description: 'Compose an original music track from a written direction and optional lyrics.',
   documentation: 'https://api.comfy.org/v2/models/pika/pika-music/openapi.json',
   verifiedAt: '2026-11-04',
-  status: 'experimental',
+  status: 'unavailable',
   delivery: 'queue',
   promptField: 'prompt',
   promptRequired: true,
@@ -23,7 +23,7 @@ export const PIKA_MUSIC_MODEL: ModelDescriptor = {
     { key: 'lyrics', label: 'Lyrics (optional)', type: 'text', description: 'Optional words and section labels, up to 2,000 characters in the studio.' },
     { key: 'seed', label: 'Seed', type: 'number', min: -1, max: 2147483647, step: 1, default: -1, description: '-1 chooses a new seed.' },
   ],
-  notes: 'Current Router schema and request/result fixtures verified. A funded music generation has not yet been run. Only text_to_music is exposed; reference voices, song covers and prompt rewriting are not submitted. No song is generated until Generate is explicitly chosen.',
+  notes: 'The funded personal-workspace request returned HTTP 403 not_enabled on 2026-11-04. This Router adapter stays disabled until provider access is established. Compose music uses the separate native Sonilo workflow. Reference voices, song covers and prompt rewriting are not submitted.',
 };
 export const AUDIO_GENERATION_MODELS: ModelDescriptor[] = [PIKA_MUSIC_MODEL];
 

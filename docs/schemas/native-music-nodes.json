@@ -1,0 +1,86 @@
+{
+  "SoniloTextToMusic": {
+    "input": {
+      "required": {
+        "prompt": [
+          "STRING",
+          {
+            "tooltip": "Text prompt describing the music to generate.",
+            "default": "",
+            "multiline": true
+          }
+        ],
+        "duration": [
+          "INT",
+          {
+            "tooltip": "Target duration in seconds. Maximum: 6 minutes.",
+            "default": 30,
+            "min": 1,
+            "max": 360
+          }
+        ],
+        "seed": [
+          "INT",
+          {
+            "tooltip": "Seed for reproducibility. Currently ignored by the Sonilo service but kept for graph consistency.",
+            "default": 0,
+            "min": 0,
+            "max": 18446744073709552000,
+            "control_after_generate": true
+          }
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "prompt",
+        "duration",
+        "seed"
+      ]
+    },
+    "is_input_list": false,
+    "output": [
+      "AUDIO"
+    ],
+    "output_is_list": [
+      false
+    ],
+    "output_name": [
+      "AUDIO"
+    ],
+    "output_tooltips": [
+      null
+    ],
+    "output_matchtypes": null,
+    "name": "SoniloTextToMusic",
+    "display_name": "Sonilo Text to Music",
+    "description": "Generate music from a text prompt using Sonilo's AI model.",
+    "python_module": "comfy_api_nodes.nodes_sonilo",
+    "category": "partner/audio/Sonilo",
+    "output_node": false,
+    "deprecated": false,
+    "experimental": false,
+    "dev_only": false,
+    "api_node": true,
+    "price_badge": {
+      "engine": "jsonata",
+      "depends_on": {
+        "widgets": [
+          {
+            "name": "duration",
+            "type": "INT"
+          }
+        ],
+        "inputs": [],
+        "input_groups": []
+      },
+      "expr": "{\"type\":\"usd\",\"usd\": 0.0025 * widgets.duration}"
+    },
+    "search_aliases": null,
+    "essentials_category": null,
+    "has_intermediate_output": false,
+    "contract_source": "https://cloud.comfy.org/api/object_info",
+    "contract_checked_at": "2026-11-04T06:37:00.325Z",
+    "contract_note": "Sanitized live Cloud node capture; no credential or hidden inputs retained. The observed funded charge may differ from this node price badge."
+  }
+}

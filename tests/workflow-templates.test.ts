@@ -9,6 +9,7 @@ import type { AddressInfo } from 'node:net';
 import express from 'express';
 import AdmZip from 'adm-zip';
 import { studioWorkflowTemplates } from '../server/workflow-templates.ts';
+import { buildMusicNativeWorkflow } from '../server/music-native-workflow.ts';
 import { makeWorkflowVersion, rejectWorkflowSecrets } from '../server/workflow-schema.ts';
 import { validateAgainstNodeInfo, type WorkflowPort } from '../server/workflow-port.ts';
 import { createWorkflowRouter } from '../server/workflow-routes.ts';
@@ -22,6 +23,7 @@ import type { Asset, Project, Take } from '../shared/types.ts';
 const nodeInfo = {
   ...JSON.parse(readFileSync(new URL('../docs/schemas/native-audio-nodes.json', import.meta.url), 'utf8')),
   ...JSON.parse(readFileSync(new URL('../docs/schemas/native-meshy-nodes.json', import.meta.url), 'utf8')),
+  ...JSON.parse(readFileSync(new URL('../docs/schemas/native-music-nodes.json', import.meta.url), 'utf8')),
 };
 type Template = ReturnType<typeof studioWorkflowTemplates>[number];
 function template(id: string): Template {
@@ -82,16 +84,17 @@ async function fixture(connected = false) {
   };
 }
 
-test('every starter validates against current public Cloud node contracts after media binding', () => {
+test('every starter validates against recorded official node contracts after media binding', () => {
   const templates = studioWorkflowTemplates();
-  assert.deepEqual(templates.map(item => item.id).sort(), ['audio-cleanup', 'dubbing', 'mesh-image']);
+  assert.deepEqual(templates.map(item => item.id).sort(), ['audio-cleanup', 'dubbing', 'mesh-image', 'music-compose']);
   for (const starter of templates) {
     const version = makeWorkflowVersion(starter.definition);
     const validation = validateAgainstNodeInfo(graphForValidation(starter.definition), nodeInfo);
     assert.equal(validation.valid, true, `${starter.id}: ${JSON.stringify(validation.issues)}`);
     assert.equal(version.target, 'comfy-cloud');
     assert.equal(version.outputNodeIds.length, 1);
-    assert.ok(version.bindings.some(binding => ['image', 'audio', 'video'].includes(binding.kind) && binding.required && binding.defaultValue === undefined));
+    if (starter.id === 'music-compose') assert.ok(version.bindings.some(binding => binding.key === 'prompt' && binding.kind === 'string' && binding.maxLength === 1000));
+    else assert.ok(version.bindings.some(binding => ['image', 'audio', 'video'].includes(binding.kind) && binding.required && binding.defaultValue === undefined));
     assert.doesNotThrow(() => rejectWorkflowSecrets(version));
     assert.match(starter.creditNote, /credit/i);
     assert.match(starter.verificationNote, /unverified|not yet verified/i);
@@ -119,7 +122,7 @@ test('a project can list, save, export and reimport every starter without a key 
     const response = await fetch(f.base + `/projects/${f.project.id}/workflow-templates`);
     assert.equal(response.status, 200);
     const templates = await response.json() as Template[];
-    assert.equal(templates.length, 3);
+    assert.equal(templates.length, 4);
     for (const starter of templates) {
       const created = await f.post(`/projects/${f.project.id}/workflows`, starter.definition);
       if (created.status !== 201) assert.fail(await created.text());
@@ -221,4 +224,18 @@ test('explicit validation checks native settings without uploading media or subm
     assert.equal(f.calls.tick, 0);
     assert.equal(f.store.projectDetail(f.project.id)!.jobs.length, 0);
   } finally { await f.cleanup(); }
+});
+
+test('music starter bounds billable duration and direction before saving a graph', () => {
+  const starter = buildMusicNativeWorkflow();
+  assert.equal(starter.apiGraph['1']!.inputs.duration, 10);
+  assert.equal(starter.apiGraph['2']!.inputs.format, 'flac');
+  assert.equal(starter.bindings.some(binding => ['image', 'audio', 'video'].includes(binding.kind)), false);
+  for (const duration of [0, 1.5, 361, Infinity, NaN]) assert.throws(() => buildMusicNativeWorkflow({ duration }));
+  for (const prompt of ['', '   ', 'x'.repeat(1001)]) assert.throws(() => buildMusicNativeWorkflow({ prompt }));
+  assert.throws(() => buildMusicNativeWorkflow({ seed: -1 }));
+  assert.throws(() => buildMusicNativeWorkflow({ seed: 1.5 }));
+  assert.equal(buildMusicNativeWorkflow({ duration: 1, prompt: 'Piano' }).apiGraph['1']!.inputs.duration, 1);
+  assert.equal(buildMusicNativeWorkflow({ duration: 360, prompt: 'x'.repeat(1000) }).apiGraph['1']!.inputs.duration, 360);
+  assert.match(starter.description, /ignored by Sonilo/);
 });
