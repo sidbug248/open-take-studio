@@ -2,6 +2,8 @@
 
 **The full creative studio is available in the cloud and on your own computer.**
 
+**Current release: 0.2.0.** [Release notes and verified scope](docs/release-0.2.0.md) | [Current source release](https://github.com/sidbug248/open-take-studio/releases/tag/v0.2.0) | [Future development opportunities](docs/future-roadmap.md)
+
 | Choose how to use it | Open or install |
 | --- | --- |
 | Full studio through Vercel — original submitted URL | [open-take-studio-review.vercel.app](https://open-take-studio-review.vercel.app/) |
@@ -16,9 +18,9 @@ Both cloud links serve the same current application. Vercel keeps its address wh
 
 Reviewer keys are encrypted on the server, expire after **12 hours**, and are removed on disconnect. Once created, the private browser session lasts **7 days**. The Vercel and Render hostnames have separate browser cookies and workspaces: return through the same URL and browser, or use an exported project package to transfer work. Export projects before signing out, clearing cookies, or changing browsers. Reconnect the same key to resume that workspace's pending jobs; a different key requires a new reviewer workspace. Never put an API key in a prompt, project package, or chat.
 
-**New cloud generation uses your own funded Comfy workspace key and its model access.** A funded reviewer API check through the Vercel URL completed one FLUX 3 image, resumed its Production canvas through resize and delivery packaging, and verified hosted save/reopen plus a hash-identical local project restore. A separate native Sonilo workflow also completed through the hosted reviewer API and saved a stereo FLAC. Browser checks separately verified that Generate opens the dismissible connection dialog and that dismissal/reload preserves the draft; a paid browser-click submission was not performed. Concurrency and recovery fault cases still use mocked providers. See the [execution record and scope](docs/funded-generation-check-2026-11-04.md).
+**New cloud generation uses your own funded Comfy workspace key and its model access.** A funded reviewer API check through the Vercel URL completed one FLUX 3 image, resumed its Production canvas through resize and delivery packaging, and verified hosted save/reopen plus a hash-identical local project restore. A separate native Sonilo workflow also completed through the hosted reviewer API and saved a stereo FLAC. A corrected complete-narration VEED dubbing workflow then saved a Spanish MP4; offline transcription preserved all three source clauses. Browser checks separately verified that Generate opens the dismissible connection dialog and that dismissal/reload preserves the draft; a paid browser-click submission was not performed. Concurrency and recovery fault cases still use mocked providers. See the [execution record and scope](docs/funded-generation-check-2026-11-04.md).
 
-This update follows the submission. [Current post-submission authoring source](https://github.com/sidbug248/open-take-studio/tree/codex/authoring-live) includes the hosted access and routing corrections. The original reviewer demonstrations and immutable `v0.1.0-submission` release below remain unchanged. The local instructions below explicitly install the current authoring branch; the tagged source ZIP remains the original competition snapshot.
+This update follows the submission. [Current post-submission authoring source](https://github.com/sidbug248/open-take-studio/tree/codex/authoring-live) includes the hosted access and routing corrections. The original reviewer demonstrations and immutable `v0.1.0-submission` release below remain unchanged. The local instructions below pin the current `v0.2.0` release. The older `v0.1.0-submission` tag and its source ZIP remain the original competition snapshot.
 
 **A local creative studio for branching films, directed 3D scenes, editable sound-driven motion, and source-preserving iteration.**
 
@@ -29,7 +31,8 @@ Open Take combines a React/TypeScript interface, Express, SQLite, managed local 
 - [Open the full studio at the submitted URL](https://open-take-studio-review.vercel.app/).
 - [Preserved competition demo and downloads](https://open-take-studio-review.vercel.app/competition/).
 - [Watch the 100-second competition video](https://x.com/ayosiddy/status/2117645518000279974).
-- [Download the tagged source release](https://github.com/sidbug248/open-take-studio/releases/tag/v0.1.0-submission).
+- [Download the current 0.2.0 source release](https://github.com/sidbug248/open-take-studio/releases/tag/v0.2.0).
+- [Original competition source and demonstration downloads](https://github.com/sidbug248/open-take-studio/releases/tag/v0.1.0-submission).
 
 The competition page preserves the submission's playable outputs and all original video, film, and download URLs. The [live authoring studio](https://open-take-studio.onrender.com) offers isolated reviewer workspaces and separate private owner sign-in. You can also run the source locally with your own authorized Comfy credentials.
 
@@ -37,11 +40,13 @@ The competition page preserves the submission's playable outputs and all origina
 
 The current authoring branch offers **Sonilo music**, editable native Comfy Cloud starters for **image-to-3D**, **translation/dubbing**, and **speech cleanup**, plus a **document-to-story** editor that assembles saved media into a real film and portable player. The music starter defaults to a short 10-second take. Saving a workflow starter or planning a story does not submit generation.
 
-**Funded verification — November 4, 2026:** Four initial local native workflows completed: Sonilo music, geometry-only Meshy image-to-3D, VEED dubbing and VEED cleanup, costing about **$1.76 / 372 credits**. A later pass completed a hosted reviewer FLUX 3 canvas handoff, hosted native Sonilo music and textured 2K Meshy for **$1.806805 / about 381.24 credits** in total. The textured GLB has UVs and an embedded 2048×2048 image; a basic visual review found a recognizable bottle, cap and pedestal with approximate shape and amber color. Listening, translation accuracy, visible lip-sync and physically transparent glass fidelity remain unverified. Read the [execution results, hashes, restore checks and precise limits](docs/funded-generation-check-2026-11-04.md).
+**Funded verification — November 4, 2026:** Four initial local native workflows completed: Sonilo music, geometry-only Meshy image-to-3D, VEED dubbing and VEED cleanup, costing about **$1.76 / 372 credits**. A later pass completed a hosted reviewer FLUX 3 canvas handoff, hosted native Sonilo music and textured 2K Meshy for **$1.806805 / about 381.24 credits** in total. The textured GLB has UVs and an embedded 2048×2048 image; a basic visual review found a recognizable bottle, cap and pedestal with approximate shape and amber color. A further corrected hosted Spanish dubbing run cost **$1.0868**; decoding and offline transcription retained the complete narration. Direct listening, voice naturalness, visible lip-sync and physically transparent glass fidelity remain unverified. Read the [execution results, hashes, restore checks and precise limits](docs/funded-generation-check-2026-11-04.md).
 
 **Pika Music is unavailable through the tested Comfy Router route** (`403 not_enabled`), even with a funded workspace. Use the native Sonilo music starter instead. Legacy Kling extension stays unavailable: Comfy removed the native node because it accepted only retired Kling 1.x predecessors. Use the separately labeled [saved-frame continuation and clip assembly](docs/kling-continuation-status-2026-11-04.md) instead. Existing media remains usable without inference credits.
 
-The [upgrade guide](docs/inference-upgrades-2026-11-04.md) explains the workflow and story tools. Current application source is on `codex/authoring-live`; the local installation commands below select that branch.
+Sync 3 checks saved video/speech durations before generation and requires a deliberate choice when the selected cutoff mode would omit narration. This local preflight preserves drafts and uses no inference credits.
+
+The [upgrade guide](docs/inference-upgrades-2026-11-04.md) explains the workflow and story tools. The stable source is tagged `v0.2.0`; continued development is on `codex/authoring-live`. The [release notes](docs/release-0.2.0.md) separate implemented features, tested execution, and output-quality limits.
 
 ## Five new production tools
 
@@ -77,10 +82,10 @@ No local model installation is required. Provider credentials and model weights 
 
 ## Install the current studio locally
 
-The current application source is on [`codex/authoring-live`](https://github.com/sidbug248/open-take-studio/tree/codex/authoring-live). The default `main` branch retains the competition application snapshot with updated public documentation. Use the commands below for a fresh installation of the current studio:
+Install the stable [`v0.2.0`](https://github.com/sidbug248/open-take-studio/tree/v0.2.0) source below. The default `main` branch retains the competition application snapshot with updated public documentation; ongoing application development uses [`codex/authoring-live`](https://github.com/sidbug248/open-take-studio/tree/codex/authoring-live). A tag checkout is intentionally detached and stays at this release.
 
 ```sh
-git clone --branch codex/authoring-live --single-branch https://github.com/sidbug248/open-take-studio.git
+git clone --branch v0.2.0 --single-branch https://github.com/sidbug248/open-take-studio.git
 cd open-take-studio
 npm ci
 ```
@@ -102,13 +107,13 @@ Open **http://127.0.0.1:4310**. The app runs on your computer, binds to loopback
 
 A fresh installation starts with an empty workspace and does not contain the author's private projects or the cloud showcase library. Cloud and local workspaces do not synchronize automatically. To transfer your own work, export an editable `.opentake.zip` project package from its cloud workspace, then use **Projects → Import production package** in your local studio. Keep the `data` directory when upgrading, and back it up with the app stopped.
 
-For development, use `npm run dev` instead of the production start. Run only one server against a given port/database. Windows also has the supplied `Start-OpenTakeStudio.ps1` launcher after dependencies have been installed.
+For development, clone `codex/authoring-live` instead of the release tag and use `npm run dev`. Run only one server against a given port/database. If Windows PowerShell blocks the npm wrapper, use `npm.cmd` for the commands above; no execution-policy change is required. Windows also has the supplied `Start-OpenTakeStudio.ps1` launcher after dependencies have been installed.
 
 For the original competition version, use the [`v0.1.0-submission` release and source ZIP](https://github.com/sidbug248/open-take-studio/releases/tag/v0.1.0-submission). That archived snapshot is separate from the current authoring branch installed above.
 
 ## Open the examples
 
-The public release includes these four downloads:
+The preserved competition release includes these four downloads:
 
 - [Competition demo MP4](https://github.com/sidbug248/open-take-studio/releases/download/v0.1.0-submission/Open-Take-Studio-Competition-Demo.mp4): the 100.063-second demonstration of the product, implementation and workflow innovation.
 - [Self-contained reviewer demo ZIP](https://github.com/sidbug248/open-take-studio/releases/download/v0.1.0-submission/Open-Take-Studio-review-demo-2026-11-03.zip): extract the entire archive and open `index.html` to view the demonstration and portable outputs.
@@ -129,7 +134,7 @@ Comfy Router and native Comfy Cloud execution remain explicit separate routes in
 
 The current authoring catalogue describes 66 creative outcomes: 65 have implemented routes, including experimental routes awaiting funded provider verification, and Kling extension remains unavailable. Some routes require source media or an external account. The immutable competition snapshot originally contained 55 implemented and 11 planned/unavailable outcomes. The 253-entry model directory is broader than the 24 registered Router adapters, two of which remain disabled; it must not be interpreted as 253 runnable integrations. Native Comfy Cloud workflows are recorded separately from Router adapters.
 
-The current three-journey validation includes two fresh H3 videos, actual scene-render input-byte matching, a mixed-soundtrack motion export, saved/reopened edits, project package restoration and standalone branching-film playback. A 154-test host run passed before final display-only changes; the final build/typecheck and visual checks followed those display changes. See `submission-evidence/verification-summary.json` and `docs/first-impression-validation.md` for scope.
+The competition three-journey validation includes two fresh H3 videos, actual scene-render input-byte matching, a mixed-soundtrack motion export, saved/reopened edits, project package restoration and standalone branching-film playback. Its 154-test checkpoint is historical. Current release verification is recorded in the [0.2.0 release notes](docs/release-0.2.0.md); the original evidence remains in `submission-evidence/verification-summary.json` and `docs/first-impression-validation.md`.
 
 Physical-phone and actual hidden-tab browser behavior remain unverified in the submission evidence. The immutable submission source is a local studio. The post-submission hosted app adds separate reviewer SQLite/media storage, credential-bound jobs, scoped recovery and bounded admission; the owner's workspace stays private. Reviewer workspace access is an anonymous browser session without cross-device account recovery. The current authoring branch adds scoped review invitations, comments and approvals without granting access to the private workspace.
 
@@ -144,5 +149,7 @@ npm run build
 Tests use isolated fixtures rather than live paid generation. Engineering notes may contain historical local-artifact references; the curated submission evidence index identifies the release's included proof and current limitations.
 
 ## License
+
+Copyright (c) 2026 Mohsin Siddiqi, trading as Eternity Flux Technologies.
 
 Original application code is MIT licensed; preserve the root `LICENSE`. Third-party packages, decoders, FFmpeg/ffprobe, external models/services and generated media retain their separate licenses and terms. See `docs/licensing.md` and `docs/licenses/`. No account credentials, local database, installed dependencies or model weights are included in the source release.

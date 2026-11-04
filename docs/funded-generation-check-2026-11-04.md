@@ -2,7 +2,7 @@
 
 ## What was exercised
 
-The initial pass loaded a funded personal Comfy workspace key in the local production studio and collected real native-workflow outputs into its managed library. Later, separate hosted reviewer API checks through the Vercel URL exercised a paid Router recipe node with its downstream local graph, and a native Sonilo workflow. These checks are recorded separately below; a paid browser-click submission is not claimed.
+The initial pass loaded a funded personal Comfy workspace key in the local production studio and collected real native-workflow outputs into its managed library. Later, separate hosted reviewer API checks through the Vercel URL exercised a paid Router recipe node with its downstream local graph, and a native Sonilo workflow. A further hosted VEED Standard check used complete narration and passed offline transcript comparison. These checks are recorded separately below; a paid browser-click submission is not claimed.
 
 Four native Comfy Cloud runs completed in the initial pass. The original Pika Router request was rejected as unavailable, so it was not retried. Sonilo provides the working native music alternative.
 
@@ -30,7 +30,7 @@ No further paid runs were queued at that initial checkpoint. Later checks and th
 - FFmpeg decoded the cleanup, dubbing and music outputs successfully. Duration, streams and non-silent audio signal were checked.
 - The GLB header, declared length, JSON/binary chunks, nonempty mesh and finite coordinate bounds were checked.
 - The original input files were preserved. At that initial checkpoint, the local database retained 19 projects and contained 474 assets after the workflow definitions, execution records and outputs were saved. No jobs remained active at that checkpoint.
-- **Listening quality was not reviewed.** Automatic approval review blocked transferring complete generated audio from the laptop for listening; local signal/format checks do not prove translation accuracy, voice naturalness, music quality or cleanup effectiveness.
+- **Listening quality was not reviewed.** The owner later authorized transfer for review, but the reviewing assistant session does not support audio input. The later local decode and offline transcription checks below are objective evidence; they do not establish voice naturalness, music quality or audible cleanup improvement.
 - The dubbing source depicts a character facing away, so this sample does not establish visible lip-sync quality.
 - The Meshy output's visual resemblance to its source has not been assessed.
 - Those initial native runs were local, not hosted reviewer executions. A key saved in the local `.env` does not automatically connect a reviewer session on Render or Vercel. The later hosted Router check below verifies its own credential-bound session and does not certify each native workflow.
@@ -85,7 +85,7 @@ Studio job `0da9ffba-38e3-431f-9446-27d4e121c865` records native Cloud execution
 
 Local import restored three assets with remapped workflow references, one archived provider job and zero active jobs. The restored FLAC was byte-identical; import submitted no inference. After the checks, the hosted reviewer test credential was disconnected at **17:42:33 UTC** with HTTP 200 and connection state `missing`.
 
-The observed debit was **$0.032175**, approximately **6.79 credits**. Successful execution, collection and audio metadata do not establish listening quality. Assistant listening remains unverified because the generated-audio transfer was blocked by automatic approval review.
+The observed debit was **$0.032175**, approximately **6.79 credits**. Successful execution, collection and audio metadata do not establish listening quality. Direct listening remains unverified because the reviewing assistant session does not support audio input. Transfer permission was granted; permission is no longer the limitation.
 
 ## Cost of this later verification pass
 
@@ -97,6 +97,45 @@ The observed debit was **$0.032175**, approximately **6.79 credits**. Successful
 | **Later pass total** | **$1.806804994** | **381.24** |
 
 These costs are observed checkpoints, not fixed quotations or a plan allowance. The earlier four-run native check cost $1.762475 separately. Account balances and credential material remain in private verification receipts.
+
+## Audio follow-up and source-duration finding
+
+A later review used full-file decoding, local signal measurements and unprompted offline speech recognition. The owner authorized transferring clips for review, but the assistant session could not accept audio input. No auditory verdict is claimed. Offline transcription ran on the owner's computer without sending audio to an external transcription service, and this review submitted no additional Comfy request.
+
+- All six original files decoded fully and had no non-finite samples or sample clipping.
+- The 6.9-second narration and cleaned output produced the same complete transcript. The cleaned version was about 3.35 dB louder; that alone does not demonstrate a noise-removal benefit.
+- Both Sonilo outputs were 10.054-second stereo files. Musical quality was not assessed by listening.
+- The earlier English video had only 5.205 seconds of audio, matching the beginning of the 6.9-second narration. Its final phrase was absent before it reached VEED. Stored generation settings show that an earlier Sync 3 demonstration used `sync_mode: cut_off`.
+- The Spanish transcript raised a possible meaning change in the closing phrase. This is an ASR-based concern, not a listening-confirmed pronunciation or translation verdict.
+
+A local corrected input, `dubbing-source-full-narration-held-frame.mp4`, preserves all 6.9 seconds of the narration by holding the final video frame. Its video stream is 6.916992 seconds and its SHA-256 is `053ec8baf4cd7d41fd206425b18e778a6578488ae2fd04b5aef8d5d9beb1250c`. The held frame supplies no new mouth animation. This input preparation is separate from generating a corrected Spanish output.
+
+The private reports retain the original hashes, objective measurements, offline transcriptions and source comparison. [Release 0.2.0 verification](release-0.2.0.md) records the subsequent duration protection and corrected-input execution separately. No private audio or credential files are included in the source release.
+
+## Corrected full-narration hosted dubbing
+
+One subsequent **hosted reviewer HTTP/API → native Comfy Cloud** VEED Standard workflow translated the complete-narration input from English to Spanish. Exactly one native generation job was submitted. The input preserves 6.9 seconds of narration in a 6.916992-second video by holding the final picture; it adds no new mouth animation.
+
+| Result | Verified value |
+| --- | --- |
+| Dubbed MP4 | 2,064,554 bytes |
+| Video duration | 6.920 seconds |
+| Audio duration | 6.911995 seconds |
+| Output SHA-256 | `be3112dff97d24fcc3d99d6fa537545483863b0384a1e914d598c00e25481cb7` |
+| Initial editable project ZIP used for local restore | 3,813,645 bytes |
+| Package integrity | All four asset hashes matched; exactly one generation job retained |
+| Decode | Entire output decoded through FFmpeg successfully |
+| Observed debit | $1.0868, approximately 229.31 credits at 211/$1 |
+
+Unprompted offline transcription of the complete English source and Spanish output retained all three clauses: an idea begins with one frame, keep the take, and follow the light. This resolves the earlier test fixture's missing ending and the earlier transcript-based closing-phrase concern. The check evaluates recognized words and meaning; it is not direct listening, pronunciation, voice-naturalness or visible lip-sync approval.
+
+The initial corrected project package was also imported into the local studio: all four asset hashes matched, exactly one completed generation was retained as archived history, and zero jobs became active. Import submitted no inference.
+
+After the deployment restart, the hosted output still had the same media SHA-256. A later export refreshed its export timestamp and produced a 3,813,643-byte ZIP with SHA-256 `2cba414f7bcb831ba1efd168380991f85f1576de48c14ad1e12984f2139c4e31`; the earlier local-restore receipt refers to the initial ZIP above. This re-export submitted no inference and incurred no additional charge. The test reviewer's key connection was then removed.
+
+The request used the hosted reviewer HTTP/API path. It verifies that workflow's funded execution, collection and export through the hosted service; a paid submission through browser controls remains unverified. No music or 3D generation was repeated for this correction.
+
+This debit is separate from the earlier $1.762475 initial pass and $1.806804994 later pass. Observed costs are historical measurements, not fixed quotes or account-balance statements.
 
 ## Remaining provider constraints
 
