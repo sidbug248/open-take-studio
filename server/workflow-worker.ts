@@ -6,6 +6,7 @@ import type { WorkflowGraph, WorkflowVersion } from '../shared/workflow-types.ts
 import type { WorkflowPort, WorkflowSnapshot } from './workflow-port.ts';
 import { WorkflowError, rejectWorkflowSecrets } from './workflow-schema.ts';
 import { safeMessage } from './config.ts';
+import {validateNativeInferenceInputs} from './native-inference-preflight.ts';
 import {bindJobCredential,suspendCredentialJob,type CredentialSource} from './credential-source.ts';
 
 const terminal=new Set(['COMPLETED','FAILED','BLOCKED','EXPIRED']);
@@ -34,17 +35,23 @@ export class WorkflowWorker {
         const asset=this.store.getAsset(job.workflow!.versionAssetId);if(!asset||asset.projectId!==job.projectId)throw new WorkflowError('Workflow version is missing');
         const definition=asset.metadata.workflowVersion as unknown as WorkflowVersion;
         const graph=structuredClone(definition.apiGraph) as WorkflowGraph;
-        const uploads={...job.workflow!.uploads};
-        for(const binding of definition.bindings){const value=job.workflow!.values[binding.key];if(value===undefined)continue;
-          if(typeof value==='object'){
-            const source=this.store.getAsset(value.assetId);if(!source||source.projectId!==job.projectId)throw new WorkflowError('A workflow input is missing from this project');
-            let uploaded=uploads[binding.key];
-            if(!uploaded||uploaded.assetId!==source.id||uploaded.sha256!==source.sha256){uploaded={assetId:source.id,sha256:source.sha256,remoteId:await this.port.upload(this.media.path(source))};uploads[binding.key]=uploaded;job=this.store.patchJob(id,{workflow:{...job.workflow!,uploads}});}
-            graph[binding.nodeId].inputs[binding.inputName]={__type:'core/ASSET',info:{id:uploaded.remoteId}};
-          }else graph[binding.nodeId].inputs[binding.inputName]=value;
+        await validateNativeInferenceInputs(definition,job.workflow!.values,this.store,this.media,job.projectId);
+        // Resolve local controls and use typed media placeholders for dependency
+        // validation before uploading any source bytes to Comfy.
+        for(const binding of definition.bindings){
+          const value=job.workflow!.values[binding.key];if(value===undefined)continue;
+          graph[binding.nodeId].inputs[binding.inputName]=typeof value==='object'?{__type:'core/ASSET',info:{id:'input-required'}}:value;
         }
         const validation=await this.port.validate(graph);
         if(!validation.valid){this.store.patchJob(id,{state:'BLOCKED',errorType:'workflow_dependencies',errorMessage:validation.issues.map(issue=>`${issue.nodeId}${issue.field?'.'+issue.field:''}: ${issue.message}`).join('; ').slice(0,1500),resultMetadata:{validation},workflow:{...job.workflow!,submissionOutcome:'not-submitted'}});return;}
+        const uploads={...job.workflow!.uploads};
+        for(const binding of definition.bindings){
+          const value=job.workflow!.values[binding.key];if(value===undefined||typeof value!=='object')continue;
+          const source=this.store.getAsset(value.assetId);if(!source||source.projectId!==job.projectId)throw new WorkflowError('A workflow input is missing from this project');
+          let uploaded=uploads[binding.key];
+          if(!uploaded||uploaded.assetId!==source.id||uploaded.sha256!==source.sha256){uploaded={assetId:source.id,sha256:source.sha256,remoteId:await this.port.upload(this.media.path(source))};uploads[binding.key]=uploaded;job=this.store.patchJob(id,{workflow:{...job.workflow!,uploads}});}
+          graph[binding.nodeId].inputs[binding.inputName]={__type:'core/ASSET',info:{id:uploaded.remoteId}};
+        }
         job=this.store.patchJob(id,{state:'SUBMITTING',inputs:{graph},attempts:job.attempts+1,submittedAt:job.submittedAt??now(),errorType:undefined,errorMessage:undefined,workflow:{...job.workflow!,submissionOutcome:'unknown'}});
         const accepted=await this.port.submit(graph,job.idempotencyKey);
         job=this.store.patchJob(id,{requestId:accepted.id,workflow:{...job.workflow!,submissionOutcome:'accepted'}});

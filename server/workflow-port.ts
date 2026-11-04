@@ -4,6 +4,7 @@ import type { WorkflowGraph, WorkflowProgress, WorkflowValidation } from '../sha
 import { graphDependencies, WorkflowError } from './workflow-schema.ts';
 import {credentialSafeError,redactCredentialValue,environmentCredentialSource,type CredentialSource,type ExecutionCredential,CredentialUnavailableError} from './credential-source.ts';
 import {operationLimit} from './credential-operation-limit.ts';
+import {validateWorkflowNodeInputs} from './workflow-node-validation.ts';
 const nativeAdmission=operationLimit(4);let nativeStreams=0;
 
 export interface WorkflowOutput {id:string;nodeId:string;name:string;contentType:string;sizeBytes:number;type:string;}
@@ -28,10 +29,12 @@ function cloudClient(credential:ExecutionCredential,source:CredentialSource,fetc
 function snapshot(job:CloudJob):WorkflowSnapshot{return{id:job.id,status:job.status,queuePosition:job.queuePosition??undefined,progress:job.progress??undefined,error:job.error??undefined,expiresAt:job.expiresAt.toISOString(),outputs:job.outputs.map(output=>({id:output.id,nodeId:output.nodeId,name:output.name,contentType:output.contentType,sizeBytes:output.sizeBytes,type:output.type}))};}
 export function validateAgainstNodeInfo(graph:WorkflowGraph,info:Record<string,any>):WorkflowValidation {
   const issues:WorkflowValidation['issues']=[];
-  const nodes=graphDependencies(graph).map(dep=>{const schema=info[dep.classType];if(!schema)issues.push({nodeId:dep.nodeId,message:`${dep.classType} is not available in the current Comfy Cloud environment`});
-    if(schema){for(const[field,value]of Object.entries(graph[dep.nodeId].inputs)){const spec=schema.input?.required?.[field]??schema.input?.optional?.[field];if(Array.isArray(value)||!spec)continue;if(value&&typeof value==='object'){if((value as {__type?:string}).__type==='core/ASSET'&&!Object.entries(spec[1]??{}).some(([key,flag])=>key.endsWith('_upload')&&flag)&&!(/^Load(?:Image|Audio|Video)/.test(dep.classType)&&/^(?:image|audio|video|file|filename)$/.test(field)))issues.push({nodeId:dep.nodeId,field,message:'Uploaded assets must bind to a loader file widget, not a media socket or numeric control'});continue;}if(Array.isArray(spec[0])&&!spec[0].includes(value))issues.push({nodeId:dep.nodeId,field,message:`${String(value)} is not a currently supported ${field} option`});if(spec[0]==='INT'&&!Number.isInteger(value)||spec[0]==='FLOAT'&&typeof value!=='number'||spec[0]==='BOOLEAN'&&typeof value!=='boolean'||spec[0]==='STRING'&&typeof value!=='string')issues.push({nodeId:dep.nodeId,field,message:`${field} does not match its ${spec[0]} node input type`});if(typeof value==='number'&&(typeof spec[1]?.min==='number'&&value<spec[1].min||typeof spec[1]?.max==='number'&&value>spec[1].max))issues.push({nodeId:dep.nodeId,field,message:`${field} is outside the node's supported range`});}
-      for(const[field,spec]of Object.entries(schema.input?.required??{}) as [string,any][])if(!Object.hasOwn(graph[dep.nodeId].inputs,field)&&!Object.keys(graph[dep.nodeId].inputs).some(key=>key.startsWith(field+'.'))&&spec[1]?.default===undefined)issues.push({nodeId:dep.nodeId,field,message:`Required node input ${field} is missing`});}
-    return{...dep,available:Boolean(schema),partnerNode:schema?.api_node===true};});
+  const nodes=graphDependencies(graph).map(dep=>{
+    const schema=info[dep.classType];
+    if(!schema)issues.push({nodeId:dep.nodeId,message:`${dep.classType} is not available in the current Comfy Cloud environment`});
+    else issues.push(...validateWorkflowNodeInputs(dep.nodeId,graph,schema,info));
+    return{...dep,available:Boolean(schema),partnerNode:schema?.api_node===true};
+  });
   return{checkedAt:new Date().toISOString(),target:'comfy-cloud',valid:issues.length===0,issues,nodes};
 }
 export function createWorkflowPort(source:CredentialSource,options:{fetchImpl?:typeof fetch}={}):WorkflowPort&{nodeInfo():Promise<Record<string,any>>}{

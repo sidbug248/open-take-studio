@@ -11,6 +11,7 @@ import type { WorkflowPort } from './workflow-port.ts';
 import type { WorkflowWorker } from './workflow-worker.ts';
 import { summarizeInlineMedia } from './project-routes.ts';
 import {bindJobCredential,type CredentialSource} from './credential-source.ts';
+import {studioWorkflowTemplates} from './workflow-templates.ts';
 
 export function workflowFromAsset(asset:Asset):WorkflowVersion {
   if(asset.metadata.operation!=='comfy-workflow-version'||!asset.metadata.workflowVersion)throw new WorkflowError('This asset is not a native Comfy workflow version');
@@ -28,6 +29,7 @@ export function createWorkflowRouter(store:Store,media:LocalFileStorage,worker:W
     const remote=/^\/(?:workflows\/[^/]+\/(?:validate|run|import-execution)|workflow-jobs\/[^/]+\/(?:retry|attach|cancel))$/.test(req.path);
     if(remote||credentialSource.available()){const credential=credentialSource.resolve();if(JSON.stringify(req.body??{}).includes(credential.apiKey))throw new WorkflowError('Keep API credentials out of workflow graphs and values.');}
   }next();});
+  router.get('/projects/:id/workflow-templates',(req,res)=>{if(!store.getProject(String(req.params.id)))throw new WorkflowError('Project not found',404);res.json(studioWorkflowTemplates());});
   router.get('/projects/:id/workflows',(req,res)=>{const projectId=String(req.params.id);if(!store.getProject(projectId))throw new WorkflowError('Project not found',404);res.json(store.listAssets(projectId).filter(asset=>asset.metadata.operation==='comfy-workflow-version').map(asset=>({asset,workflow:workflowFromAsset(asset)})));});
   router.post('/projects/:id/workflows',async(req,res)=>{
     const projectId=String(req.params.id),project=store.getProject(projectId);if(!project)throw new WorkflowError('Project not found',404);
@@ -57,6 +59,7 @@ export function createWorkflowRouter(store:Store,media:LocalFileStorage,worker:W
       if(['image','video','audio'].includes(binding.kind)){if(typeof value!=='object')throw new WorkflowError(`${binding.label} needs a saved media asset`);const source=store.getAsset(value.assetId);if(!source||source.projectId!==projectId||source.kind!==binding.kind)throw new WorkflowError(`${binding.label} needs a ${binding.kind} from this project`);inputAssetIds[binding.key]=source.id;}
       else if(typeof value!==binding.kind)throw new WorkflowError(`${binding.label} needs a ${binding.kind}`);
       if(typeof value==='number'&&(binding.min!==undefined&&value<binding.min||binding.max!==undefined&&value>binding.max))throw new WorkflowError(`${binding.label} is outside the supported range`);
+      if(typeof value==='string'&&binding.maxLength!==undefined&&value.length>binding.maxLength)throw new WorkflowError(`${binding.label} exceeds its ${binding.maxLength}-character limit`);
       if(binding.options&&typeof value==='string'&&!binding.options.includes(value))throw new WorkflowError(`${binding.label} is not a supported option`);values[binding.key]=value;
     }
     const key=`native:${projectId}:${body.clientRequestId}`,fingerprint=createHash('sha256').update(JSON.stringify({assetId:asset.id,...body,values})).digest('hex'),previous=store.getJobByIdempotencyKey(key);

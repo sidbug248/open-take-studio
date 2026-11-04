@@ -31,13 +31,14 @@ const ReviewDeliveryStudio=lazy(()=>import('./ReviewDeliveryStudio').then(module
 const StudioMcpPanel=lazy(()=>import('./StudioMcpPanel').then(module=>({default:module.StudioMcpPanel})));
 const PublishingPanel=lazy(()=>import('./PublishingPanel').then(module=>({default:module.PublishingPanel})));
 const ObjectRoom=lazy(()=>import('./ObjectRoom').then(module=>({default:module.ObjectRoom})));
+const DocumentStoryStudio=lazy(()=>import('./DocumentStoryStudio').then(module=>({default:module.DocumentStoryStudio})));
 const WorkflowStudio=lazy(()=>import('./WorkflowStudio').then(module=>({default:module.WorkflowStudio})));
 const AudioMixStudio=lazy(()=>import('./AudioMixStudio').then(module=>({default:module.AudioMixStudio})));
 const SpatialStage=lazy(()=>import('./SpatialStage').then(module=>({default:module.SpatialStage})));
 const MotionComposer=lazy(()=>import('./MotionComposer').then(module=>({default:module.MotionComposer})));
 const PlayableStudio=lazy(()=>import('./PlayableStudio').then(module=>({default:module.PlayableStudio})));
 
-type View = 'studio' | 'assets' | 'shots' | 'compare' | 'history' | 'tools' | 'recipes' | 'films' | 'scene' | 'spatial' | 'motion' | 'playable' | 'workflow' | 'audio-mix' | 'object-room' | 'ending' | 'production' | 'review' | 'publishing' | 'mcp';
+type View = 'studio' | 'assets' | 'shots' | 'compare' | 'history' | 'tools' | 'recipes' | 'films' | 'scene' | 'spatial' | 'motion' | 'playable' | 'workflow' | 'audio-mix' | 'object-room' | 'ending' | 'production' | 'review' | 'publishing' | 'mcp' | 'document-story';
 type Landing = 'explore' | 'projects' | 'recipes' | 'workspace' | 'catalogue';
 function storedWorkspace(storage:WorkspaceStorage,id:string):{view?:View;selectedId?:string;compareIds?:string[]}{try{return JSON.parse(storage.getItem(`ots:workspace:${id}`)||'{}');}catch{return {};}}
 type Draft = { referenceRoles?:ReferenceRoles; modelId: string; prompt: string; settings: Json; inputAssetIds: Record<string, string | string[]>; parentTakeId?: string; sourceAssetId?: string; shotId?: string; preparedRequest?:GenerationRequest; };
@@ -52,6 +53,7 @@ export default function App() {
   return <StudioApp key={status.accessMode==='reviewer'?status.workspaceId:status.accessMode||'owner'} initialStatus={status}/>;
 }
 function StudioApp({initialStatus}:{initialStatus:StudioStatus}) {
+  const [workflowTemplateId,setWorkflowTemplateId]=useState<string>();
   const storage=useRef(createWorkspaceStorage(initialStatus,localStorage)).current;
   const [projects, setProjects] = useState<Project[]>([]), [projectId, setProjectId] = useState(() => storage.getItem('ots:project') || '');
   const [loadedDetail, setDetail] = useState<ProjectDetail | null>(null), [models, setModels] = useState<ModelDescriptor[]>([]);
@@ -233,6 +235,7 @@ function StudioApp({initialStatus}:{initialStatus:StudioStatus}) {
   async function openCapability(toolView?:string,modelId?:string,settings?:Record<string,string|number|boolean>,context?:CatalogueContext){
     if(context?.projectId.startsWith('showcase:')){try{const resolved=await resolveCreativeSource(context.projectId);context={...mapSourceValue(context,resolved.idMap),projectId:resolved.projectId};}catch(error){report(error,()=>openCapability(toolView,modelId,settings,context));return;}}
     setCatalogueContext(context||null);
+    setWorkflowTemplateId(toolView==='workflow'&&typeof settings?.workflowTemplate==='string'?settings.workflowTemplate:undefined);
     if(context){
       const project=await api<ProjectDetail>('/api/projects/'+context.projectId);
       const take=project.takes.find(item=>item.id===context.takeId),descriptor=models.find(item=>item.id===modelId);
@@ -241,7 +244,7 @@ function StudioApp({initialStatus}:{initialStatus:StudioStatus}) {
       if(context.demo?.workflowReference?.takeIds?.length)setCompareIds(context.demo.workflowReference.takeIds.slice(0,2));
       if(context.demo?.workflowReference?.recipeId)setRemixRecipe(project.recipes.find(recipe=>recipe.id===context.demo!.workflowReference!.recipeId)||null);
     }else if(!projectId)await startDraft('',undefined,models.find(item=>item.id===modelId)?.kind||'image',modelId);
-    else{setLanding('workspace');if(modelId)chooseModel(modelId);if(settings)setDraft(current=>({...current,settings,preparedRequest:undefined}));}
+    else{setLanding('workspace');if(modelId)chooseModel(modelId);if(settings&&toolView!=='workflow')setDraft(current=>({...current,settings,preparedRequest:undefined}));}
     setAdvancedReferences(true);setView((modelId?'studio':toolView||'studio') as View);setComposerOpen(true);setInstrumentsOpen(false);
   }
   function openModal(next: 'project' | 'shot' | 'recipe') { modalOpener.current = document.activeElement as HTMLElement | null; setModal(next); }
@@ -393,9 +396,10 @@ function StudioApp({initialStatus}:{initialStatus:StudioStatus}) {
         {view==='playable'&&<Suspense fallback={<main className="loading-state">Opening playable studio…</main>}><PlayableStudio detail={detail} onRefresh={refresh} report={report} initialAssetId={selectedAsset?.kind==='image'?selectedAsset.id:undefined}/></Suspense>}
         {view==='spatial'&&<Suspense fallback={<main className="loading-state">Opening spatial stage…</main>}><SpatialStage detail={detail} onRefresh={refresh} report={report} initialAssetId={journeyContext?.kind==='object'?journeyContext.sceneAssetId:selectedAsset&&['image','3d'].includes(selectedAsset.kind)?selectedAsset.id:undefined} onOpenObjectRoom={sceneAssetId=>{setJourneyContext(journeyContext?.kind==='object'?{...journeyContext,sceneAssetId}:{kind:'object',projectId:detail.project.id,sceneAssetId,modelAssetId:selectedAsset?.kind==='3d'?selectedAsset.id:detail.assets.find(a=>a.kind==='3d')?.id||''});setView('object-room');}} onCinematicGuide={({asset,take,prompt,sceneAssetId})=>{setUndoDraft(draft);updateDraft({modelId:'minimax/minimax-h3',prompt:'A slow cinematic reveal of the sculptural object. Soft daylight moves gently across the material. '+prompt,settings:{duration:5,resolution:'768P'},inputAssetIds:{first_frame:asset.id},sourceAssetId:asset.id,parentTakeId:take.id});if(journeyContext?.kind==='object')setJourneyContext({...journeyContext,sceneAssetId});setSelectedId(take.id);setView('studio');setComposerOpen(true);refresh().catch(report);setNotice('Actual scene frame linked to MiniMax H3. Review direction, then generate; motion is interpreted from the reference.');}} onUseGuide={({asset,take,prompt})=>{const original=selectedAsset?.kind==='image'?selectedAsset:undefined;updateDraft({modelId:'bfl/flux-3-image',prompt:original?'Use the first reference for the subject and the second as a rendered camera and lighting guide. '+prompt:prompt,settings:{},inputAssetIds:{images:original?[original.id,asset.id]:[asset.id]},sourceAssetId:original?.id||asset.id,parentTakeId:original?selected?.id:take.id});setView('studio');setComposerOpen(true);setSelectedId(take.id);refresh().catch(report);setNotice('Rendered camera guide linked. Generation will interpret this reference.');}}/></Suspense>}
         {view==='object-room'&&<Suspense fallback={<main className="loading-state">Opening Object Room…</main>}><ObjectRoom detail={detail} onRefresh={refresh} report={report} initialAssetId={journeyContext?.kind==='object'?journeyContext.sceneAssetId:catalogueContext?.demo?.workflowReference?.artifactAssetId||selectedAsset?.id}/></Suspense>}
-        {view==='workflow'&&<Suspense fallback={<main className="loading-state">Opening workflow stage…</main>}><WorkflowStudio detail={detail} onRefresh={refresh} report={report} initialAssetId={catalogueContext?.demo?.workflowReference?.nativeWorkflowId||selected?.workflowVersionAssetId||((selectedAsset?.metadata.operation==='comfy-workflow-version')?selectedAsset.id:undefined)}/></Suspense>}
+        {view==='workflow'&&<Suspense fallback={<main className="loading-state">Opening workflow stage…</main>}><WorkflowStudio key={detail.project.id} detail={detail} onRefresh={refresh} report={report} initialTemplateId={workflowTemplateId} initialAssetId={catalogueContext?.demo?.workflowReference?.nativeWorkflowId||selected?.workflowVersionAssetId||((selectedAsset?.metadata.operation==='comfy-workflow-version')?selectedAsset.id:undefined)}/></Suspense>}
         {view==='audio-mix'&&<Suspense fallback={<main className="loading-state">Opening sound mixer…</main>}><AudioMixStudio detail={detail} onRefresh={refresh} report={report}/></Suspense>}
         {view==='motion'&&<Suspense fallback={<main className="loading-state">Opening motion composer…</main>}><MotionComposer initialCompositionAssetId={journeyContext?.kind==='motion'?journeyContext.compositionAssetId:undefined} initialAudioAssetId={journeyContext?.kind==='motion'?journeyContext.soundtrackAssetId:undefined} detail={detail} onRefresh={refresh} onError={report}/></Suspense>}
+        {view==='document-story'&&<Suspense fallback={<main className="loading-state">Opening document story…</main>}><DocumentStoryStudio key={detail.project.id} detail={detail} onRefresh={refresh} report={report} onGenerateScene={beat=>{const source=detail.assets.find(asset=>asset.id===beat.assetId&&asset.kind==='image');updateDraft({modelId:'bfl/flux-3-image',prompt:beat.prompt,settings:{},inputAssetIds:source?{images:[source.id]}:{},sourceAssetId:source?.id,parentTakeId:undefined,shotId:undefined,referenceRoles:{}});setView('studio');setComposerOpen(true);setNotice('Scene direction prepared. Review it and choose Generate when ready. Your story plan is preserved.');}}/></Suspense>}
         {view==='production'&&<Suspense fallback={<main className="loading-state">Opening production canvas…</main>}><ProductionCanvas project={detail} onChanged={refresh} onClose={()=>setView('studio')}/></Suspense>}
         {view==='review'&&<Suspense fallback={<main className="loading-state">Opening review and delivery…</main>}><ReviewDeliveryStudio project={detail} onChanged={refresh} onClose={()=>setView('studio')} publishing={<Suspense fallback={<p>Opening publishing…</p>}><PublishingPanel project={detail}/></Suspense>}/></Suspense>}
         {view==='publishing'&&<Suspense fallback={<main className="loading-state">Opening publishing…</main>}><main className="content-page"><button className="btn quiet" onClick={()=>setView('review')}>Review & delivery <ArrowRight size={14}/></button><PublishingPanel project={detail}/></main></Suspense>}
@@ -470,6 +474,7 @@ const instrumentItems:Instrument[]=[
 {id:'playable',name:'Playable studio',description:'Make a real browser game from project artwork',section:'MAKE',icon:Box},
  {id:'motion',name:'Motion & music',description:'Audio cues, kinetic type, and rendered composition',icon:Music2,section:'MAKE'},
 {id:'tools',name:'Image edit & captions',description:'Crop, color, composite, and manual subtitles',icon:Scissors,section:'MAKE'},
+{id:'document-story',name:'Document to story',description:'Turn text into an editable scene plan and a portable film',icon:BookOpen,section:'CONNECT'},
 {id:'shots',name:'Shot board',description:'Plan frames, compose comic pages, and batch a sequence',icon:Clapperboard,section:'CONNECT'},
 {id:'films',name:'Branching films',description:'Arrange real clips into alternative story paths',icon:Film,section:'CONNECT'},
 {id:'scene',name:'Shared scene',description:'Revise references and inspect affected outcomes',icon:Layers3,section:'CONNECT'},

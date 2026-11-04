@@ -16,7 +16,7 @@ Both cloud links serve the same current application. Vercel keeps its address wh
 
 Reviewer keys are encrypted on the server, expire after **12 hours**, and are removed on disconnect. Once created, the private browser session lasts **7 days**. The Vercel and Render hostnames have separate browser cookies and workspaces: return through the same URL and browser, or use an exported project package to transfer work. Export projects before signing out, clearing cookies, or changing browsers. Reconnect the same key to resume that workspace's pending jobs; a different key requires a new reviewer workspace. Never put an API key in a prompt, project package, or chat.
 
-**The owner's original event credit allocation has ended.** Reviewer requests use only the reviewer's connected key. Live HTTP checks verified isolated media access, saving, downloads, exports, invalid-key rejection, and connect/disconnect/reconnect with the known unfunded key. Concurrent execution and recovery were tested with mocked providers. A fresh live generation with a funded reviewer key has **not** been verified.
+**New cloud generation uses your own funded Comfy workspace key and its model access.** Reviewer requests use only the reviewer's connected key. Media access, saving, downloads, exports and connection error handling were tested; concurrent execution and recovery used mocked providers. A fresh live generation with a funded reviewer key has **not** been verified.
 
 This update follows the submission. [Current post-submission authoring source](https://github.com/sidbug248/open-take-studio/tree/codex/authoring-live) includes the hosted access and routing corrections. The original reviewer demonstrations and immutable `v0.1.0-submission` release below remain unchanged. The local instructions below explicitly install the current authoring branch; the tagged source ZIP remains the original competition snapshot.
 
@@ -32,6 +32,12 @@ Open Take combines a React/TypeScript interface, Express, SQLite, managed local 
 - [Download the tagged source release](https://github.com/sidbug248/open-take-studio/releases/tag/v0.1.0-submission).
 
 The competition page preserves the submission's playable outputs and all original video, film, and download URLs. The [live authoring studio](https://open-take-studio.onrender.com) offers isolated reviewer workspaces and separate private owner sign-in. You can also run the source locally with your own authorized Comfy credentials.
+
+## Generation and story upgrades
+
+The current authoring branch now adds **Pika Music**, editable native Comfy Cloud starters for **image-to-3D**, **translation/dubbing**, and **speech cleanup**, plus a **document-to-story** editor that assembles saved media into a real film and portable player. Music defaults to a short 10-second take. Saving a workflow starter or planning a story does not submit generation.
+
+The four provider paths have validated contracts and local tests; **funded execution remains unverified** until a key from a funded workspace is connected. Kling extension still awaits a compatible provider predecessor contract and stays unavailable. Existing media remains usable without inference credits. Read the [upgrade guide, setup, costs and verification limits](docs/inference-upgrades-2026-11-04.md).
 
 ## Five new production tools
 
@@ -117,7 +123,7 @@ Comfy Router and native Comfy Cloud execution remain explicit separate routes in
 
 ## What is implemented and what remains
 
-The current authoring catalogue describes 66 creative outcomes: 60 implemented (some require source inputs or an external account), and six explicitly planned/unavailable. The immutable competition snapshot originally contained 55 implemented and 11 planned/unavailable outcomes. The 253-entry model directory is broader than the 21 implemented adapters and must not be interpreted as 253 runnable integrations.
+The current authoring catalogue describes 66 creative outcomes: 65 have implemented routes, including experimental routes awaiting funded provider verification, and Kling extension remains unavailable. Some routes require source media or an external account. The immutable competition snapshot originally contained 55 implemented and 11 planned/unavailable outcomes. The 253-entry model directory is broader than the 24 registered Router adapters, two of which remain disabled; it must not be interpreted as 253 runnable integrations. Native Comfy Cloud workflows are recorded separately from Router adapters.
 
 The current three-journey validation includes two fresh H3 videos, actual scene-render input-byte matching, a mixed-soundtrack motion export, saved/reopened edits, project package restoration and standalone branching-film playback. A 154-test host run passed before final display-only changes; the final build/typecheck and visual checks followed those display changes. See `submission-evidence/verification-summary.json` and `docs/first-impression-validation.md` for scope.
 

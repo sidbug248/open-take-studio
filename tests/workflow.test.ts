@@ -106,3 +106,40 @@ test('Cloud editor source lineage requires matching uploaded bytes and exact edi
     const copy=await importProject(f.store,f.media,await exportProject(f.store,f.media,f.project.id));const version=f.store.listAssets(copy.id).find(value=>value.metadata.operation==='comfy-workflow-version')!;assert.equal((version.metadata.cloudReference as any).cloudEditorUrl,url);assert.deepEqual((version.metadata.workflowVersion as any).apiGraph,graph);
   }finally{await f.cleanup();}
 });
+
+
+test('dependency validation blocks native uploads and submission before admission',async()=>{
+  const f=await fixture();try{
+    let validations=0;
+    f.port.validate=async graph=>{
+      validations++;
+      assert.equal(f.counts().uploads,0);
+      assert.equal(f.counts().submissions,0);
+      assert.deepEqual(graph['1'].inputs.image,{__type:'core/ASSET',info:{id:'input-required'}});
+      return {checkedAt:new Date().toISOString(),target:'comfy-cloud',valid:false,issues:[{nodeId:'2',field:'model_name',message:'Required model is unavailable in this Cloud environment'}],nodes:[]};
+    };
+    const created=await f.post(`/projects/${f.project.id}/workflows`,f.definition);
+    assert.equal(created.status,201,await created.clone().text());
+    const {asset}=await created.json() as {asset:Asset};
+    const response=await f.post(`/workflows/${asset.id}/run`,{values:{image:{assetId:f.input.id}},clientRequestId:'dependency-before-upload'});
+    assert.equal(response.status,202,await response.clone().text());
+    const {job}=await response.json() as {job:Job};
+    const intendedInputs=structuredClone(job.inputs);
+    await f.worker.process(job.id);
+    const blocked=f.store.getJob(job.id)!;
+    assert.equal(blocked.state,'BLOCKED');
+    assert.equal(blocked.errorType,'workflow_dependencies');
+    assert.equal(blocked.attempts,0);
+    assert.equal(blocked.requestId,undefined);
+    assert.equal(blocked.submittedAt,undefined);
+    assert.equal(blocked.workflow!.submissionOutcome,'not-submitted');
+    assert.deepEqual(blocked.workflow!.uploads,undefined);
+    assert.deepEqual(blocked.inputs,intendedInputs);
+    assert.equal(f.counts().uploads,0);
+    assert.equal(f.counts().submissions,0);
+    await f.worker.tick();
+    assert.equal(validations,1);
+    assert.equal(f.counts().uploads,0);
+    assert.equal(f.counts().submissions,0);
+  }finally{await f.cleanup();}
+});

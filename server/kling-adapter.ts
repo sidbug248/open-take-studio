@@ -18,6 +18,16 @@ export function extractKlingMedia(result: any): ModelMedia[] {
   if (result?.code !== undefined && result.code !== 0) throw new Error(String(result.message ?? 'Kling request failed'));
   if (result?.data?.task_status !== 'succeed') throw new Error(String(result?.data?.task_status_msg ?? result?.message ?? 'Kling did not return a succeeded native task'));
   const videos = result.data.task_result?.videos;
-  if (!Array.isArray(videos) || !videos.length || videos.some(video => typeof video.url !== 'string' || !/^https:\/\//.test(video.url))) throw new Error('Kling completed without a supported video URL');
-  return videos.map((video, index) => ({ url: video.url, mimeType: 'video/mp4', name: `kling-video-${index + 1}.mp4`, kind: 'video' as const }));
+  if (!Array.isArray(videos) || !videos.length) throw new Error('Kling completed without a supported video URL');
+  const httpsMedia = (value: unknown): value is string => {
+    if (typeof value !== 'string') return false;
+    try { const url = new URL(value); return url.protocol === 'https:' && Boolean(url.hostname) && !url.username && !url.password; } catch { return false; }
+  };
+  return videos.map((video, index) => {
+    // The provider may return only its hotlink-protected watermark URL. Router
+    // treats either field as a valid result; do not discard a completed output.
+    const url = [video?.url, video?.watermark_url].find(httpsMedia);
+    if (!url) throw new Error('Kling completed without a supported video URL');
+    return { url, mimeType: 'video/mp4', name: `kling-video-${index + 1}.mp4`, kind: 'video' as const };
+  });
 }

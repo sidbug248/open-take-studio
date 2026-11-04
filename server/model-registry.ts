@@ -1,6 +1,7 @@
 import type { ModelBuildContext, ModelControl, ModelDescriptor, ModelMedia, ModelSetting } from '../shared/model-types.js';
 import { KLING_MODELS, buildKlingInput, extractKlingMedia } from './kling-adapter.ts';
 import { TRANSCRIPTION_MODEL, buildTranscriptionInput, extractTranscript } from './transcription-adapter.ts';
+import { AUDIO_GENERATION_MODELS, PIKA_MUSIC_MODEL, buildAudioGenerationInput, extractAudioGenerationMedia } from './audio-generation-adapters.ts';
 
 const verifiedAt = '2026-11-02';
 const docs = 'https://docs.comfy.org/development/comfy-router/models/';
@@ -11,6 +12,7 @@ const bool = (key: string, label: string, value: boolean): ModelControl => ({ ke
 /** These adapters have reviewed Router input AND output schemas. Status is implementation,
  * not a claim that this account has paid for or successfully executed every model. */
 export const MODEL_REGISTRY: ModelDescriptor[] = [
+  ...AUDIO_GENERATION_MODELS,
   ...KLING_MODELS,
   TRANSCRIPTION_MODEL,
   {
@@ -269,6 +271,7 @@ export function buildModelInput(modelId: string, context: ModelBuildContext): Re
     }
   }
   const first = (key: string) => dataItems(context.inputData[key])[0];
+  if (modelId === PIKA_MUSIC_MODEL.id) return buildAudioGenerationInput(modelId, {prompt, settings, inputData: context.inputData});
   if (modelId === TRANSCRIPTION_MODEL.id) return buildTranscriptionInput(prompt, settings, first('audio')!);
   if (modelId.startsWith('kling/')) return buildKlingInput(modelId, prompt, settings);
   if (modelId === 'bfl/flux-3-image') {
@@ -361,6 +364,7 @@ export function timedCaptionMedia(segments: { start: number; end: number; text: 
 /** Model result envelope only, not the SDK {kind,data} wrapper. Binary models are
  * persisted by the worker directly and never sent through this JSON extractor. */
 export function extractModelMedia(modelId: string, result: unknown): ModelMedia[] {
+  if (modelId === PIKA_MUSIC_MODEL.id) return extractAudioGenerationMedia(modelId, result);
   if (modelId === TRANSCRIPTION_MODEL.id) return extractTranscript(result);
   if (modelId.startsWith('kling/')) return extractKlingMedia(result);
   // Collection of an already accepted result remains possible after an adapter

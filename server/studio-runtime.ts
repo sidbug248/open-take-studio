@@ -29,6 +29,7 @@ import {createReviewRouter,createSharedReviewRouter} from './review-routes.ts';
 import {PublishingService} from './publishing.ts';
 import {StudioMcpService} from './studio-mcp.ts';
 import {drainDeliveryWork} from './delivery-package.ts';
+import {createDocumentStoryRouter,drainDocumentStoryWork} from './document-story.ts';
 
 export interface StudioRuntimeOptions {dataDir:string;settings:RuntimeConfig;credentials?:CredentialSource;routerPort?:RouterPort;workflowPort?:WorkflowPort;startWorkers?:boolean;workspaceId?:string;workspaceExpiresAt?:string;publishingAvailable?:()=>boolean;}
 export interface StudioRuntime {store:Store;media:LocalFileStorage;explore:ExploreService;router:Router;worker:GenerationWorker;workflowWorker:WorkflowWorker;displayWorker:DisplayPreparationWorker;credentials:CredentialSource;publishing:PublishingService;mcp:StudioMcpService;sharedReview:Router;start():void;close():Promise<void>;}
@@ -60,6 +61,7 @@ export function createStudioRuntime(options:StudioRuntimeOptions):StudioRuntime 
   router.use('/api',createSceneRouter(store,media));
   router.use('/api',createFilmRouter(store,media));
   router.use('/api',createProductionGraphRouter(store,media));
+  router.use('/api',createDocumentStoryRouter(store,media));
   router.use('/api',createReviewRouter(store,media,{workspaceId,workspaceExpiresAt:options.workspaceExpiresAt,secureCookies:options.settings.mode==='hosted'}));
   router.use('/api',publishing.managementRouter());
   router.use('/api',mcp.managementRouter());
@@ -68,7 +70,7 @@ export function createStudioRuntime(options:StudioRuntimeOptions):StudioRuntime 
   let started=false,closed=false;
   const runtime:StudioRuntime={store,media,explore,router,worker,workflowWorker,displayWorker,credentials,publishing,mcp,sharedReview,
     start(){if(started)return;started=true;worker.start();workflowWorker.start();displayWorker.start();publishing.start();},
-    async close(){if(closed)return;closed=true;const [a,b]=await Promise.all([worker.drain(24000),workflowWorker.drain(24000),displayWorker.stop(),publishing.stop(),drainProductionGraphWork(store),mcp.drain()]);await drainDeliveryWork(store);if(a&&b)store.close();},
+    async close(){if(closed)return;closed=true;const [a,b]=await Promise.all([worker.drain(24000),workflowWorker.drain(24000),displayWorker.stop(),publishing.stop(),drainProductionGraphWork(store),drainDocumentStoryWork(store),mcp.drain()]);await drainDeliveryWork(store);if(a&&b)store.close();},
   };
   if(options.startWorkers)runtime.start();return runtime;
 }

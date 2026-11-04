@@ -6,7 +6,7 @@ export interface WorkflowBinding {
   key:string; label:string; nodeId:string; inputName:string;
   kind:'string'|'number'|'boolean'|'image'|'video'|'audio';
   required:boolean; defaultValue?:string|number|boolean;
-  min?:number; max?:number; options?:string[];
+  min?:number; max?:number; options?:string[]; maxLength?:number;
 }
 export interface WorkflowDependency { nodeId:string; classType:string; models:Record<string,string>; }
 export interface WorkflowVersion {
@@ -34,4 +34,10 @@ export interface WorkflowValidation {
   checkedAt:string; target:'comfy-cloud'; valid:boolean;
   issues:{nodeId:string;field?:string;message:string}[];
   nodes:{nodeId:string;classType:string;available:boolean;partnerNode:boolean;models:Record<string,string>}[];
+}
+
+/** Built-in editable workflow. Saving a starter never executes its graph. */
+export interface WorkflowTemplate {
+  id:string; name:string; description:string; creditNote:string; verificationNote:string;
+  definition:Pick<WorkflowVersion,'name'|'description'|'editorGraph'|'apiGraph'|'bindings'|'outputNodeIds'|'outputKind'>;
 }
