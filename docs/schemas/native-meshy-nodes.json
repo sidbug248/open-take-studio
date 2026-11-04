@@ -1,0 +1,336 @@
+{
+  "LoadImage": {
+    "input": {
+      "required": {
+        "image": [
+          [
+            "source-image.png"
+          ],
+          {
+            "image_upload": true
+          }
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "image"
+      ]
+    },
+    "output": [
+      "IMAGE",
+      "MASK"
+    ],
+    "output_name": [
+      "IMAGE",
+      "MASK"
+    ],
+    "name": "LoadImage",
+    "display_name": "Load Image",
+    "output_node": false
+  },
+  "MeshyImageToModelNode": {
+    "input": {
+      "required": {
+        "model": [
+          "COMBO",
+          {
+            "multiselect": false,
+            "options": [
+              "meshy-7.1",
+              "meshy-7",
+              "meshy-6",
+              "latest"
+            ]
+          }
+        ],
+        "image": [
+          "IMAGE",
+          {}
+        ],
+        "should_remesh": [
+          "COMFY_DYNAMICCOMBO_V3",
+          {
+            "tooltip": "When set to false, returns an unprocessed triangular mesh.",
+            "options": [
+              {
+                "key": "true",
+                "inputs": {
+                  "required": {
+                    "topology": [
+                      "COMBO",
+                      {
+                        "multiselect": false,
+                        "options": [
+                          "triangle",
+                          "quad"
+                        ]
+                      }
+                    ],
+                    "target_polycount": [
+                      "INT",
+                      {
+                        "default": 300000,
+                        "min": 100,
+                        "max": 300000,
+                        "display": "number"
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "key": "false",
+                "inputs": {
+                  "required": {}
+                }
+              }
+            ]
+          }
+        ],
+        "symmetry_mode": [
+          "COMBO",
+          {
+            "multiselect": false,
+            "options": [
+              "auto",
+              "on",
+              "off"
+            ]
+          }
+        ],
+        "should_texture": [
+          "COMFY_DYNAMICCOMBO_V3",
+          {
+            "tooltip": "Determines whether textures are generated. Setting it to false skips the texture phase and returns a mesh without textures.",
+            "options": [
+              {
+                "key": "true",
+                "inputs": {
+                  "required": {
+                    "enable_pbr": [
+                      "BOOLEAN",
+                      {
+                        "tooltip": "Generate PBR Maps (metallic, roughness, normal) in addition to the base color.",
+                        "default": false
+                      }
+                    ],
+                    "texture_prompt": [
+                      "STRING",
+                      {
+                        "tooltip": "Provide a text prompt to guide the texturing process. Maximum 600 characters. Cannot be used at the same time as 'texture_image'.",
+                        "default": "",
+                        "multiline": true
+                      }
+                    ],
+                    "texture_resolution": [
+                      "COMBO",
+                      {
+                        "tooltip": "Base color texture resolution. Higher resolutions capture more surface detail.",
+                        "multiselect": false,
+                        "options": [
+                          "2k",
+                          "4k",
+                          "8k"
+                        ]
+                      }
+                    ]
+                  },
+                  "optional": {
+                    "texture_image": [
+                      "IMAGE",
+                      {
+                        "tooltip": "Only one of 'texture_image' or 'texture_prompt' may be used at the same time."
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "key": "false",
+                "inputs": {
+                  "required": {}
+                }
+              }
+            ]
+          }
+        ],
+        "pose_mode": [
+          "COMBO",
+          {
+            "tooltip": "Specify the pose mode for the generated model.",
+            "advanced": true,
+            "multiselect": false,
+            "options": [
+              "",
+              "A-pose",
+              "T-pose"
+            ]
+          }
+        ],
+        "seed": [
+          "INT",
+          {
+            "tooltip": "Seed controls whether the node should re-run; results are non-deterministic regardless of seed.",
+            "default": 0,
+            "min": 0,
+            "max": 2147483647,
+            "control_after_generate": true,
+            "display": "number"
+          }
+        ],
+        "ultra_mode": [
+          "BOOLEAN",
+          {
+            "tooltip": "Run an extra refinement pass for higher-fidelity geometry with finer surface detail.",
+            "default": false
+          }
+        ]
+      },
+      "optional": {
+        "ultra_resolution": [
+          "COMBO",
+          {
+            "tooltip": "Resolution of the ultra pass: 2k runs it at 2048³, 4k at 4096³ for the finest surface detail. 4k requires meshy-7.1 or latest. Used only when ultra_mode is enabled.",
+            "multiselect": false,
+            "options": [
+              "2k",
+              "4k"
+            ]
+          }
+        ]
+      },
+      "hidden": {
+        "auth_token_comfy_org": [
+          "AUTH_TOKEN_COMFY_ORG"
+        ],
+        "api_key_comfy_org": [
+          "API_KEY_COMFY_ORG"
+        ],
+        "unique_id": [
+          "UNIQUE_ID"
+        ],
+        "comfy_usage_source": [
+          "COMFY_USAGE_SOURCE"
+        ],
+        "prompt": [
+          "PROMPT"
+        ],
+        "extra_pnginfo": [
+          "EXTRA_PNGINFO"
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "model",
+        "image",
+        "should_remesh",
+        "symmetry_mode",
+        "should_texture",
+        "pose_mode",
+        "seed",
+        "ultra_mode"
+      ],
+      "optional": [
+        "ultra_resolution"
+      ],
+      "hidden": [
+        "auth_token_comfy_org",
+        "api_key_comfy_org",
+        "unique_id",
+        "comfy_usage_source",
+        "prompt",
+        "extra_pnginfo"
+      ]
+    },
+    "output": [
+      "STRING",
+      "MESHY_TASK_ID",
+      "FILE_3D_GLB",
+      "FILE_3D_FBX"
+    ],
+    "output_name": [
+      "model_file",
+      "meshy_task_id",
+      "GLB",
+      "FBX"
+    ],
+    "name": "MeshyImageToModelNode",
+    "display_name": "Meshy: Image to Model",
+    "output_node": true,
+    "api_node": true,
+    "deprecated": false,
+    "price_badge": {
+      "engine": "jsonata",
+      "depends_on": {
+        "widgets": [
+          {
+            "name": "model",
+            "type": "COMBO"
+          },
+          {
+            "name": "should_texture",
+            "type": "COMFY_DYNAMICCOMBO_V3"
+          },
+          {
+            "name": "should_texture.texture_resolution",
+            "type": "COMBO"
+          },
+          {
+            "name": "ultra_mode",
+            "type": "BOOLEAN"
+          }
+        ],
+        "inputs": [],
+        "input_groups": []
+      },
+      "expr": "\n                (\n                  $textured := widgets.should_texture = \"true\";\n                  $resolution := $textured ? $lookup(widgets, \"should_texture.texture_resolution\") : \"2k\";\n                  $credits := ($textured ? 30 : 20)\n                    + ($resolution = \"8k\" ? 5 : 0)\n                    + ((widgets.ultra_mode and widgets.model in [\"meshy-7.1\", \"meshy-7\", \"latest\"]) ? 5 : 0);\n                  {\"type\":\"usd\",\"usd\": $credits * 0.0572}\n                )\n                "
+    }
+  },
+  "SaveGLB": {
+    "input": {
+      "required": {
+        "mesh": [
+          "MESH,FILE_3D_GLB,FILE_3D_GLTF,FILE_3D_OBJ,FILE_3D_FBX,FILE_3D_STL,FILE_3D_USDZ,FILE_3D_PLY,FILE_3D_SPLAT,FILE_3D_SPZ,FILE_3D_KSPLAT,FILE_3D_SPLAT_ANY,FILE_3D_POINT_CLOUD_ANY,FILE_3D",
+          {
+            "tooltip": "Mesh or 3D file to save"
+          }
+        ],
+        "filename_prefix": [
+          "STRING",
+          {
+            "default": "3d/ComfyUI",
+            "multiline": false
+          }
+        ]
+      },
+      "hidden": {
+        "prompt": [
+          "PROMPT"
+        ],
+        "extra_pnginfo": [
+          "EXTRA_PNGINFO"
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "mesh",
+        "filename_prefix"
+      ],
+      "hidden": [
+        "prompt",
+        "extra_pnginfo"
+      ]
+    },
+    "output": [],
+    "output_name": [],
+    "name": "SaveGLB",
+    "display_name": "Save 3D Model",
+    "output_node": true,
+    "api_node": false,
+    "deprecated": false,
+    "price_badge": null
+  }
+}
