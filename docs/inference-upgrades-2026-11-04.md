@@ -92,7 +92,7 @@ PDF/Word extraction, inferred narration, automatic translation and autonomous mu
 
 ## Credits and remaining checks
 
-The initial implementation stage used no paid inference. The first funded pass completed four local native runs for **$1.762475**, approximately **372 credits** at 211 credits per dollar. The later hosted FLUX 3, textured Meshy and hosted native Sonilo checks cost **$1.806804994**, approximately **381.24 credits**. The balance after those checks was **$16.340720006**, approximately **3,447.89 credits**; this is a recorded checkpoint, not a live balance or a guarantee for future work. Prices depend on provider, duration, geometry/textures, resolution, runtime and retries.
+The initial implementation stage used no paid inference. The first funded pass completed four local native runs for **$1.762475**, approximately **372 credits** at 211 credits per dollar. The later hosted FLUX 3, textured Meshy and hosted native Sonilo checks cost **$1.806804994**, approximately **381.24 credits**. These are observed execution costs, not a plan allowance or a guarantee for future work. Account balances remain in private verification receipts. Prices depend on provider, duration, geometry/textures, resolution, runtime and retries.
 
 The useful remaining work is:
 

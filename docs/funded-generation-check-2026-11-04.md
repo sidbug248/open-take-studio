@@ -18,11 +18,11 @@ The Meshy run deliberately omitted texturing and ultra mode. A missing texture i
 
 ## Measured cost
 
-The account's reported balance fell from **1,991.0000 cents** to **1,814.7525 cents** during these sequential checks: an observed difference of **$1.762475**, approximately **372 Comfy credits** at 211 credits per dollar. The final check was at **2026-11-04 06:36:17 UTC**. Approximately **3,829 credits** remained.
+These sequential checks incurred an observed total of **$1.762475**, approximately **372 Comfy credits** at 211 credits per dollar. The final cost check was at **2026-11-04 06:36:17 UTC**. Account balances are retained only in private verification receipts.
 
 These are observed balance differences, not fixed quotations for every future request. Model settings, duration, provider prices and billing timing can affect cost. In particular, the live Sonilo node badge displayed $0.0025 per second, while the observed ten-second debit was $0.032175; the lower badge should not be treated as a guaranteed price.
 
-No further paid runs were queued at that initial checkpoint. Later checks and their own costs are recorded separately below; the 3,829-credit figure is historical, not a current available balance.
+No further paid runs were queued at that initial checkpoint. Later checks and their own costs are recorded separately below.
 
 ## Initial native-workflow verification and limits
 
@@ -96,7 +96,7 @@ The observed debit was **$0.032175**, approximately **6.79 credits**. Successful
 | Hosted native Sonilo | $0.032175000 | 6.79 |
 | **Later pass total** | **$1.806804994** | **381.24** |
 
-The recorded balance after these checks was **$16.340720006**, approximately **3,447.89 credits**. This is a historical checkpoint, not a live balance, plan allowance or guaranteed cost for future requests. The earlier four-run native check cost $1.762475 separately.
+These costs are observed checkpoints, not fixed quotations or a plan allowance. The earlier four-run native check cost $1.762475 separately. Account balances and credential material remain in private verification receipts.
 
 ## Remaining provider constraints
 
