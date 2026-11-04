@@ -22,7 +22,7 @@ let shuttingDown=false;
 const app=express();app.disable('x-powered-by');app.set('trust proxy',config.trustProxyHops);
 app.use((_req,res,next)=>{if(shuttingDown){res.status(503).setHeader('Retry-After','10');res.end('Studio is restarting; saved jobs will recover.');return;}next();});
 app.use(securityBoundary(config));
-app.get('/api/health',(_req,res)=>res.json(config.mode==='hosted'?{ok:true,version:'0.1.0'}:{ok:true,keyConfigured:config.keyConfigured,version:'0.1.0',storagePath:config.dataDir,sdkVersion:'0.5.0'}));
+app.get('/api/health',(_req,res)=>res.json(config.mode==='hosted'?{ok:true,version:'0.2.0'}:{ok:true,keyConfigured:config.keyConfigured,version:'0.2.0',storagePath:config.dataDir,sdkVersion:'0.5.0'}));
 app.use(sessions.identify());
 app.use(createStudioPublicRouter({owner,reviewerRuntime:id=>reviewers?.getRuntime(id)}));
 if(reviewers){app.use(reviewers.identify);app.use(reviewers.arrive);app.use(reviewers.router);}
@@ -31,7 +31,7 @@ if(reviewers)app.use(reviewers.dispatch);
 app.use(sessions.gate());
 // Owner-only deployment diagnostic: never returns raw IP, cookies or proxy proof.
 app.get('/api/runtime/request-context',(req,res)=>{const context=requestOrigin(req),hash=(value:string)=>createHash('sha256').update(value).digest('hex');res.json(context?{origin:context.origin,proxied:context.proxied,ipSource:context.ipSource,clientIpHash:hash(context.clientIp),forwarding:{expressIpHash:hash(req.ip??''),forwardedForHashes:String(req.headers['x-forwarded-for']??'').split(',').map(value=>hash(value.trim())),realIpHash:hash(String(req.headers['x-real-ip']??''))}}:{origin:'local',proxied:false});});
-app.get('/api/studio/status',(_req,res)=>{res.setHeader('Cache-Control','no-store');res.json({ok:true,version:'0.1.0',keyConfigured:config.keyConfigured,mode:config.mode,sdkVersion:'0.5.0',accessMode:'owner',workspaceId:'owner'});});
+app.get('/api/studio/status',(_req,res)=>{res.setHeader('Cache-Control','no-store');res.json({ok:true,version:'0.2.0',keyConfigured:config.keyConfigured,mode:config.mode,sdkVersion:'0.5.0',accessMode:'owner',workspaceId:'owner'});});
 app.use('/api',express.json({limit:'2mb'}),createRuntimeBackupRouter(owner.store,backupService));
 app.use(owner.router);
 const server=createServer(app);

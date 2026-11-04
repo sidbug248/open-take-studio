@@ -92,7 +92,7 @@ export function buildAudioNativeWorkflow(kind: AudioNativeWorkflowKind, options:
     ];
     return {
       name: 'Translate and dub a video',
-      description: 'Translate the speech in a saved video, preserve the speaker’s voice and synchronize their lips through the native VEED Standard node in Comfy Cloud. Requires speech and a visible speaker, no longer than 599 seconds. The source stays unchanged. Current node contract verified; funded execution and provider availability remain unverified.',
+      description: 'Translate the speech in a saved video, preserve the speaker’s voice and synchronize their lips through the native VEED Standard node in Comfy Cloud. Requires speech and a visible speaker, no longer than 599 seconds. The source stays unchanged. Review the translated words, voice and visible lip synchronization before publishing.',
       apiGraph, editorGraph: editorGraph(apiGraph, 'video', ['standard', targetLanguage, sourceLanguage, seed, 'fixed']) as WorkflowVersion['editorGraph'],
       bindings, outputNodeIds: ['3'], outputKind: 'video',
     };
@@ -115,7 +115,7 @@ export function buildAudioNativeWorkflow(kind: AudioNativeWorkflowKind, options:
   ];
   return {
     name: 'Clean a speech recording',
-    description: 'Remove background noise from saved speech through the native VEED Clean Audio node in Comfy Cloud. Returns 48 kHz mono speech; music and sound effects are removed too. Use speech shorter than 30 minutes (at most 1799 seconds). The original stays unchanged. This is separate from the disabled Router adapter; native provider execution remains unverified.',
+    description: 'Remove background noise from saved speech through the native VEED Clean Audio node in Comfy Cloud. Returns 48 kHz mono speech; music and sound effects are removed too. Use speech shorter than 30 minutes (at most 1799 seconds). The original stays unchanged. The native workflow is available separately from the disabled Router adapter. Compare the cleaned result with the source before replacing a soundtrack.',
     apiGraph, editorGraph: editorGraph(apiGraph, 'audio', [strength, loudness, ...(normalize ? [targetLufs] : [])]) as WorkflowVersion['editorGraph'],
     bindings, outputNodeIds: ['3'], outputKind: 'audio',
   };
