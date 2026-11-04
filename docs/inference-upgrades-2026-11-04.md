@@ -10,8 +10,8 @@ Application commit [9e98c8f](https://github.com/sidbug248/open-take-studio/commi
 | --- | --- | --- | --- |
 | Standalone music | Native **Sonilo Text to Music** → FLAC | Separate local and hosted reviewer API executions completed, each saving a 10.054-second stereo FLAC. The starter is available in Native Workflows and from Compose standalone music in the Catalogue. | Listening and musical-quality review; paid browser-click admission is not claimed. Pika Music returned `403 not_enabled` through Router and stays unavailable. |
 | Image to 3D | Native **Meshy 7.1**, saved image → geometry → GLB | Geometry-only and separate textured 2K runs completed. The textured GLB contains UVs and a 2048×2048 embedded image; four rendered views showed recognizable bottle, cap and pedestal with amber color and approximate shape. | Advanced PBR, physically transparent glass fidelity and hosted execution of this native workflow remain unverified. The pedestal color differs from the source. |
-| Translation and dubbing | Native **VEED Standard**, speech video → translated video | A funded English-to-Spanish run saved a playable MP4 with an audio track. | Listening, translation and voice-quality review; a suitable front-facing speech sample for lip-sync review; hosted execution of this native workflow. |
-| Speech cleanup | Native **VEED Clean Audio**, saved speech → FLAC | A funded run saved a valid, non-silent 48 kHz mono FLAC. | Listening comparison against the source; hosted execution of this native workflow. |
+| Translation and dubbing | Native **VEED Standard**, speech video → translated video | Initial local execution and a corrected complete-input hosted reviewer API run produced MP4s. The corrected output fully decodes; offline transcription preserves all three source clauses in Spanish. | Audible naturalness and suitable front-facing lip-sync review; paid browser submission remains unverified. |
+| Speech cleanup | Native **VEED Clean Audio**, saved speech → FLAC | A funded run saved a valid 48 kHz mono FLAC. Full decode and offline transcription preserve the complete 6.9-second source script without sample clipping. | Audible denoising benefit and naturalness; hosted execution of this native workflow. |
 | Document to finished story | Local text ingestion, editable scene plan, saved-media assembly, captions and portable player | Real MP4/ZIP creation, source preservation, project export/import and re-render were tested. The hosted document-story journey was checked at the earlier release. | Optional further creative examples. PDF/Word extraction and autonomous AI story production are outside this implementation. |
 | Kling extension | Legacy `kling/videos-video-extend` adapter, unavailable | The real Kling 2.6 predecessor failed. Official Comfy source removed the native node because it accepted only retired Kling 1.x predecessors. | Do not repeat the incompatible request. Use a saved frame to generate a separate H3 shot, or assemble saved clips. These alternatives are not native Kling extension. |
 
@@ -60,7 +60,13 @@ Choose **Translate and dub**, bind a saved video containing speech and set the s
 
 The source must contain an audio track and be no longer than 599 seconds. Begin with a short clip. After execution, compare translated words, pronunciation, voice treatment and timing with the original. Use a front-facing speaker when assessing visible lip synchronization.
 
-The funded check translated a short English clip into Spanish and saved an MP4. Its character faces away, so that sample cannot verify visible lip-sync quality. The original remains a separate asset.
+The initial funded check saved an MP4, but later offline transcription found that an earlier Sync 3 `cut_off` operation had already removed the final words from its input. A corrected input holds the last frame to retain the full narration. One subsequent hosted reviewer API run saved a complete Spanish output, and offline transcription preserved all three source clauses, including the previously missing ending. That hold adds no mouth animation, and the away-facing source cannot establish visible lip-sync quality. Originals remain separate assets. See the [corrected execution report](funded-generation-check-2026-11-04.md#corrected-full-narration-hosted-dubbing).
+
+### Check speech and video lengths for Sync 3
+
+When using **Sync 3 · lip sync**, select the performance video and speech track. The studio measures their actual saved streams. If **Cut off at the shorter input** would omit speech, it shows the two durations and requires an explicit acknowledgement before generation, or you can choose another duration mode. It does not silently change the mode.
+
+Changing the project, inputs or settings invalidates the acknowledgement, which also expires after 15 minutes. Saved drafts and recipes do not retain it. Server admission rechecks the source hashes and durations; the preflight itself uses no Comfy credits.
 
 ### Clean a speech recording
 
@@ -92,17 +98,17 @@ PDF/Word extraction, inferred narration, automatic translation and autonomous mu
 
 ## Credits and remaining checks
 
-The initial implementation stage used no paid inference. The first funded pass completed four local native runs for **$1.762475**, approximately **372 credits** at 211 credits per dollar. The later hosted FLUX 3, textured Meshy and hosted native Sonilo checks cost **$1.806804994**, approximately **381.24 credits**. These are observed execution costs, not a plan allowance or a guarantee for future work. Account balances remain in private verification receipts. Prices depend on provider, duration, geometry/textures, resolution, runtime and retries.
+The initial implementation stage used no paid inference. The first funded pass completed four local native runs for **$1.762475**, approximately **372 credits** at 211 credits per dollar. The later hosted FLUX 3, textured Meshy and hosted native Sonilo checks cost **$1.806804994**, approximately **381.24 credits**. One subsequent corrected complete-narration hosted dub cost **$1.0868**, approximately **229.31 credits**. These are observed execution costs, not a plan allowance or a guarantee for future work. Account balances remain in private verification receipts. Prices depend on provider, duration, geometry/textures, resolution, runtime and retries.
 
 The useful remaining work is:
 
-1. Listen to the saved music, cleaned speech and dubbing; compare cleanup and dubbing with the originals.
+1. Review the existing automated decode, duration and transcript evidence first. Direct listening remains a separate quality check, not a reason to repeat successful paid execution.
 2. The textured Meshy GLB has received a basic four-view visual review. Advanced PBR, physical glass materials and exact source fidelity remain separate from that check.
-3. The hosted reviewer API canvas path completed one paid image, downstream local processing, save/reopen, export and local restore. A separate hosted Sonilo workflow also completed. A paid browser-click admission and hosted checks of other native models remain distinct.
+3. The hosted reviewer API canvas path completed one paid image, downstream local processing, save/reopen, export and local restore. Separate hosted Sonilo and corrected complete-narration VEED dubbing workflows also completed. Paid browser admission and hosted execution of every other native model remain separate from those results.
 4. A suitable front-facing dubbing sample remains necessary to assess visible lip synchronization; the saved source faces away. No automatic repeat of the completed texture request is needed.
 5. Keep the retired Kling extension disabled. Use the existing [saved-frame continuation and film tools](kling-continuation-status-2026-11-04.md); do not spend credits repeating a rejected Kling 2.6 predecessor.
 
-Automatic approval review blocked transferring the complete private audio clips for assistant listening. Local metadata/decoding checks continued; listening quality remains unreviewed. Do not turn those file checks into a quality claim.
+The owner authorized audio transfer for review, but the reviewing assistant session does not support audio input. Local full-file decoding and offline transcription were completed. The source and cleaned speech retain the full script; the corrected hosted Spanish dub now preserves all three source clauses in its transcript. These checks do not establish audible naturalness, musical quality or noise-removal benefit. See the [audio follow-up](funded-generation-check-2026-11-04.md#audio-follow-up-and-source-duration-finding), [corrected dub](funded-generation-check-2026-11-04.md#corrected-full-narration-hosted-dubbing) and [current release verification](release-0.2.0.md).
 
 Read the [funded execution report](funded-generation-check-2026-11-04.md) for exact observations. The earlier [testing budget](comfy-testing-budget-2026-11-03.md) remains a dated, conditional planning document.
 
@@ -119,10 +125,10 @@ The hostnames have separate browser cookies and reviewer workspaces. Return thro
 
 Local installation requires neither a Render nor Vercel subscription. The app, database, media and local rendering run on your computer; new AI generation uses the configured hosted Comfy/provider service. Saved media does not disappear when inference credits run out.
 
-Install the current application branch:
+Install the stable 0.2.0 release (use `codex/authoring-live` instead when developing):
 
 ```sh
-git clone --branch codex/authoring-live --single-branch https://github.com/sidbug248/open-take-studio.git
+git clone --branch v0.2.0 --single-branch https://github.com/sidbug248/open-take-studio.git
 cd open-take-studio
 npm ci
 node -e "const fs = require('node:fs'); if (!fs.existsSync('.env')) fs.copyFileSync('.env.example', '.env', fs.constants.COPYFILE_EXCL);"
@@ -143,4 +149,5 @@ A fresh clone does not include private projects or the cloud showcase. Import yo
 - A later hosted reviewer API check produced one FLUX 3 image, resumed its graph through local resize and packaging, reopened the hosted project and restored the export locally with matching output hashes and no new inference.
 - A separate hosted native Sonilo workflow completed, saving a 10.054-second stereo FLAC, executed graph and project export. Fresh reopen/export and local restore passed with byte-identical audio, remapped workflow references and no active imported jobs. The test credential was disconnected afterward; listening quality remains unreviewed.
 - Browser checks separately confirmed that Generate opens the key dialog, dismissal retains the draft, and a full reload retains the draft. They did not perform paid browser-click admission.
+- The corrected complete-narration hosted VEED run saved a 6.920-second MP4; all four project-package asset hashes matched. Offline transcription preserved all three original clauses in Spanish. No direct listening or visible lip-sync approval is claimed.
 - The archived competition tag remains unchanged. Deployment of subsequent source changes must be verified separately; these receipts do not attest an unpushed commit as live.
